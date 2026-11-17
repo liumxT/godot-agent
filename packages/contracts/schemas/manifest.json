@@ -1,0 +1,71 @@
+{
+  "protocol_version": "1.0",
+  "cases": [
+    {
+      "id": "request.valid.basic",
+      "schema": "api/request.schema.json",
+      "file": "examples/request.valid.json",
+      "valid": true
+    },
+    {
+      "id": "request.invalid.missing_action",
+      "schema": "api/request.schema.json",
+      "file": "examples/request.invalid.missing_action.json",
+      "valid": false
+    },
+    {
+      "id": "request.invalid.bad_version",
+      "schema": "api/request.schema.json",
+      "file": "examples/request.invalid.bad_version.json",
+      "valid": false
+    },
+    {
+      "id": "response.success.valid",
+      "schema": "api/response.schema.json",
+      "file": "examples/response.success.valid.json",
+      "valid": true
+    },
+    {
+      "id": "response.error.valid",
+      "schema": "api/response.schema.json",
+      "file": "examples/response.error.valid.json",
+      "valid": true
+    },
+    {
+      "id": "response.invalid.success_with_error",
+      "schema": "api/response.schema.json",
+      "file": "examples/response.invalid.success_with_error.json",
+      "valid": false
+    },
+    {
+      "id": "response.validation_failed.valid",
+      "schema": "api/response.schema.json",
+      "file": "examples/response.validation_failed.valid.json",
+      "valid": true
+    },
+    {
+      "id": "event.valid.basic",
+      "schema": "events/event.schema.json",
+      "file": "examples/event.valid.json",
+      "valid": true
+    },
+    {
+      "id": "event.invalid.bad_source",
+      "schema": "events/event.schema.json",
+      "file": "examples/event.invalid.bad_source.json",
+      "valid": false
+    },
+    {
+      "id": "error.valid.basic",
+      "schema": "errors/error.schema.json",
+      "file": "examples/error.valid.json",
+      "valid": true
+    },
+    {
+      "id": "error.invalid.bad_code",
+      "schema": "errors/error.schema.json",
+      "file": "examples/error.invalid.bad_code.json",
+      "valid": false
+    }
+  ]
+}

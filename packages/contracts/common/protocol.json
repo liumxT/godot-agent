@@ -1,0 +1,8 @@
+{
+  "protocol_version": "1.0",
+  "id_pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$",
+  "action_pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+  "error_code_pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+  "timestamp_pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$",
+  "sources": ["backend", "plugin"]
+}

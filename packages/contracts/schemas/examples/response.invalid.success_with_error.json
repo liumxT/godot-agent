@@ -1,0 +1,13 @@
+{
+  "protocol_version": "1.0",
+  "request_id": "req_01HZX0000000000000003",
+  "success": true,
+  "data": {},
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "should not be present when success is true",
+    "details": {},
+    "retryable": false,
+    "correlation_id": "cor_01HZX0000000000000003"
+  }
+}

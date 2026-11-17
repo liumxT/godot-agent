@@ -1,0 +1,7 @@
+{
+  "code": "invalid_request",
+  "message": "code must be upper case",
+  "details": {},
+  "retryable": false,
+  "correlation_id": "cor_01HZX0000000000000003"
+}

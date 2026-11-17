@@ -1,0 +1,15 @@
+{
+  "protocol_version": "1.0",
+  "request_id": "req_01HZX0000000000000001",
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "action is required",
+    "details": {
+      "field": "action"
+    },
+    "retryable": false,
+    "correlation_id": "cor_01HZX0000000000000001"
+  }
+}

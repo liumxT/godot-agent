@@ -1,0 +1,9 @@
+{
+  "code": "RESOURCE_LOCKED",
+  "message": "resource is locked by another task",
+  "details": {
+    "resource": "res://scenes/player.tscn"
+  },
+  "retryable": true,
+  "correlation_id": "cor_01HZX0000000000000002"
+}

@@ -1,0 +1,8 @@
+{
+  "protocol_version": "1.0",
+  "event_id": "evt_01HZX0000000000000001",
+  "event_type": "project.scanned",
+  "timestamp": "2026-11-17T10:00:01Z",
+  "source": "editor",
+  "payload": {}
+}

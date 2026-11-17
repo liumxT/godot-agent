@@ -1,0 +1,12 @@
+{
+  "protocol_version": "1.0",
+  "request_id": "req_01HZX0000000000000000",
+  "correlation_id": "cor_01HZX0000000000000000",
+  "timestamp": "2026-11-17T10:00:00Z",
+  "session_id": "ses_01HZX0000000000000000",
+  "project_id": "prj_01HZX0000000000000000",
+  "action": "project.scan",
+  "payload": {
+    "path": "res://"
+  }
+}

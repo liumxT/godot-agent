@@ -30,3 +30,8 @@ addons/godot_ai_agent/
 - 本阶段不实现 Editor Bridge、Session、Heartbeat。
 - 插件不得在未经授权的情况下修改项目资源。
 - 所有日志必须经 `core/logger.gd`，禁止直接 `print`。
+
+## 契约校验
+
+`tests/contract_probe` 是仅用于测试的独立插件，不随产品分发。
+校验命令见 `packages/contracts/README.md`。

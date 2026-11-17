@@ -1,0 +1,13 @@
+{
+  "protocol_version": "1.0",
+  "event_id": "evt_01HZX0000000000000000",
+  "event_type": "project.scanned",
+  "timestamp": "2026-11-17T10:00:01Z",
+  "source": "backend",
+  "session_id": "ses_01HZX0000000000000000",
+  "project_id": "prj_01HZX0000000000000000",
+  "correlation_id": "cor_01HZX0000000000000000",
+  "payload": {
+    "file_count": 42
+  }
+}

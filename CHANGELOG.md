@@ -12,3 +12,4 @@
 - 仓库规范：`.gitignore`、`.editorconfig`、`README.md`、`CONTRIBUTING.md`。
 - Backend E0 骨架：配置加载、结构化日志、统一错误、生命周期、健康检查。
 - Godot Plugin E0 骨架：插件声明、版本校验、状态 Dock 面板。
+- Shared Contracts 1.0：请求/响应/错误/事件 Schema、错误码规范、两端共用的样例清单与校验器。
