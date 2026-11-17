@@ -8,8 +8,10 @@
 | 本地同源检查 | [scripts/testing/check_all.py](../../scripts/testing/check_all.py) |
 | 检查报告 | `artifacts/ci-report.md` + `artifacts/ci-report.json`（不入库） |
 
-仓库尚无 remote，当前以本地脚本为权威检查；推送至 GitHub 后
-workflow 自动生效，二者执行同一套规则，避免"本地过、CI 挂"。
+远程仓库为 `github.com/liumxT/godot-agent`，本地脚本与 workflow 执行同一套规则，
+避免"本地过、CI 挂"。两个 job 固定 `ubuntu-24.04`：`ubuntu-latest` 已迁移到 26.04，
+而 setup-python 尚无 Python 3.14.2 的 26.04 构建。首次远程运行记录：
+[run 44065613603](https://github.com/liumxT/godot-agent/actions/runs/44065613603)（通过）。
 
 ## 2. 检查阶段
 

@@ -21,6 +21,7 @@ E0 阶段（项目基础设施与工程规范）。
 - [x] E0-T08 日志与异常
 - [x] E0-T09 CI
 - [x] E0-T10 工程文档
+- [x] E0 验收通过（[验收报告](docs/00-project/e0-acceptance-report.md)，2026-11-17，CI 双 job 绿色）
 
 ## 技术基线
 

@@ -33,7 +33,7 @@
 | 打包分发 | PyInstaller（onedir 主 / onefile 备选） | 见 ADR-007，构建期依赖 |
 | 日志 | 标准库 logging + 结构化 JSON formatter | E0-T08 落规范 |
 | 版本控制 | Git 2.54.0 | — |
-| CI | 待定（见 §4 待确认项） | E0-T09 |
+| CI | GitHub Actions + 本地同源脚本 | 双 job 已跑通（见 [ci.md](../03-development/ci.md)） |
 
 ## 3. 开发环境版本清单（2026-11-17 本机实测）
 
