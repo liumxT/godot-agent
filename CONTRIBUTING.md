@@ -40,6 +40,11 @@
 - 评审关注：模块边界、状态所有权、错误处理、测试证据。
 - 架构级变更必须新增或修订 ADR，不允许在代码中绕过既有约束。
 
+流程细节：[开发流程规范](docs/00-project/development-workflow.md)、
+[Code Review 规范](docs/00-project/code-review.md)、
+[Bug 管理规范](docs/00-project/bug-management.md)。
+模板见 [docs/templates/](docs/templates/README.md)。
+
 ## 5. 完成定义（DoD）
 
 一个任务完成需同时满足：
