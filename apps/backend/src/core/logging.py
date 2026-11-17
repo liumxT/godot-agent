@@ -1,7 +1,10 @@
-"""统一日志入口。
+"""统一日志入口（E0-T08）。
 
-日志必须结构化输出（单行 JSON），并携带可关联字段
-（request_id / task_id），便于后续审计与问题定位。
+日志必须结构化输出（单行 JSON），字段与 Godot 插件侧保持一致：
+timestamp / level / component / event / request_id / correlation_id /
+session_id / project_id / error_code / message。
+
+请求级关联 ID 由 ``request_context()`` 绑定，格式化时自动附加。
 """
 
 from __future__ import annotations
@@ -9,20 +12,53 @@ from __future__ import annotations
 import json
 import logging
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import UTC, datetime
 from typing import Any
 
-_EXTRA_FIELDS = ("request_id", "task_id", "component", "route")
+_CONTEXT_FIELDS = ("request_id", "correlation_id", "session_id", "project_id")
+
+# 允许写入日志的扩展字段；其余 extra 会被忽略，避免污染日志或与 LogRecord 冲突
+_EXTRA_FIELDS = (
+    "component",
+    "event",
+    "environment",
+    "route",
+    "task_id",
+    "error_code",
+) + _CONTEXT_FIELDS
+
+_context: ContextVar[dict[str, str] | None] = ContextVar("log_request_context", default=None)
+
+
+@contextmanager
+def request_context(**ids: str) -> Iterator[None]:
+    """绑定请求级关联字段；退出时恢复上一层上下文。"""
+
+    token = _context.set({key: value for key, value in ids.items() if key in _CONTEXT_FIELDS and value})
+    try:
+        yield
+    finally:
+        _context.reset(token)
+
+
+def context_values() -> dict[str, str]:
+    return dict(_context.get() or {})
 
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         payload: dict[str, Any] = {
-            "ts": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
+            "component": getattr(record, "component", record.name),
+            "event": getattr(record, "event", None) or record.getMessage(),
             "message": record.getMessage(),
         }
+        payload.update(context_values())
         for field in _EXTRA_FIELDS:
             value = getattr(record, field, None)
             if value is not None:
@@ -47,3 +83,21 @@ def configure_logging(level: str = "INFO") -> None:
 
 def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)
+
+
+def log_event(
+    logger: logging.Logger,
+    level: int,
+    event: str,
+    message: str = "",
+    **fields: Any,
+) -> None:
+    """记录带明确事件名的结构化日志。
+
+    ``event`` 使用 snake_case（如 ``migration_applied``）；
+    ``message`` 缺省时复用事件名。未声明的扩展字段不会写入日志。
+    """
+
+    extra = {key: value for key, value in fields.items() if key in _EXTRA_FIELDS and value is not None}
+    extra["event"] = event
+    logger.log(level, message or event, extra=extra)

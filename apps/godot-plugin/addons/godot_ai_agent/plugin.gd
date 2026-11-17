@@ -21,23 +21,25 @@ var _enabled := false
 func _enter_tree() -> void:
 	# 重复启用保护：避免面板被重复注册
 	if _enabled:
-		PluginLog.warn("plugin already enabled, skip duplicate registration")
+		PluginLog.warn("plugin_already_enabled")
 		return
 
 	var version := Engine.get_version_info()
 	var version_text: String = str(version.get("string", "unknown"))
 
 	if not _is_supported(version):
-		PluginLog.error("unsupported Godot version %s, requires %d.%d+" % [
-			version_text, MIN_GODOT_MAJOR, MIN_GODOT_MINOR
-		])
+		PluginLog.error("unsupported_godot_version", {
+			"error_code": "UNSUPPORTED_GODOT_VERSION",
+			"version": version_text,
+			"required": "%d.%d+" % [MIN_GODOT_MAJOR, MIN_GODOT_MINOR],
+		})
 		_create_panel(version_text, false)
 		_enabled = true
 		return
 
 	_create_panel(version_text, true)
 	_enabled = true
-	PluginLog.info("plugin enabled, version=%s" % PLUGIN_VERSION)
+	PluginLog.info("plugin_enabled", {"version": PLUGIN_VERSION})
 
 
 func _exit_tree() -> void:
@@ -49,7 +51,7 @@ func _exit_tree() -> void:
 		_panel.queue_free()
 	_panel = null
 	_enabled = false
-	PluginLog.info("plugin disabled")
+	PluginLog.info("plugin_disabled")
 
 
 func _create_panel(version_text: String, supported: bool) -> void:

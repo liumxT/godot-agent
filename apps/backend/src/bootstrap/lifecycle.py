@@ -6,6 +6,7 @@ E0 阶段不注册业务资源；后续阶段在此装配数据库、事件、Wo
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
@@ -13,7 +14,7 @@ from fastapi import FastAPI
 
 from config.settings import Settings
 from core.errors import StartupError
-from core.logging import get_logger
+from core.logging import get_logger, log_event
 
 StartupHook = Callable[[], Awaitable[None] | None]
 ShutdownHook = Callable[[], Awaitable[None] | None]
@@ -34,9 +35,12 @@ class Lifecycle:
 
     @asynccontextmanager
     async def lifespan(self, _: FastAPI) -> AsyncIterator[None]:
-        self._logger.info(
+        log_event(
+            self._logger,
+            logging.INFO,
             "application_start",
-            extra={"component": "bootstrap", "environment": self._settings.environment.value},
+            component="bootstrap",
+            environment=self._settings.environment.value,
         )
         try:
             await self._run(self._startup_hooks)
@@ -45,7 +49,7 @@ class Lifecycle:
             raise StartupError("应用启动失败", details={"reason": str(exc)}) from exc
         finally:
             await self._run(self._shutdown_hooks)
-            self._logger.info("application_stop", extra={"component": "bootstrap"})
+            log_event(self._logger, logging.INFO, "application_stop", component="bootstrap")
 
     async def _run(self, hooks: list[StartupHook] | list[ShutdownHook]) -> None:
         for hook in hooks:

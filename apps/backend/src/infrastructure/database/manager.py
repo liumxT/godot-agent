@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -21,7 +22,7 @@ from sqlalchemy import create_engine as sa_create_engine
 
 from config.settings import Settings
 from core.errors import AppError
-from core.logging import get_logger
+from core.logging import get_logger, log_event
 from infrastructure.database.engine import ensure_database_parent, sqlite_database_path
 
 BACKEND_ROOT = Path(__file__).resolve().parents[3]
@@ -99,7 +100,14 @@ def upgrade_to_head(settings: Settings, *, backup: bool = True) -> MigrationResu
     try:
         command.upgrade(alembic_config(settings), "head")
     except Exception as exc:  # 统一转换为领域错误
-        logger.exception("migration_failed", extra={"component": "database"})
+        logger.exception(
+            "migration_failed",
+            extra={
+                "component": "database",
+                "event": "migration_failed",
+                "error_code": "MIGRATION_FAILED",
+            },
+        )
         raise MigrationError(
             "数据库升级失败",
             details={
@@ -109,10 +117,11 @@ def upgrade_to_head(settings: Settings, *, backup: bool = True) -> MigrationResu
         ) from exc
 
     after = current_revision(settings)
-    logger.info(
-        "migration_applied %s -> %s",
-        before or "none",
-        after or "none",
-        extra={"component": "database"},
+    log_event(
+        logger,
+        logging.INFO,
+        "migration_applied",
+        f"migration_applied {before or 'none'} -> {after or 'none'}",
+        component="database",
     )
     return MigrationResult(before, after, backup_path if backup else None)

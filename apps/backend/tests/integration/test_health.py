@@ -27,20 +27,31 @@ async def test_health_returns_ok(app) -> None:
     assert body["status"] == "ok"
     assert body["service"] == "godot-ai-backend"
     assert body["environment"] == "test"
+    assert response.headers["X-Request-ID"].startswith("req-")
 
 
 async def test_error_response_shape(app) -> None:
     from core.errors import AppError
+    from shared.contracts import validate_instance
 
     @app.get("/boom")
     async def _boom() -> None:
-        raise AppError("测试错误", code="test_error", status_code=418, details={"k": "v"})
+        raise AppError(
+            "测试错误",
+            code="INVALID_REQUEST",
+            status_code=418,
+            details={"k": "v"},
+        )
 
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get("/boom")
 
     assert response.status_code == 418
-    assert response.json() == {
-        "error": {"code": "test_error", "message": "测试错误", "details": {"k": "v"}}
-    }
+    body = response.json()["error"]
+    assert body["code"] == "INVALID_REQUEST"
+    assert body["message"] == "测试错误"
+    assert body["details"] == {"k": "v"}
+    assert body["retryable"] is False
+    assert body["correlation_id"] == response.headers["X-Request-ID"]
+    assert validate_instance(body, "errors/error.schema.json") == []
