@@ -38,12 +38,24 @@
 
 ## 3. 根目录文档
 
-以下文档暂时保留在仓库根目录（迁移需确认，见
-[待确认项 Q2](06-decisions/README.md#44-待确认项)）：
+**文档归档规则（2026-11-17 确认）：**
+
+1. 新文档一律创建在 `docs/` 对应子目录，不再新增到仓库根目录。
+2. 存量的规划与设计文档暂时保留在根目录，避免批量修改跨文档链接。
+3. E12 结束后统一归档到 `docs/`（蓝图与设计说明书 → `02-architecture/`，
+   实施计划 → `00-project/`，测试计划 → `04-testing/`，E0–E12 → `00-project/plans/`）。
+4. 归档时必须同步更新引用链接，并在 CI 中检查 Markdown 相对链接有效性。
+
+待迁移清单：
 
 - [实施蓝图.md](../实施蓝图.md)
-- [完整开发计划细分/](../完整开发计划细分/)
-- [README.md](../README.md)、[CONTRIBUTING.md](../CONTRIBUTING.md)、[CHANGELOG.md](../CHANGELOG.md)
+- [Godot AI Agent 完整项目设计说明书.md](../Godot%20AI%20Agent%20完整项目设计说明书.md)
+- [Godot AI Agent 完整开发实施计划.md](../Godot%20AI%20Agent%20完整开发实施计划.md)
+- [Godot AI Agent 全项目测试与质量保证计划.md](../Godot%20AI%20Agent%20全项目测试与质量保证计划.md)
+- [完整开发计划细分/](../完整开发计划细分/)（E0–E12 共 13 份）
+
+根目录长期保留：[README.md](../README.md)、[CONTRIBUTING.md](../CONTRIBUTING.md)、
+[CHANGELOG.md](../CHANGELOG.md)。
 
 ## 4. 写作约定
 

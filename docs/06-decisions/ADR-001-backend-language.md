@@ -35,7 +35,10 @@ Model Gateway、Tool System、Agent Runtime、多 Agent 编排、资产管线、
 
 ## 4. 决策
 
-**Backend 统一使用 Python，基线版本 `3.14.2`（允许在 lockfile 冲突时降级到 3.13.x）。**
+**Backend 统一使用 Python，基线版本 `3.14.2`（patch 级锁定，`requires-python = ">=3.14,<3.15"`）。
+
+回退条件：E4 起任一必需依赖缺少 3.14 的官方支持或 wheel，降级到 3.13.x，并在
+ADR-002 与 [打包 ADR](ADR-007-packaging.md) 中同步记录后重新验证。
 
 附加约束：
 
@@ -66,6 +69,10 @@ Model Gateway、Tool System、Agent Runtime、多 Agent 编排、资产管线、
 
 PyInstaller 打包 FastAPI + SQLite + WebSocket，在**未安装 Python 的目标机/干净用户环境**上启动成功并完成一次握手。
 若该 spike 失败且 Nuitka 同样失败，则触发本 ADR 修订，评估切换 .NET 8 self-contained。
+
+验证进展（2026-11-17）：已用 PyInstaller 6.22.3 构建 onedir/onefile 产物，验证启动、
+数据库迁移与 `GET /health`，详见 [ADR-007](ADR-007-packaging.md)。"无 Python 的干净
+机器"验证随 E10 安装包制作一并执行。
 
 ## 8. 变更条件
 

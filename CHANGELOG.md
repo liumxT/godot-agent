@@ -21,3 +21,4 @@
 - E0 验收（E0-D12/D13）：E0 测试报告与阶段验收报告；补充生命周期集成测试与数据库目录故障注入测试。
 - 技术决策补全（E0-T02）：新增 ADR-004（Primary Database）、ADR-005（本地通信）、ADR-006（测试框架），ADR-001…006 全部 Accepted。
 - 打包 spike（E0-T02）：PyInstaller onedir / onefile 构建配置与冒烟脚本、`--migrate` 入口、打包后资源定位（`sys._MEIPASS`）、ADR-007 记录实测体积与启动耗时。
+- 待确认项收口（C4）：Q2 确定"新文档进 `docs/`、存量保留、E12 归档"；Q3 锁定 Python 3.14.2（`requires-python >=3.14,<3.15`、ruff `py314`、CI 固定 3.14.2）。
