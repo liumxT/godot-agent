@@ -1,0 +1,16 @@
+; Godot AI Agent 插件开发宿主工程（仅用于开发与测试）
+config_version=5
+
+[application]
+
+config/name="Godot AI Agent Plugin Dev"
+config/features=PackedStringArray("4.5", "GL Compatibility")
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_ai_agent/plugin.cfg")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
