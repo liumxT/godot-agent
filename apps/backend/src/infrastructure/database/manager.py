@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -25,7 +26,8 @@ from core.errors import AppError
 from core.logging import get_logger, log_event
 from infrastructure.database.engine import ensure_database_parent, sqlite_database_path
 
-BACKEND_ROOT = Path(__file__).resolve().parents[3]
+_BUNDLE_DIR = getattr(sys, "_MEIPASS", None)
+BACKEND_ROOT = Path(_BUNDLE_DIR) if _BUNDLE_DIR else Path(__file__).resolve().parents[3]
 BACKUP_DIR_NAME = "backups"
 
 
@@ -46,7 +48,8 @@ class MigrationResult:
 
 
 def alembic_config(settings: Settings) -> Config:
-    config = Config(str(BACKEND_ROOT / "alembic.ini"))
+    # 打包后 alembic.ini 的 prepend_sys_path 无意义，直接以编程方式配置
+    config = Config() if _BUNDLE_DIR else Config(str(BACKEND_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(BACKEND_ROOT / "migrations"))
     config.set_main_option("sqlalchemy.url", settings.database_url)
     return config

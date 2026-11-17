@@ -16,6 +16,7 @@
 | [ADR-004](ADR-004-database.md) | Primary Database | SQLite（WAL、短事务、单写者、Alembic 迁移） | Accepted |
 | [ADR-005](ADR-005-local-communication.md) | 本地通信 | WebSocket 主通道 + HTTP 健康检查，仅回环 | Accepted |
 | [ADR-006](ADR-006-testing-framework.md) | 测试框架 | pytest + httpx + jsonschema + Godot headless 探针 | Accepted |
+| [ADR-007](ADR-007-packaging.md) | Backend 打包与分发 | PyInstaller onedir 为主，onefile 为便携备选 | Accepted |
 
 ## 2. 技术栈清单
 
@@ -29,7 +30,7 @@
 | 数据库 | SQLite（WAL、短事务、单写者） | 单文件本地库 |
 | 通信 | 本地 WebSocket（主）+ HTTP（健康检查/诊断） | 仅绑定 127.0.0.1 |
 | 测试 | pytest + pytest-asyncio + httpx | — |
-| 打包分发 | PyInstaller（Nuitka 为备选） | E0 spike 验证 |
+| 打包分发 | PyInstaller（onedir 主 / onefile 备选） | 见 ADR-007，构建期依赖 |
 | 日志 | 标准库 logging + 结构化 JSON formatter | E0-T08 落规范 |
 | 版本控制 | Git 2.54.0 | — |
 | CI | 待定（见 §4 待确认项） | E0-T09 |

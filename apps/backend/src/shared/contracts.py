@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from collections.abc import Iterator
 from functools import lru_cache
 from pathlib import Path
@@ -22,13 +23,22 @@ class ContractError(Exception):
     """契约文件缺失或不可解析。"""
 
 
+def _resource_root() -> Path:
+    """资源根目录：PyInstaller 打包后为解包目录，开发时为仓库根目录。"""
+
+    bundle = getattr(sys, "_MEIPASS", None)
+    if bundle:
+        return Path(bundle)
+    return Path(__file__).resolve().parents[4]
+
+
 def contracts_root() -> Path:
     """契约根目录。打包后可通过环境变量覆盖。"""
 
     override = os.environ.get("GODOT_AI_CONTRACTS_DIR")
     if override:
         return Path(override).resolve()
-    return Path(__file__).resolve().parents[4] / "packages" / "contracts"
+    return _resource_root() / "packages" / "contracts"
 
 
 def load_json(relative_path: str) -> Any:

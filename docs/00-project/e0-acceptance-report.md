@@ -80,12 +80,13 @@
   [ADR-004](../06-decisions/ADR-004-database.md)、
   [ADR-005](../06-decisions/ADR-005-local-communication.md)、
   [ADR-006](../06-decisions/ADR-006-testing-framework.md)。
+- C2 打包 spike（PyInstaller）：[ADR-007](../06-decisions/ADR-007-packaging.md)，
+  onedir 39.1 MB / 1248 ms，onefile 23.4 MB / 1757 ms，迁移与健康检查均通过。
 
 以下事项完成前，E0 保持"有条件通过"：
 
 | 编号 | 条件 | 负责 | 完成标准 |
 | --- | --- | --- | --- |
-| C2 | 完成 T02 打包 spike（PyInstaller）并记录结论 | Backend | 产出可运行的单文件/单目录后端，结论写入 ADR |
 | C3 | 接入 remote 后跑通 CI 两个 job | 技术负责人 | `Backend checks` 与 `Godot plugin checks` 绿色 |
 | C4 | 关闭待确认项 Q2（根目录文档迁移）、Q3（Python 版本锁定） | 项目负责人 | 结论写入 [决策记录](../06-decisions/README.md#44-待确认项) |
 
@@ -104,10 +105,10 @@
 ## 7. 结论
 
 E0 的工程基础、契约、数据与配置规范、日志异常体系、CI 和文档体系均已落地并有测试
-证据；技术栈 ADR（ADR-001…006）已全部完成。剩余缺口集中在 **T02 打包 spike**、
-**远程 CI 验证** 与 **Q2/Q3 收口**，不影响 E1 的需求与架构设计工作。
+证据；技术栈 ADR（ADR-001…007）与打包 spike 已完成。剩余缺口为 **远程 CI 验证**
+与 **Q2/Q3 收口**，不影响 E1 的需求与架构设计工作。
 
-建议：**允许启动 E1 设计工作；E1 编码开始前完成 C2、C3。**
+建议：**允许启动 E1 设计工作；E1 编码开始前完成 C3、C4。**
 
 ## 8. 确认
 
