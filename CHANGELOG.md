@@ -10,3 +10,5 @@
 - 技术决策记录 ADR-001（Backend 语言）、ADR-002（框架与基础库）、ADR-003（Godot 版本基线）。
 - Monorepo 基础目录结构。
 - 仓库规范：`.gitignore`、`.editorconfig`、`README.md`、`CONTRIBUTING.md`。
+- Backend E0 骨架：配置加载、结构化日志、统一错误、生命周期、健康检查。
+- Godot Plugin E0 骨架：插件声明、版本校验、状态 Dock 面板。

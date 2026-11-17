@@ -13,8 +13,8 @@ E0 阶段（项目基础设施与工程规范）。
 - [x] 技术栈决策（ADR-001 / ADR-002 / ADR-003）
 - [x] E0-T01 仓库初始化
 - [ ] E0-T02 技术栈与运行环境（打包 spike 待完成）
-- [ ] E0-T03 Backend 骨架
-- [ ] E0-T04 Godot Plugin 骨架
+- [x] E0-T03 Backend 骨架
+- [x] E0-T04 Godot Plugin 骨架
 - [ ] E0-T05 Shared Contracts
 - [ ] E0-T06 数据库规范
 - [ ] E0-T07 配置与 Secrets
