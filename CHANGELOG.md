@@ -19,3 +19,4 @@
 - CI（E0-T09）：本地一键检查脚本（结构/敏感文件/格式/静态/契约/测试/Godot）、GitHub Actions 双 job 工作流、Markdown + JSON 检查报告、CI 使用说明。
 - 工程文档（E0-T10）：10 类文档模板、开发流程 / Code Review / Bug 管理规范、PR 与 Issue 模板、文档索引。
 - E0 验收（E0-D12/D13）：E0 测试报告与阶段验收报告；补充生命周期集成测试与数据库目录故障注入测试。
+- 技术决策补全（E0-T02）：新增 ADR-004（Primary Database）、ADR-005（本地通信）、ADR-006（测试框架），ADR-001…006 全部 Accepted。

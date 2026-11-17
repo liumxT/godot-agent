@@ -13,9 +13,9 @@
 | [ADR-001](ADR-001-backend-language.md) | Backend 编程语言 | Python 3.14 | Accepted |
 | [ADR-002](ADR-002-backend-framework.md) | Backend 框架与基础库 | FastAPI + Pydantic v2 + SQLAlchemy 2.0 + Alembic | Accepted |
 | [ADR-003](ADR-003-godot-version.md) | Godot 版本基线 | Godot 4.5.1（GDScript-only） | Accepted |
-| ADR-004 | Primary Database | SQLite（蓝图 §7.1 已定，待补文档） | Pending |
-| ADR-005 | 本地通信 | 本地 WebSocket + HTTP（蓝图 §8.2 已定，待补文档） | Pending |
-| ADR-006 | 测试框架 | pytest 系（待补文档） | Pending |
+| [ADR-004](ADR-004-database.md) | Primary Database | SQLite（WAL、短事务、单写者、Alembic 迁移） | Accepted |
+| [ADR-005](ADR-005-local-communication.md) | 本地通信 | WebSocket 主通道 + HTTP 健康检查，仅回环 | Accepted |
+| [ADR-006](ADR-006-testing-framework.md) | 测试框架 | pytest + httpx + jsonschema + Godot headless 探针 | Accepted |
 
 ## 2. 技术栈清单
 

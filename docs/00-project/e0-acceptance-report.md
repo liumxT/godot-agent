@@ -26,7 +26,7 @@
 | 编号 | 交付物 | 位置 | 状态 |
 | --- | --- | --- | --- |
 | E0-D01 | 仓库结构与基础文件 | 根目录 | 完成 |
-| E0-D02 | 技术栈清单与版本记录 | [06-decisions](../06-decisions/README.md) | **部分**（ADR-004/005/006 待补） |
+| E0-D02 | 技术栈清单与版本记录 | [06-decisions](../06-decisions/README.md) | 完成（打包 spike 见 C2） |
 | E0-D03 | Backend 工程骨架 | `apps/backend` | 完成 |
 | E0-D04 | Godot Plugin 骨架 | `apps/godot-plugin` | 完成 |
 | E0-D05 | Shared Contracts | `packages/contracts` | 完成 |
@@ -68,17 +68,23 @@
 | 11 | 一次提交触发完整检查 | 满足（本地；远程待接） |
 | 12 | 仓库不含敏感文件/凭证 | 满足 |
 | 13 | 插件可安装/启用/关闭 | 满足 |
-| 14 | 技术栈 ADR 已形成 | 部分（ADR-001…003 完成） |
+| 14 | 技术栈 ADR 已形成 | 满足（ADR-001…006） |
 | 15 | 文档模板已建立 | 满足 |
 | 16 | Code Review 已完成 | 部分（单人自查 + CI 门禁） |
 
 ## 5. 通过条件
 
+已完成条件：
+
+- C1 补齐 ADR-004（数据库）、ADR-005（本地通信）、ADR-006（测试框架）：
+  [ADR-004](../06-decisions/ADR-004-database.md)、
+  [ADR-005](../06-decisions/ADR-005-local-communication.md)、
+  [ADR-006](../06-decisions/ADR-006-testing-framework.md)。
+
 以下事项完成前，E0 保持"有条件通过"：
 
 | 编号 | 条件 | 负责 | 完成标准 |
 | --- | --- | --- | --- |
-| C1 | 补齐 ADR-004（数据库）、ADR-005（本地通信）、ADR-006（测试框架） | 技术负责人 | 三份 ADR 状态为 Accepted |
 | C2 | 完成 T02 打包 spike（PyInstaller）并记录结论 | Backend | 产出可运行的单文件/单目录后端，结论写入 ADR |
 | C3 | 接入 remote 后跑通 CI 两个 job | 技术负责人 | `Backend checks` 与 `Godot plugin checks` 绿色 |
 | C4 | 关闭待确认项 Q2（根目录文档迁移）、Q3（Python 版本锁定） | 项目负责人 | 结论写入 [决策记录](../06-decisions/README.md#44-待确认项) |
@@ -98,10 +104,10 @@
 ## 7. 结论
 
 E0 的工程基础、契约、数据与配置规范、日志异常体系、CI 和文档体系均已落地并有测试
-证据；剩余缺口集中在 **T02 收尾（ADR + 打包 spike）** 与 **远程 CI 验证**，
-不影响 E1 的需求与架构设计工作。
+证据；技术栈 ADR（ADR-001…006）已全部完成。剩余缺口集中在 **T02 打包 spike**、
+**远程 CI 验证** 与 **Q2/Q3 收口**，不影响 E1 的需求与架构设计工作。
 
-建议：**允许启动 E1 设计工作；E1 编码开始前完成 C1、C2。**
+建议：**允许启动 E1 设计工作；E1 编码开始前完成 C2、C3。**
 
 ## 8. 确认
 
