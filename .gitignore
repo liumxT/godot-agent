@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# 构建产物
+dist/
+build/
+*.spec
+
+# 本地数据库与运行数据
+data/
+logs/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# 密钥与本地配置（绝不入库）
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.pfx
+
+# Godot
+.godot/
+.import/
+export/
+*.translation
+*.tmp
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 临时文件
+*.log
+*.bak
+.screenshots/
