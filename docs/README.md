@@ -29,6 +29,8 @@
 - [开发流程规范](00-project/development-workflow.md)
 - [Code Review 规范](00-project/code-review.md)
 - [Bug 管理规范](00-project/bug-management.md)
+- [E0 测试报告](00-project/e0-test-report.md)
+- [E0 验收报告](00-project/e0-acceptance-report.md)
 
 ### 技术决策
 

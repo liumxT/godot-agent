@@ -108,3 +108,18 @@ def test_failure_is_wrapped(monkeypatch: pytest.MonkeyPatch, settings: Settings)
     assert exc_info.value.code == "MIGRATION_FAILED"
     assert "boom" not in exc_info.value.message
     assert exc_info.value.details["from_revision"] == "000001"
+
+
+def test_uncreatable_database_directory_is_reported(tmp_path: Path) -> None:
+    """故障注入：库文件父路径被占用为普通文件。"""
+
+    blocker = tmp_path / "data"
+    blocker.write_text("not a directory", encoding="utf-8")
+    settings = load_settings(
+        _env_file=None,
+        database_url=f"sqlite+aiosqlite:///{blocker.as_posix()}/test.db",
+        environment="test",
+    )
+
+    with pytest.raises(OSError):
+        upgrade_to_head(settings, backup=False)
