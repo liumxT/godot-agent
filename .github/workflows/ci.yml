@@ -12,7 +12,8 @@ concurrency:
 jobs:
   backend:
     name: Backend checks
-    runs-on: ubuntu-latest
+    # ubuntu-latest 已迁移到 26.04，而 setup-python 尚无 3.14.2 的 26.04 构建
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +42,7 @@ jobs:
 
   godot:
     name: Godot plugin checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
