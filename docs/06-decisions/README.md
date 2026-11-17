@@ -43,7 +43,7 @@
 | .NET SDK | 8.0.422 | `C:\Program Files\dotnet\dotnet.exe` | 可用（本阶段不用） |
 | Git | 2.54.0.windows.1 | `D:\应用程序\git\Git\cmd\git.exe` | 已装，**PATH 损坏** |
 | Godot | 4.5.1.stable.official.f62fdbde1 | `D:\应用程序\godot\Godot_v4.5.1-stable_win64.exe\Godot_v4.5.1-stable_win64_console.exe` | 已装 |
-| Godot 导出模板 | 未安装 | `%APPDATA%\Godot\export_templates`（空） | **缺失，阻塞 E10** |
+| Godot 导出模板 | 4.5.1.stable（已安装，2026-11-17） | `%APPDATA%\Godot\export_templates\4.5.1.stable` | 可用（含 Windows/Linux/Web 模板） |
 
 `godot --version` 实测输出：`4.5.1.stable.official.f62fdbde1`
 
@@ -65,11 +65,11 @@ if ($userPath -notlike '*\Git\cmd*') {
 
 验证：新开终端执行 `git --version`，应输出 `git version 2.54.0.windows.1`。
 
-### 4.2 必须修复：Godot 导出模板缺失
+### 4.2 Godot 导出模板（已安装）
 
-`%APPDATA%\Godot\export_templates` 为空目录。E10 Build & Release 无法执行
-`--export-release`。需在 Godot 4.5.1 编辑器中安装匹配版本的 Export Templates
-（编辑器菜单「编辑器 → 管理导出模板」）。E0/E1/E2 不受影响，但必须在 E10 前完成。
+`%APPDATA%\Godot\export_templates\4.5.1.stable` 已含完整模板（`version.txt` = `4.5.1.stable`，
+含 `windows_release_x86_64.exe` 等）。E10 Build & Release 可执行 `--export-release`，
+只需届时提供 `export_presets.cfg`（E10 交付物）。
 
 ### 4.3 Godot runtime 启动崩溃（已恢复，根因未确证）
 
@@ -96,6 +96,16 @@ if ($userPath -notlike '*\Git\cmd*') {
 - 保留 ASCII 安装路径，降低路径类工具的偶发风险。
 - E9 前增加 runtime 冒烟检查（`--headless` 跑空场景 + 固定退出码）。
 - 若 E9 阶段复现，再升级或重装 Godot 4.5.1 并采集 WER 事件。
+
+排查期间出现过的 Godot 弹窗（均已定位，非本项目缺陷）：
+
+| 弹窗 | 来源 | 处理 |
+| --- | --- | --- |
+| `CrashHandlerException: signal 11` 崩溃对话框 | 复现崩溃时反复以 GUI 模式启动 Godot | 崩溃已自行消失；改用 `--headless` |
+| `Error: Can't run project: no main scene defined` | 排查用的空测试工程以非编辑器模式运行 | 测试工程已删除（`C:\GodotTest`、`D:\应用程序\Test` 等） |
+
+当前状态：`apps/godot-plugin` 以 `--headless --editor --quit` 运行，插件正常
+启用/停用，退出码 `0`，无报错。
 
 ### 4.4 待确认项
 
