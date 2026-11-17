@@ -37,7 +37,9 @@ _context: ContextVar[dict[str, str] | None] = ContextVar("log_request_context", 
 def request_context(**ids: str) -> Iterator[None]:
     """绑定请求级关联字段；退出时恢复上一层上下文。"""
 
-    token = _context.set({key: value for key, value in ids.items() if key in _CONTEXT_FIELDS and value})
+    token = _context.set(
+        {key: value for key, value in ids.items() if key in _CONTEXT_FIELDS and value}
+    )
     try:
         yield
     finally:
@@ -98,6 +100,8 @@ def log_event(
     ``message`` 缺省时复用事件名。未声明的扩展字段不会写入日志。
     """
 
-    extra = {key: value for key, value in fields.items() if key in _EXTRA_FIELDS and value is not None}
+    extra = {
+        key: value for key, value in fields.items() if key in _EXTRA_FIELDS and value is not None
+    }
     extra["event"] = event
     logger.log(level, message or event, extra=extra)

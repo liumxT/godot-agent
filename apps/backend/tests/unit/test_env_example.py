@@ -51,8 +51,7 @@ def test_env_example_contains_no_credentials() -> None:
 
 def test_gitignore_excludes_local_env() -> None:
     lines = {
-        line.strip()
-        for line in (REPO_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+        line.strip() for line in (REPO_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
     }
 
     assert ".env" in lines

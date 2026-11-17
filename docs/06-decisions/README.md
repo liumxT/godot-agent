@@ -111,7 +111,7 @@ if ($userPath -notlike '*\Git\cmd*') {
 
 | 编号 | 事项 | 影响 | 建议 |
 | --- | --- | --- | --- |
-| Q1 | CI 平台（GitHub Actions / Gitee / 仅本地脚本） | E0-T09 | 仓库尚无 remote，建议先本地脚本 + 预留 CI 配置 |
+| Q1 | CI 平台（GitHub Actions / Gitee / 仅本地脚本） | E0-T09 | **已定**：GitHub Actions + 本地同源脚本，见 [ci.md](../03-development/ci.md) |
 | Q2 | 现有文档是否迁入 `docs/` 子目录 | E0-T01 目录规范 | 会移动当前打开的文档，需你确认 |
 | Q3 | Python 是否锁 3.13（生态最稳）或直接用 3.14.2 | 依赖 wheel 可用性 | 先用 3.14.2，lockfile 冲突再降 3.13 |
 
