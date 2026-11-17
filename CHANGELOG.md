@@ -13,3 +13,4 @@
 - Backend E0 骨架：配置加载、结构化日志、统一错误、生命周期、健康检查。
 - Godot Plugin E0 骨架：插件声明、版本校验、状态 Dock 面板。
 - Shared Contracts 1.0：请求/响应/错误/事件 Schema、错误码规范、两端共用的样例清单与校验器。
+- 数据库基础（E0-T06）：Alembic 迁移、SQLite 连接 PRAGMA（WAL/外键/超时）、升级前自动备份、失败包装为 `MIGRATION_FAILED`、迁移与 PRAGMA 集成测试、数据库开发规范文档。

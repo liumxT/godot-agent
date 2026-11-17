@@ -41,7 +41,7 @@ class Lifecycle:
         try:
             await self._run(self._startup_hooks)
             yield
-        except Exception as exc:  # noqa: BLE001 - 启动失败必须显式转换
+        except Exception as exc:  # 启动失败必须显式转换
             raise StartupError("应用启动失败", details={"reason": str(exc)}) from exc
         finally:
             await self._run(self._shutdown_hooks)
