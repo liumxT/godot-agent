@@ -17,7 +17,7 @@ E0 阶段（项目基础设施与工程规范）。
 - [x] E0-T04 Godot Plugin 骨架
 - [x] E0-T05 Shared Contracts
 - [x] E0-T06 数据库规范
-- [ ] E0-T07 配置与 Secrets
+- [x] E0-T07 配置与 Secrets
 - [ ] E0-T08 日志与异常
 - [ ] E0-T09 CI
 - [ ] E0-T10 工程文档

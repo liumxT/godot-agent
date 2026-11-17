@@ -29,6 +29,11 @@ Copy-Item .env.example .env
 
 健康检查：`GET http://127.0.0.1:8765/health`
 
+## 配置与密钥
+
+- 配置：`Copy-Item .env.example .env` 后修改，规则见 [配置管理规范](../../docs/03-development/configuration.md)。
+- 密钥：只存操作系统凭证库（`GODOT_AI_` 环境变量里不放 Key），见 [Secrets 管理规范](../../docs/03-development/secrets.md)。
+
 ## 测试
 
 ```powershell
