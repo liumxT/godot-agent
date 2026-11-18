@@ -26,6 +26,7 @@
 
 ### 流程与管理
 
+- [项目进度表](00-project/progress.md)
 - [开发流程规范](00-project/development-workflow.md)
 - [Code Review 规范](00-project/code-review.md)
 - [Bug 管理规范](00-project/bug-management.md)
