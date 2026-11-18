@@ -8,7 +8,7 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E1 Backend Core（待启动）** |
+| 当前阶段 | **E1 Backend Core（设计完成，待评审）** |
 | 阶段进度 | 1 / 13 完成（E0） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job 通过（[run 44065613603](https://github.com/liumxT/godot-agent/actions/runs/44065613603)） |
@@ -19,7 +19,7 @@
 | 阶段 | 名称 | 状态 | 说明 |
 | --- | --- | --- | --- |
 | E0 | Project Foundation | ✅ 已通过 | 2026-11-17 验收，条件 C1–C4 全部关闭 |
-| E1 | Backend Core | ⏳ 下一阶段 | 14 个任务，见 §5 |
+| E1 | Backend Core | ⏳ 进行中 | 任务拆解与设计已完成，见 [设计文档](../02-architecture/e1-backend-core-design.md) |
 | E2 | Backend Services | ⬜ 未开始 | 依赖 E1 |
 | E3 | Godot Integration | ⬜ 未开始 | 依赖 E1/E2 |
 | E4 | Project & Workflow Systems | ⬜ 未开始 | |
@@ -59,7 +59,10 @@
 | 技术基线 | Godot 4.5.1 / Python 3.14.2 / FastAPI / SQLite（WAL）/ Alembic / PyInstaller 6.22.3 |
 | 远程 CI | `Backend checks` + `Godot plugin checks` 通过（ubuntu-24.04） |
 
-## 5. E1 计划（未开始）
+## 5. E1 计划（设计完成，待实施）
+
+设计文档：[E1 Backend Core 设计与任务拆解](../02-architecture/e1-backend-core-design.md)
+（模块边界、关键设计、数据模型、5 个实施批次与测试映射）。
 
 | 任务 | 内容 |
 | --- | --- |
@@ -78,7 +81,7 @@
 | E1-T13 | 可观测性和诊断 |
 | E1-T14 | Core 集成测试和性能验证 |
 
-启动前动作：以 [E1.md](../../完整开发计划细分/E1.md) 为准，先做任务拆解与设计，再进入编码。
+启动前动作：评审设计文档 §8 的 E1-Q1…Q6，确定后按 M1（生命周期 / 配置 / 日志 / 异常）启动实施。
 
 ## 6. 已知问题与待办
 

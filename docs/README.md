@@ -33,6 +33,10 @@
 - [E0 测试报告](00-project/e0-test-report.md)
 - [E0 验收报告](00-project/e0-acceptance-report.md)
 
+### 架构设计
+
+- [E1 Backend Core 设计与任务拆解](02-architecture/e1-backend-core-design.md)
+
 ### 技术决策
 
 - [ADR 索引与环境记录](06-decisions/README.md)
