@@ -363,6 +363,27 @@ class ToolOutputInvalid(AppError):
     status_code = 502
 
 
+class ToolAdapterMissing(AppError):
+    """E5：没有可执行该工具的 Adapter。"""
+
+    code = "TOOL_ADAPTER_MISSING"
+    status_code = 502
+
+
+class ResourceLockConflict(AppError):
+    """E5：目标资源已被其他持有者锁定，或锁类型不兼容。"""
+
+    code = "RESOURCE_LOCK_CONFLICT"
+    status_code = 409
+
+
+class ResourceLockExpired(AppError):
+    """E5：资源锁已过期或已释放，必须重新获取。"""
+
+    code = "RESOURCE_LOCK_EXPIRED"
+    status_code = 409
+
+
 class RequestTooLarge(AppError):
     """请求体超过大小限制。"""
 

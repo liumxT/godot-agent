@@ -62,9 +62,15 @@ from modules.task.service import (
     DependencyService,
     TaskService,
 )
+from modules.tool.adapters import ToolAdapterRegistry
 from modules.tool.approval import ToolApprovalGate
+from modules.tool.audit import ToolAuditService
+from modules.tool.execution import ToolExecutionService
+from modules.tool.locks import ResourceLockService
 from modules.tool.permissions import ToolPermissionEngine
+from modules.tool.recovery import ToolRecoveryService
 from modules.tool.registry import ToolRegistryService
+from modules.tool.verification import ToolVerificationService
 from modules.workflow.repository import WorkflowInstanceRepository
 from modules.workflow.service import (
     WorkflowDefinitionService,
@@ -323,11 +329,23 @@ def register_startup_steps(
             tools=tool_registry_service,
             approvals=tool_approval_gate,
         )
+        tool_adapter_registry = ToolAdapterRegistry()
+        tool_lock_service = ResourceLockService(database)
+        tool_audit_service = ToolAuditService(database)
+        tool_verification_service = ToolVerificationService(database)
+        tool_recovery_service = ToolRecoveryService(
+            database,
+            tools=tool_registry_service,
+            adapters=tool_adapter_registry,
+            verifications=tool_verification_service,
+            audits=tool_audit_service,
+        )
         try:
             await auth_service.purge_expired()
             await session_service.expire_stale()
             await access_service.expire_stale()
             await lease_service.expire_stale()
+            await tool_lock_service.expire_stale()
             await bridge_event_service.prune()
             await snapshot_service.prune_expired()
             await runtime_service.expire_stale(
@@ -351,6 +369,17 @@ def register_startup_steps(
                 component="workflow",
                 error_code="INFRASTRUCTURE_ERROR",
             )
+        if tool_adapter_registry.names():
+            try:
+                await tool_recovery_service.recover_pending()
+            except Exception:  # noqa: BLE001 - 工具恢复失败不阻断启动
+                log_event(
+                    logger,
+                    logging.ERROR,
+                    "tool_recovery_failed",
+                    component="tool",
+                    error_code="INFRASTRUCTURE_ERROR",
+                )
         await cleanup.start()
 
         services.register("secret_store", secret_store)
@@ -392,6 +421,11 @@ def register_startup_steps(
         services.register("tool_registry_service", tool_registry_service)
         services.register("tool_approval_gate", tool_approval_gate)
         services.register("tool_permission_engine", tool_permission_engine)
+        services.register("tool_adapter_registry", tool_adapter_registry)
+        services.register("tool_lock_service", tool_lock_service)
+        services.register("tool_audit_service", tool_audit_service)
+        services.register("tool_verification_service", tool_verification_service)
+        services.register("tool_recovery_service", tool_recovery_service)
         services.register("project_access_service", access_service)
         services.register("bridge_metrics", BridgeMetrics())
         services.register("rate_limiter", rate_limiter)
@@ -417,6 +451,19 @@ def register_startup_steps(
         services.register("event_registry", registry)
         services.register("event_bus", bus)
         services.register("event_dispatcher", dispatcher)
+        execution_service = ToolExecutionService(
+            database,
+            tools=services.get("tool_registry_service", ToolRegistryService),
+            permissions=services.get("tool_permission_engine", ToolPermissionEngine),
+            locks=services.get("tool_lock_service", ResourceLockService),
+            verifications=services.get("tool_verification_service", ToolVerificationService),
+            audits=services.get("tool_audit_service", ToolAuditService),
+            recovery=services.get("tool_recovery_service", ToolRecoveryService),
+            adapters=services.get("tool_adapter_registry", ToolAdapterRegistry),
+            changesets=services.try_get("changeset_service"),
+            events=bus,
+        )
+        services.register("tool_execution_service", execution_service)
         await dispatcher.start()
 
     async def _stop_events() -> None:

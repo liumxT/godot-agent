@@ -360,6 +360,24 @@
       "retryable": false,
       "http_status": 502,
       "description": "工具输出未通过工具定义的输出 Schema 校验。"
+    },
+    {
+      "code": "TOOL_ADAPTER_MISSING",
+      "retryable": false,
+      "http_status": 502,
+      "description": "没有可执行该工具的 Adapter，执行被拒绝。"
+    },
+    {
+      "code": "RESOURCE_LOCK_CONFLICT",
+      "retryable": false,
+      "http_status": 409,
+      "description": "目标资源已被其他执行持有锁定，或锁类型不兼容。"
+    },
+    {
+      "code": "RESOURCE_LOCK_EXPIRED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "资源锁已过期或已释放，必须重新获取。"
     }
   ]
 }
