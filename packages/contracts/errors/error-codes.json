@@ -324,6 +324,18 @@
       "retryable": false,
       "http_status": 409,
       "description": "模型请求已发送但结果未知，不能直接按失败重试。"
+    },
+    {
+      "code": "PROMPT_VARIABLE_INVALID",
+      "retryable": false,
+      "http_status": 400,
+      "description": "Prompt 变量缺失、类型不符或占位符未在 Schema 中声明。"
+    },
+    {
+      "code": "CONTEXT_SOURCE_MISSING",
+      "retryable": false,
+      "http_status": 409,
+      "description": "Context 装配所需来源不存在，或固定 Context 引用缺失。"
     }
   ]
 }

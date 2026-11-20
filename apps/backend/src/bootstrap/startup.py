@@ -35,6 +35,7 @@ from modules.bridge_metrics import BridgeMetrics
 from modules.changeset.repository import ChangeSetRepository
 from modules.changeset.service import ChangeSetService
 from modules.client.service import AuthCleanupTask, AuthService, ClientService
+from modules.context.service import ContextAssemblyService
 from modules.editor_session.models import EditorSessionModel
 from modules.editor_session.service import EditorSessionService
 from modules.lease.service import LeaseService
@@ -49,6 +50,7 @@ from modules.project_registry.service import (
     ProjectLifecycleService,
     ProjectRegistryService,
 )
+from modules.prompt.service import PromptService
 from modules.requirement.service import RequirementService
 from modules.runtime.service import RuntimeService
 from modules.session.service import SessionService
@@ -301,6 +303,15 @@ def register_startup_steps(
             database,
             blockers=_project_blockers(database),
         )
+        prompt_service = PromptService(database)
+        context_assembly_service = ContextAssemblyService(
+            database,
+            projects=project_registry_service,
+            configurations=project_configuration_service,
+            tasks=task_service,
+            attempts=task_attempt_service,
+            workflows=workflow_instance_service,
+        )
         try:
             await auth_service.purge_expired()
             await session_service.expire_stale()
@@ -365,6 +376,8 @@ def register_startup_steps(
         services.register("model_registry_service", model_registry_service)
         services.register("model_routing_service", model_routing_service)
         services.register("model_gateway_service", model_gateway_service)
+        services.register("prompt_service", prompt_service)
+        services.register("context_assembly_service", context_assembly_service)
         services.register("project_access_service", access_service)
         services.register("bridge_metrics", BridgeMetrics())
         services.register("rate_limiter", rate_limiter)

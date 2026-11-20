@@ -321,6 +321,20 @@ class ModelRequestUnknown(AppError):
     status_code = 409
 
 
+class PromptVariableInvalid(AppError):
+    """E5：Prompt 变量缺少、类型不符或占位符未声明。"""
+
+    code = "PROMPT_VARIABLE_INVALID"
+    status_code = 400
+
+
+class ContextSourceMissing(AppError):
+    """E5：Context 装配所需来源不存在，或固定 Context 引用缺失。"""
+
+    code = "CONTEXT_SOURCE_MISSING"
+    status_code = 409
+
+
 class RequestTooLarge(AppError):
     """请求体超过大小限制。"""
 
