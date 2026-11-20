@@ -62,6 +62,9 @@ from modules.task.service import (
     DependencyService,
     TaskService,
 )
+from modules.tool.approval import ToolApprovalGate
+from modules.tool.permissions import ToolPermissionEngine
+from modules.tool.registry import ToolRegistryService
 from modules.workflow.repository import WorkflowInstanceRepository
 from modules.workflow.service import (
     WorkflowDefinitionService,
@@ -312,6 +315,14 @@ def register_startup_steps(
             attempts=task_attempt_service,
             workflows=workflow_instance_service,
         )
+        tool_registry_service = ToolRegistryService(database)
+        tool_approval_gate = ToolApprovalGate(approval_service)
+        tool_permission_engine = ToolPermissionEngine(
+            access=access_service,
+            tasks=task_service,
+            tools=tool_registry_service,
+            approvals=tool_approval_gate,
+        )
         try:
             await auth_service.purge_expired()
             await session_service.expire_stale()
@@ -378,6 +389,9 @@ def register_startup_steps(
         services.register("model_gateway_service", model_gateway_service)
         services.register("prompt_service", prompt_service)
         services.register("context_assembly_service", context_assembly_service)
+        services.register("tool_registry_service", tool_registry_service)
+        services.register("tool_approval_gate", tool_approval_gate)
+        services.register("tool_permission_engine", tool_permission_engine)
         services.register("project_access_service", access_service)
         services.register("bridge_metrics", BridgeMetrics())
         services.register("rate_limiter", rate_limiter)

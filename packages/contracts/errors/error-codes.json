@@ -336,6 +336,30 @@
       "retryable": false,
       "http_status": 409,
       "description": "Context 装配所需来源不存在，或固定 Context 引用缺失。"
+    },
+    {
+      "code": "TOOL_ALREADY_REGISTERED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "同一工具名称的版本已存在。"
+    },
+    {
+      "code": "TOOL_SCHEMA_INVALID",
+      "retryable": false,
+      "http_status": 400,
+      "description": "工具输入或输出 Schema 不是合法 JSON Schema。"
+    },
+    {
+      "code": "TOOL_INPUT_INVALID",
+      "retryable": false,
+      "http_status": 400,
+      "description": "工具输入未通过工具定义的输入 Schema 校验。"
+    },
+    {
+      "code": "TOOL_OUTPUT_INVALID",
+      "retryable": false,
+      "http_status": 502,
+      "description": "工具输出未通过工具定义的输出 Schema 校验。"
     }
   ]
 }

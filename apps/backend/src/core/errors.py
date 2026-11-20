@@ -335,6 +335,34 @@ class ContextSourceMissing(AppError):
     status_code = 409
 
 
+class ToolAlreadyRegistered(AppError):
+    """E5：同一工具名称的版本已存在。"""
+
+    code = "TOOL_ALREADY_REGISTERED"
+    status_code = 409
+
+
+class ToolSchemaInvalid(AppError):
+    """E5：工具输入或输出 Schema 不是合法 JSON Schema。"""
+
+    code = "TOOL_SCHEMA_INVALID"
+    status_code = 400
+
+
+class ToolInputInvalid(AppError):
+    """E5：工具输入未通过 Schema 校验。"""
+
+    code = "TOOL_INPUT_INVALID"
+    status_code = 400
+
+
+class ToolOutputInvalid(AppError):
+    """E5：工具输出未通过 Schema 校验。"""
+
+    code = "TOOL_OUTPUT_INVALID"
+    status_code = 502
+
+
 class RequestTooLarge(AppError):
     """请求体超过大小限制。"""
 
