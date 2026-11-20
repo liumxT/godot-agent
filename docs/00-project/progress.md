@@ -1,20 +1,23 @@
 # 项目进度表
 
-> 更新于 2026-11-18（E2-M10 完成，E2 验收通过）。
+> 更新于 2026-11-20（E3、E4 完成并验收通过）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
-> [E2 安全测试报告](e2-security-test-report.md) 与 [E2 验收报告](e2-acceptance-report.md)。
+> [E2 安全测试报告](e2-security-test-report.md)、[E2 验收报告](e2-acceptance-report.md)、
+> [E3 验收报告](e3-acceptance-report.md) 与 [E4 验收报告](e4-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E2 Backend Services（已完成，待 E3）** |
-| 阶段进度 | 3 / 13 完成（E0、E1、E2） |
+| 当前阶段 | **E4 Project & Workflow Systems（已完成，待 E5）** |
+| 阶段进度 | 5 / 13 完成（E0–E4） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
-| CI | GitHub Actions 双 job 通过（[run 44065613603](https://github.com/liumxT/godot-agent/actions/runs/44065613603)） |
-| 后端测试 | 299 passed（contract 28 / integration 112 / unit 159），ruff 全通过 |
+| CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
+| 后端测试 | 419 passed（unit + integration 377 / contract 42），ruff 全通过 |
+| Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
+| 数据库迁移 | head 为 `000010` |
 
 ## 2. 阶段总览
 
@@ -23,9 +26,9 @@
 | E0 | Project Foundation | ✅ 已通过 | 2026-11-17 验收，条件 C1–C4 全部关闭 |
 | E1 | Backend Core | ✅ 已完成 | 14 / 14 任务，P0 全部通过，见 [E1 验收报告](e1-acceptance-report.md) |
 | E2 | Backend Services | ✅ 已完成 | 2026-11-18 验收，M6–M10 全部完成，见 [E2 验收报告](e2-acceptance-report.md) |
-| E3 | Godot Integration | ⬜ 未开始 | 依赖 E1/E2 |
-| E4 | Project & Workflow Systems | ⬜ 未开始 | |
-| E5 | AI & Tool Foundation | ⬜ 未开始 | |
+| E3 | Godot Integration | ✅ 已完成 | 2026-11-20 验收，18 任务，见 [E3 验收报告](e3-acceptance-report.md) |
+| E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
+| E5 | AI & Tool Foundation | ⬜ 未开始 | 依赖 E0–E4 |
 | E6 | Agent Runtime | ⬜ 未开始 | |
 | E7 | Multi-Agent & Game Development | ⬜ 未开始 | |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
@@ -53,9 +56,9 @@
 
 | 项 | 状态 / 数值 |
 | --- | --- |
-| 后端测试 | 299 passed（pytest，asyncio auto） |
-| 契约校验 | 19 个 manifest 用例，Backend 与 Godot 双向验证 |
-| Godot 运行 | headless 编辑器模式加载插件、契约探针，`exit 0` |
+| 后端测试 | 419 passed（pytest，asyncio auto） |
+| 契约校验 | 38 个 manifest 用例，Backend 与 Godot 双向验证（契约测试 42 passed） |
+| Godot 运行 | headless 编辑器模式加载插件、契约探针，E3 测试 68/68 passed，`exit 0` |
 | 打包（onedir） | 39.1 MB，冷启动到 `/health` 1248 ms，迁移与健康检查通过 |
 | 打包（onefile） | 23.4 MB，冷启动 1757 ms，整棵进程树可正常结束 |
 | 技术基线 | Godot 4.5.1 / Python 3.14.2 / FastAPI / SQLite（WAL）/ Alembic / PyInstaller 6.22.3 |
@@ -115,7 +118,7 @@ Outbox 恢复→备份→恢复→健康→关闭）、`scripts/testing/perf_e1.
 E1 收尾：补齐只读数据库写探测与运行期损坏识别（新增 3 个测试，合计 176 passed），
 输出 [E1 验收报告](e1-acceptance-report.md)（E1-D16），10 项故障注入全部 PASS。
 
-下一步：E3 Godot Integration。
+下一步：E3 Godot Integration（见 §7）。
 
 ## 6. E2 实施进度（M10 已完成，E2 验收通过）
 
@@ -179,7 +182,51 @@ M10 交付：`modules/audit`（`AuditEventModel` / Repository / `AuditService`�
 输出 [E2 安全测试报告](e2-security-test-report.md)（12 项）与
 [E2 验收报告](e2-acceptance-report.md)（E2-D15）；ruff 与 `check_all` 通过。
 
-## 7. 已知问题与待办
+## 7. E3 实施进度（6 批次 / 18 任务，验收通过）
+
+设计文档：[E3 Godot Integration 设计与任务拆解](../02-architecture/e3-godot-integration-design.md)
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E3-M1 | T01 插件生命周期、T02 服务管理 | ✅ 已完成 |
+| E3-M2 | T03 Backend Discovery、T04 Bridge 协议、T05 WebSocket Client | ✅ 已完成 |
+| E3-M3 | T06 认证、T07 Session、T08 Lease、T17 连接 UI | ✅ 已完成 |
+| E3-M4 | T09 心跳、T10 事件同步、T11 快照 | ✅ 已完成 |
+| E3-M5 | T12 重连恢复、T13 多 Editor 隔离、T14 项目身份 | ✅ 已完成 |
+| E3-M6 | T15 状态采集、T16 Runtime Bridge、T18 集成测试与收尾 | ✅ 已完成 |
+
+交付：Godot 侧 `core/{plugin_lifecycle,service_registry,plugin_context}`、
+`bridge/{editor_bridge_client,connection_state,protocol_adapter,action_registry}`、
+`services/{backend_discovery,editor_auth,editor_session,heartbeat,event_sync,reconnection,snapshot}`、
+`runtime/runtime_bridge.gd`、`state/{project_identity,editor_state_provider}`、
+`ui/connection_panel.gd`、`tests/{test_runner,e3}`；
+契约侧 `packages/contracts/bridge/`（7 个 schema）；
+后端 `modules/{editor_session,lease,bridge_event,snapshot,project,runtime}`、
+`app/ws/{editor,runtime}.py`、迁移 `000007`–`000009`；
+后端 361 passed（unit + integration 319 / contract 42），Godot 68/68 passed，
+`check_all.py` 8 阶段全 PASS，迁移 head `000009`，
+安全要求 E3-SEC-001…010 均有测试或实现证据。
+
+## 8. E4 实施进度（6 批次 / 24 任务，验收通过）
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E4-M1 | T01 Project Domain、T02 Registry、T03 Lifecycle、T04 Configuration、T05 Access Integration | ✅ 已完成 |
+| E4-M2 | T06 Task System、T07 状态机、T08 Attempt、T09 依赖、T10 Checkpoint、T11 Event Log | ✅ 已完成 |
+| E4-M3 | T12 Workflow Definition、T13 Instance、T14 Node Engine、T15 Phase、T16 Scheduler、T17 Recovery | ✅ 已完成 |
+| E4-M4 | T18 Requirement、T19 ChangeSet、T20 Approval、T21 User Acceptance | ✅ 已完成 |
+| E4-M5 | T22 Project/Task/Workflow API、T23 Management UI | ✅ 已完成 |
+| E4-M6 | T24 测试、全量验证与验收报告 | ✅ 已完成 |
+
+交付：`modules/{project_registry,project,task,requirement,changeset,approval,workflow}`、
+`app/api/{projects_v1,tasks,workflows,changesets,approvals,management_ui}.py`、
+迁移 `000010_e4_project_workflow`；Workflow 调度与启动恢复、审批哈希绑定、
+项目配置版本乐观锁与归档阻塞检查；管理页 `/api/v1/manage` 覆盖项目、任务、
+Workflow 与待处理审批；后端 419 passed（unit + integration 377 / contract 42），
+`check_all.py` 8 阶段全 PASS，迁移 head `000010`；
+E1–E3 回归全绿，无接口破坏。已知限制见 [E4 验收报告](e4-acceptance-report.md#6-已知限制)。
+
+## 9. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
@@ -188,10 +235,15 @@ M10 交付：`modules/audit`（`AuditEventModel` / Repository / `AuditService`�
 | 无 Python 干净机器上的打包验证 | E10 | 待安装包制作时执行 |
 | CI 未覆盖打包冒烟与 Markdown 链接检查 | E10 / E12 | 待补 |
 | onefile 便携产物的杀软误报 | E10 | 分发前在目标环境实测 |
+| 管理界面为浏览器单页，未提供 Godot 编辑器 Dock | E5+ | 本期按最小实现处理 |
+| Workflow 未实现并行分支与节点超时重试 | E5+ | 后续 Workflow 增强 |
+| 启动恢复将未完成 Attempt 置 `UNKNOWN`、Task 置 `BLOCKED` | E5 | 自动重试策略由 Agent 执行层实现 |
+| 归档阻塞统计最多扫描 200 条 Workflow/ChangeSet | E5 | 需要时改聚合计数查询 |
+| Runtime 凭证（`client_type=tool`）API 已支持，管理界面未提供签发入口 | E5 | 客户端管理界面补齐 |
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 8. 维护规则
+## 10. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。
