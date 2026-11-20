@@ -282,6 +282,36 @@
       "retryable": false,
       "http_status": 409,
       "description": "审批绑定的目标哈希与当前内容不一致，必须重新审批。"
+    },
+    {
+      "code": "PROVIDER_CONFIGURATION_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "模型 Provider 连接配置不完整或非法。"
+    },
+    {
+      "code": "PROVIDER_NOT_CONFIGURED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "模型 Provider 缺少可用配置或凭证。"
+    },
+    {
+      "code": "MODEL_UNAVAILABLE",
+      "retryable": false,
+      "http_status": 409,
+      "description": "指定的模型不可用，需确认替代模型后再调用。"
+    },
+    {
+      "code": "MODEL_CAPABILITY_UNSUPPORTED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "模型未经确认具备所需能力，不能按该能力调用。"
+    },
+    {
+      "code": "MODEL_ALREADY_REGISTERED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "同一 Provider 下的模型键已登记。"
     }
   ]
 }

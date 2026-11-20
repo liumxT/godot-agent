@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-20（E3、E4 完成并验收通过）。
+> 更新于 2026-11-20（E5 进行中：M1 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -11,13 +11,13 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E4 Project & Workflow Systems（已完成，待 E5）** |
-| 阶段进度 | 5 / 13 完成（E0–E4） |
+| 当前阶段 | **E5 AI & Tool Foundation（进行中，M1 完成）** |
+| 阶段进度 | 5 / 13 完成（E0–E4），E5 已启动 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 419 passed（unit + integration 377 / contract 42），ruff 全通过 |
+| 后端测试 | 434 passed（unit + integration 392 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000010` |
+| 数据库迁移 | head 为 `000011` |
 
 ## 2. 阶段总览
 
@@ -28,7 +28,7 @@
 | E2 | Backend Services | ✅ 已完成 | 2026-11-18 验收，M6–M10 全部完成，见 [E2 验收报告](e2-acceptance-report.md) |
 | E3 | Godot Integration | ✅ 已完成 | 2026-11-20 验收，18 任务，见 [E3 验收报告](e3-acceptance-report.md) |
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
-| E5 | AI & Tool Foundation | ⬜ 未开始 | 依赖 E0–E4 |
+| E5 | AI & Tool Foundation | ⏳ 进行中 | M1（T01–T07 Model Gateway 基础）完成 |
 | E6 | Agent Runtime | ⬜ 未开始 | |
 | E7 | Multi-Agent & Game Development | ⬜ 未开始 | |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
@@ -56,7 +56,7 @@
 
 | 项 | 状态 / 数值 |
 | --- | --- |
-| 后端测试 | 419 passed（pytest，asyncio auto） |
+| 后端测试 | 434 passed（pytest，asyncio auto） |
 | 契约校验 | 38 个 manifest 用例，Backend 与 Godot 双向验证（契约测试 42 passed） |
 | Godot 运行 | headless 编辑器模式加载插件、契约探针，E3 测试 68/68 passed，`exit 0` |
 | 打包（onedir） | 39.1 MB，冷启动到 `/health` 1248 ms，迁移与健康检查通过 |
@@ -226,7 +226,28 @@ Workflow 与待处理审批；后端 419 passed（unit + integration 377 / contr
 `check_all.py` 8 阶段全 PASS，迁移 head `000010`；
 E1–E3 回归全绿，无接口破坏。已知限制见 [E4 验收报告](e4-acceptance-report.md#6-已知限制)。
 
-## 9. 已知问题与待办
+## 9. E5 实施进度（进行中）
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E5-M1 | T01 Domain、T02 Provider Interface、T03 Adapter Framework、T04 Provider Config、T05 Model Registry、T06 Capability Registry、T07 Routing | ✅ 已完成 |
+| E5-M2 | T08 统一请求、T09 统一响应、T10 流式、T11 Token、T12 Cost、T13 调用审计、T14 重试与超时 | ⬜ 未开始 |
+| E5-M3 | T15 Prompt 版本化、T16 Context Assembly 接口 | ⬜ 未开始 |
+| E5-M4 | T17 Tool Registry、T18 Schema、T19 Permission、T20 Risk、T21 Approval | ⬜ 未开始 |
+| E5-M5 | T22 执行引擎、T23 幂等、T24 资源锁、T25 审计、T26 验证、T27 恢复 | ⬜ 未开始 |
+| E5-M6 | T28 Godot Adapter、T29 File Adapter、T30 Tool API 与管理页 | ⬜ 未开始 |
+| E5-M7 | T31 集成 / 安全 / 故障恢复测试、验收报告 | ⬜ 未开始 |
+
+交付（M1）：`modules/model_gateway/{models,repository,registry,routing,configuration}.py` 与
+`providers/{base,errors,registry,openai,anthropic,local}.py`；迁移
+`000011_e5_model_gateway`（Provider、配置版本、模型、能力、价格版本、请求/响应）；
+错误码 `PROVIDER_CONFIGURATION_INVALID` / `PROVIDER_NOT_CONFIGURED` /
+`MODEL_UNAVAILABLE` / `MODEL_CAPABILITY_UNSUPPORTED` / `MODEL_ALREADY_REGISTERED`；
+Provider 配置使用 SecretStore 保存密钥并按版本审计；路由只接受有证据的
+`SUPPORTED` 能力，模型不可用时返回原因与替代项，不静默降级。新增 15 个测试
+（单元 11 / 集成 4），后端 434 passed，ruff 全通过。
+
+## 10. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
@@ -243,7 +264,7 @@ E1–E3 回归全绿，无接口破坏。已知限制见 [E4 验收报告](e4-ac
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 10. 维护规则
+## 11. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。

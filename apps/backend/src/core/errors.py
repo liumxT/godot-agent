@@ -272,6 +272,41 @@ class ApprovalHashMismatch(AppError):
     status_code = 409
 
 
+class ProviderConfigurationInvalid(AppError):
+    """E5：Provider 连接配置不完整或非法。"""
+
+    code = "PROVIDER_CONFIGURATION_INVALID"
+    status_code = 422
+
+
+class ProviderNotConfigured(AppError):
+    """E5：Provider 缺少可用配置或凭证。"""
+
+    code = "PROVIDER_NOT_CONFIGURED"
+    status_code = 409
+
+
+class ModelUnavailable(AppError):
+    """E5：用户指定的模型不可用，必须显式返回原因与替代项。"""
+
+    code = "MODEL_UNAVAILABLE"
+    status_code = 409
+
+
+class ModelCapabilityUnsupported(AppError):
+    """E5：模型未验证具备所需能力。"""
+
+    code = "MODEL_CAPABILITY_UNSUPPORTED"
+    status_code = 409
+
+
+class ModelAlreadyRegistered(AppError):
+    """E5：同一 Provider 下的模型键已登记。"""
+
+    code = "MODEL_ALREADY_REGISTERED"
+    status_code = 409
+
+
 class RequestTooLarge(AppError):
     """请求体超过大小限制。"""
 

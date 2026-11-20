@@ -38,6 +38,10 @@ from modules.client.service import AuthCleanupTask, AuthService, ClientService
 from modules.editor_session.models import EditorSessionModel
 from modules.editor_session.service import EditorSessionService
 from modules.lease.service import LeaseService
+from modules.model_gateway.configuration import ProviderConfigurationService
+from modules.model_gateway.providers.registry import default_adapter_registry
+from modules.model_gateway.registry import ModelRegistryService
+from modules.model_gateway.routing import ModelRoutingService
 from modules.project.service import ProjectService
 from modules.project_registry.service import (
     ProjectConfigurationService,
@@ -273,6 +277,14 @@ def register_startup_steps(
         requirement_service = RequirementService(database)
         approval_service = ApprovalService(database)
         changeset_service = ChangeSetService(database, approvals=approval_service)
+        provider_configuration_service = ProviderConfigurationService(
+            database,
+            secret_store,
+            adapters=default_adapter_registry(),
+            default_timeout_seconds=settings.model_gateway_default_timeout_seconds,
+        )
+        model_registry_service = ModelRegistryService(database)
+        model_routing_service = ModelRoutingService(model_registry_service)
         project_lifecycle_service = ProjectLifecycleService(
             database,
             blockers=_project_blockers(database),
@@ -337,6 +349,9 @@ def register_startup_steps(
         services.register("requirement_service", requirement_service)
         services.register("approval_service", approval_service)
         services.register("changeset_service", changeset_service)
+        services.register("provider_configuration_service", provider_configuration_service)
+        services.register("model_registry_service", model_registry_service)
+        services.register("model_routing_service", model_routing_service)
         services.register("project_access_service", access_service)
         services.register("bridge_metrics", BridgeMetrics())
         services.register("rate_limiter", rate_limiter)

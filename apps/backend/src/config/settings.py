@@ -110,6 +110,9 @@ class Settings(BaseSettings):
     bridge_runtime_timeout_seconds: int = Field(default=20, ge=1, le=600)
     bridge_rate_limit_per_minute: int = Field(default=240, ge=1, le=100000)
 
+    # E5 Model Gateway：Provider 配置未显式指定超时时的默认值
+    model_gateway_default_timeout_seconds: int = Field(default=60, ge=1, le=600)
+
     @field_validator("host")
     @classmethod
     def _loopback_only(cls, value: str) -> str:

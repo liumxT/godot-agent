@@ -42,7 +42,7 @@ async def test_create_backup_with_metadata(database) -> None:
     assert info.path.is_file()
     assert info.path.with_suffix(".json").is_file()
     assert info.integrity.lower() == "ok"
-    assert info.revision == "000010"
+    assert info.revision == "000011"
     assert info.size_bytes == info.path.stat().st_size
     assert len(info.sha256) == 64
     assert info.reason == "test"
