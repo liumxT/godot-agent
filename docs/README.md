@@ -18,6 +18,9 @@
 ### 工程规范
 
 - [数据库规范](03-development/database.md)
+- [API 服务规范](03-development/api.md)
+- [事件与 Outbox/Inbox](03-development/events.md)
+- [健康检查与诊断](03-development/observability.md)
 - [配置管理规范](03-development/configuration.md)
 - [Secrets 管理规范](03-development/secrets.md)
 - [日志规范](03-development/logging.md)
@@ -32,10 +35,13 @@
 - [Bug 管理规范](00-project/bug-management.md)
 - [E0 测试报告](00-project/e0-test-report.md)
 - [E0 验收报告](00-project/e0-acceptance-report.md)
+- [E1 测试报告](00-project/e1-test-report.md)
+- [E1 验收报告](00-project/e1-acceptance-report.md)
 
 ### 架构设计
 
 - [E1 Backend Core 设计与任务拆解](02-architecture/e1-backend-core-design.md)
+- [E2 Backend Services 设计与任务拆解](02-architecture/e2-backend-services-design.md)
 
 ### 技术决策
 

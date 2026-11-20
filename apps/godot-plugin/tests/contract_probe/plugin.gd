@@ -57,6 +57,30 @@ func _validate(schema: String, sample: Variant) -> Array:
 			return Validator.validate_event(sample)
 		"errors/error.schema.json":
 			return Validator.validate_error(sample)
+		"api/system.schema.json":
+			return Validator.validate_system(sample)
+		"api/client.schema.json":
+			return Validator.validate_client(sample)
+		"api/auth.schema.json":
+			return Validator.validate_auth(sample)
+		"api/session.schema.json":
+			return Validator.validate_session(sample)
+		"api/project-access.schema.json":
+			return Validator.validate_project_access(sample)
+		"bridge/control.schema.json":
+			return Validator.validate_bridge_control(sample)
+		"bridge/session-created.schema.json":
+			return Validator.validate_bridge_session_created(sample)
+		"bridge/lease.schema.json":
+			return Validator.validate_bridge_lease(sample)
+		"bridge/session-binding.schema.json":
+			return Validator.validate_bridge_session_binding(sample)
+		"bridge/editor-state.schema.json":
+			return Validator.validate_bridge_editor_state(sample)
+		"bridge/snapshot.schema.json":
+			return Validator.validate_bridge_snapshot(sample)
+		"bridge/runtime.schema.json":
+			return Validator.validate_bridge_runtime(sample)
 		_:
 			return ["unknown schema: %s" % schema]
 

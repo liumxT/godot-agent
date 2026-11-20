@@ -10,12 +10,8 @@ from __future__ import annotations
 import json
 import sys
 
-import uvicorn
-
-from bootstrap.application import create_app
+from app.server import run
 from config.settings import load_settings
-
-app = create_app()
 
 
 def _migrate() -> int:
@@ -41,12 +37,7 @@ def main() -> None:
         raise SystemExit(_migrate())
 
     settings = load_settings()
-    uvicorn.run(
-        app,
-        host=settings.host,
-        port=settings.port,
-        log_config=None,
-    )
+    run(settings)
 
 
 if __name__ == "__main__":

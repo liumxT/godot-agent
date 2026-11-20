@@ -1,0 +1,21 @@
+{
+  "session_id": "ses_abcdef123456",
+  "session_token": "gds_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "token_type": "Bearer",
+  "expires_at": "2026-11-18T09:30:00Z",
+  "editor_instance_id": "edi_0123456789ab",
+  "project_id": "proj_demo_001",
+  "lease": {
+    "lease_id": "lea_0123456789ab",
+    "session_id": "ses_abcdef123456",
+    "project_id": "proj_demo_001",
+    "fencing_token": 7,
+    "status": "ACTIVE",
+    "issued_at": "2026-11-18T09:00:00Z",
+    "renewed_at": null,
+    "expires_at": "2026-11-18T09:00:45Z",
+    "revoked_at": null
+  },
+  "heartbeat_interval_seconds": 10,
+  "request_timeout_seconds": 15
+}

@@ -1,0 +1,7 @@
+{
+  "app_name": "godot-ai-backend",
+  "app_version": "0.1.0",
+  "api_version": "v1",
+  "protocol_version": "1.0",
+  "environment": "test"
+}

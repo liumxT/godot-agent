@@ -1,4 +1,4 @@
-# 日志规范（E0-T08）
+# 日志规范（E0-T08 / E1-T07）
 
 ## 1. 目标
 
@@ -90,17 +90,38 @@ PluginLog.error("unsupported_godot_version", {
 
 允许记录：标识符、路径、错误码、耗时、计数、状态。
 
-## 8. 输出示例
+E1 起由 `RedactionFilter` 与 `JsonFormatter` 自动执行：
+
+- 键名命中 `api_key|token|secret|password|authorization` 的字段输出 `***`；
+- 可通过 `register_secret(value)` 登记已知 Secret，message / exception 中出现即替换；
+- 常见凭证格式（`sk-...`、`Bearer ...`、`key=value`）在文本中替换为 `***`；
+- 堆栈保留，但其中的已知 Secret 同样被替换。
+
+## 8. 文件输出与轮转
+
+`configure_logging(level, log_dir=..., max_bytes=..., backup_count=...)`：
+
+- 控制台 + 文件双输出，均为单行 JSON；
+- 默认 `log_dir/backend.log`，5 MB × 5 份轮转；
+- 重复调用会先移除旧 handler，不会叠加输出；
+- `log_dir` 不可写时抛出 `StartupError`（启动失败，E1-FI-005）；
+- `test` 环境不写文件，避免污染工作目录；
+- 关闭流程由生命周期调用 `flush_logging()`。
+
+测试可使用 `capture_logs()` 获取结构化记录列表（`event` / `component` 等字段可直接断言）。
+
+
+## 9. 输出示例
 
 ```json
 {"timestamp":"2026-11-17T09:31:50+00:00","level":"INFO","logger":"backend.database","component":"database","event":"migration_applied","message":"migration_applied 000001 -> 000001","request_id":"req-9f2c","correlation_id":"req-9f2c"}
 ```
 
-## 9. 验收
+## 10. 验收
 
 ```powershell
 cd apps/backend
-.\.venv\Scripts\python.exe -m pytest tests/unit/test_logging.py tests/integration/test_health.py -q
+.\.venv\Scripts\python.exe -m pytest tests/unit/test_logging.py tests/unit/test_logging_file.py tests/integration/test_health.py -q
 ```
 
 Godot 侧：

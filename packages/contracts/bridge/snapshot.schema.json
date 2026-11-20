@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.godot-ai.local/bridge/snapshot.schema.json",
+  "title": "Editor Snapshot",
+  "description": "插件生成的编辑器基准快照；只存摘要，不包含资源内容。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "session_id",
+    "project_id",
+    "editor_instance_id",
+    "snapshot_version",
+    "last_event_sequence",
+    "created_at",
+    "editor_status",
+    "project_status",
+    "active_scene",
+    "current_selection",
+    "unsaved_resources",
+    "run_status",
+    "import_status",
+    "truncated"
+  ],
+  "properties": {
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^snp_[a-z0-9]{12}$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^ses_[a-z0-9]{12}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+    },
+    "editor_instance_id": {
+      "type": "string",
+      "pattern": "^edi_[a-z0-9]{12}$"
+    },
+    "snapshot_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "last_event_sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "editor_status": {
+      "enum": ["READY", "BUSY", "IMPORTING", "UNKNOWN"]
+    },
+    "project_status": {
+      "enum": ["READY", "LOADING", "MISSING"]
+    },
+    "active_scene": {
+      "type": ["string", "null"],
+      "pattern": "^(res|user)://.+$"
+    },
+    "current_selection": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
+    },
+    "unsaved_resources": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "resource_type"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(res|user)://.+$"
+          },
+          "resource_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      }
+    },
+    "run_status": {
+      "enum": ["STOPPED", "RUNNING", "PAUSED"]
+    },
+    "import_status": {
+      "enum": ["IDLE", "IMPORTING", "FAILED"]
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  }
+}

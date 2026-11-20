@@ -1,0 +1,10 @@
+{
+  "protocol_version": "1.0",
+  "message_id": "ctl_7f3a9c2e",
+  "message_type": "PING",
+  "timestamp": "2026-11-18T09:00:00Z",
+  "session_id": null,
+  "project_id": null,
+  "correlation_id": null,
+  "payload": {}
+}

@@ -8,7 +8,7 @@ config/features=PackedStringArray("4.5", "GL Compatibility")
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_ai_agent/plugin.cfg", "res://tests/contract_probe/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot_ai_agent/plugin.cfg", "res://tests/contract_probe/plugin.cfg", "res://tests/lifecycle_probe/plugin.cfg", "res://tests/e3_runner/plugin.cfg")
 
 [rendering]
 

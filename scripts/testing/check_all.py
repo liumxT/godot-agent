@@ -2,7 +2,7 @@
 """E0 自动化工程检查（E0-T09）。
 
 按固定顺序执行：仓库结构 → 敏感文件 → 代码格式 → 静态检查 →
-契约 Schema → Backend 测试 → Godot 插件检查，并生成 Markdown 报告。
+契约 Schema → Backend 测试 → Godot 插件检查 → Godot Bridge 测试，并生成 Markdown 报告。
 
 用法（在 Backend 虚拟环境中运行）：
 
@@ -190,6 +190,8 @@ def stage_godot() -> str:
     )
     if code != 0:
         raise AssertionError(output[-2000:])
+    # 等待上一个编辑器实例释放项目缓存与编辑器设置文件。
+    time.sleep(1.5)
     code, output = _run(
         [
             binary,
@@ -209,6 +211,37 @@ def stage_godot() -> str:
     return "插件加载与契约探针通过"
 
 
+def stage_godot_bridge() -> str:
+    binary = _godot_binary()
+    if binary is None:
+        return "SKIP: 未找到 Godot，可设置 GODOT_BIN"
+    # Godot 编辑器退出后仍可能在保存项目缓存，紧接着启动会读到旧锁并异常退出。
+    # 前序阶段会留下导入/设置写盘线程，启动扫描被拖慢时 1200 帧可能不足以跑完测试，
+    # 因此给测试运行器留出更大的帧数上限；测试完成会主动 quit，不影响正常耗时。
+    time.sleep(3.0)
+    code, output = _run(
+        [
+            binary,
+            "--headless",
+            "--path",
+            str(GODOT_PROJECT),
+            "--editor",
+            "--quit-after",
+            "6000",
+            "--",
+            "--e3-test",
+        ],
+        ROOT,
+    )
+    if code != 0:
+        raise AssertionError(output[-2000:])
+    summary = next(
+        (line for line in reversed(output.splitlines()) if line.startswith("godot tests:")),
+        "Godot E3 测试通过",
+    )
+    return summary
+
+
 STAGES: tuple[tuple[str, Callable[[], str]], ...] = (
     ("仓库结构", stage_structure),
     ("敏感文件", stage_sensitive_files),
@@ -217,6 +250,7 @@ STAGES: tuple[tuple[str, Callable[[], str]], ...] = (
     ("Contracts Schema", stage_contracts),
     ("Backend 测试", stage_backend_tests),
     ("Godot Plugin", stage_godot),
+    ("Godot Bridge Tests", stage_godot_bridge),
 )
 
 

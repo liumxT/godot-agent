@@ -7,6 +7,7 @@ Linux Secret Service。配置、日志、数据库中都不得出现明文凭证
 from infrastructure.secrets.store import (
     KEYRING_SERVICE,
     KeyringSecretStore,
+    MemorySecretStore,
     SecretStore,
     redact,
     require_secret,
@@ -15,6 +16,7 @@ from infrastructure.secrets.store import (
 __all__ = [
     "KEYRING_SERVICE",
     "KeyringSecretStore",
+    "MemorySecretStore",
     "SecretStore",
     "redact",
     "require_secret",

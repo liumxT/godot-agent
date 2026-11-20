@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.godot-ai.local/bridge/runtime.schema.json",
+  "title": "Runtime Report",
+  "description": "游戏进程 Runtime 实例上报；Runtime 独立认证，不继承 Editor 租约与写权限。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runtime_instance_id",
+    "project_root",
+    "project_fingerprint",
+    "process_id",
+    "started_at",
+    "godot_version",
+    "build_mode",
+    "status"
+  ],
+  "properties": {
+    "runtime_instance_id": {
+      "type": "string",
+      "pattern": "^rti_[a-z0-9]{12}$"
+    },
+    "project_root": {
+      "type": "string",
+      "pattern": "^(res|user)://.*$"
+    },
+    "project_fingerprint": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{16,64}$"
+    },
+    "process_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "started_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "godot_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+([.-][A-Za-z0-9]+)*$"
+    },
+    "build_mode": {
+      "enum": ["debug", "release"]
+    },
+    "status": {
+      "enum": ["RUNNING", "STOPPED", "CRASHED"]
+    }
+  }
+}

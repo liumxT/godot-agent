@@ -26,10 +26,88 @@
       "description": "缺少或无效的本地认证凭证。"
     },
     {
+      "code": "AUTH_REQUIRED",
+      "retryable": false,
+      "http_status": 401,
+      "description": "受保护接口缺少 Bearer Token 或 Bootstrap Token。"
+    },
+    {
+      "code": "AUTH_INVALID",
+      "retryable": false,
+      "http_status": 401,
+      "description": "客户端未知、已注销或凭证不可用。"
+    },
+    {
+      "code": "AUTH_CHALLENGE_INVALID",
+      "retryable": false,
+      "http_status": 401,
+      "description": "认证挑战过期、重复使用或 proof 校验失败。"
+    },
+    {
+      "code": "TOKEN_INVALID",
+      "retryable": false,
+      "http_status": 401,
+      "description": "Access Token 无法识别。"
+    },
+    {
+      "code": "TOKEN_EXPIRED",
+      "retryable": false,
+      "http_status": 401,
+      "description": "Access Token 已过期，需要重新认证。"
+    },
+    {
+      "code": "TOKEN_REVOKED",
+      "retryable": false,
+      "http_status": 401,
+      "description": "Access Token 已被撤销或轮换。"
+    },
+    {
+      "code": "SESSION_INVALID",
+      "retryable": false,
+      "http_status": 401,
+      "description": "Session Token 无法识别或 Session 状态非法。"
+    },
+    {
+      "code": "SESSION_EXPIRED",
+      "retryable": false,
+      "http_status": 401,
+      "description": "Session 已过期，需要重新创建会话。"
+    },
+    {
+      "code": "SESSION_REVOKED",
+      "retryable": false,
+      "http_status": 401,
+      "description": "Session 已被撤销。"
+    },
+    {
+      "code": "PROJECT_ACCESS_DENIED",
+      "retryable": false,
+      "http_status": 403,
+      "description": "当前 Session 没有该项目的有效访问。"
+    },
+    {
+      "code": "CLIENT_EXISTS",
+      "retryable": false,
+      "http_status": 409,
+      "description": "client_id 已注册。"
+    },
+    {
+      "code": "PERMISSION_DENIED",
+      "retryable": false,
+      "http_status": 403,
+      "description": "已认证但无权执行该操作。"
+    },
+    {
       "code": "NOT_FOUND",
       "retryable": false,
       "http_status": 404,
       "description": "目标资源不存在。"
+    },
+    {
+      "code": "METHOD_NOT_ALLOWED",
+      "retryable": false,
+      "http_status": 405,
+      "description": "请求方法不被该接口支持。"
     },
     {
       "code": "CONFLICT",
@@ -44,6 +122,18 @@
       "description": "资源被其他任务锁定，可在锁释放后重试。"
     },
     {
+      "code": "REQUEST_TOO_LARGE",
+      "retryable": false,
+      "http_status": 413,
+      "description": "请求体超过服务端大小限制。"
+    },
+    {
+      "code": "REQUEST_TIMEOUT",
+      "retryable": true,
+      "http_status": 504,
+      "description": "请求处理超过服务端时限，可稍后重试。"
+    },
+    {
       "code": "RATE_LIMITED",
       "retryable": true,
       "http_status": 429,
@@ -54,6 +144,48 @@
       "retryable": true,
       "http_status": 504,
       "description": "下游调用超时。"
+    },
+    {
+      "code": "TRANSACTION_TIMEOUT",
+      "retryable": true,
+      "http_status": 504,
+      "description": "数据库事务超出允许时间并已回滚。"
+    },
+    {
+      "code": "DATABASE_UNAVAILABLE",
+      "retryable": true,
+      "http_status": 503,
+      "description": "数据库暂不可用，可按退避策略重试。"
+    },
+    {
+      "code": "AUDIT_FAILED",
+      "retryable": true,
+      "http_status": 503,
+      "description": "审计写入失败，敏感操作已按 fail-closed 拒绝。"
+    },
+    {
+      "code": "DATABASE_INTEGRITY_ERROR",
+      "retryable": false,
+      "http_status": 500,
+      "description": "数据库数据完整性或约束校验失败。"
+    },
+    {
+      "code": "INFRASTRUCTURE_ERROR",
+      "retryable": false,
+      "http_status": 500,
+      "description": "基础设施层失败（文件、事件、凭证库等）。"
+    },
+    {
+      "code": "BACKUP_FAILED",
+      "retryable": false,
+      "http_status": 500,
+      "description": "数据库备份失败。"
+    },
+    {
+      "code": "RESTORE_FAILED",
+      "retryable": false,
+      "http_status": 500,
+      "description": "数据库恢复失败，当前数据已保留。"
     },
     {
       "code": "DEPENDENCY_UNAVAILABLE",
@@ -72,6 +204,84 @@
       "retryable": false,
       "http_status": 500,
       "description": "未预期的内部错误，需要查看日志。"
+    },
+    {
+      "code": "UNKNOWN_MESSAGE_TYPE",
+      "retryable": false,
+      "http_status": 400,
+      "description": "未登记的 WS 消息类型或 action，忽略并计数。"
+    },
+    {
+      "code": "SESSION_SUSPENDED",
+      "retryable": true,
+      "http_status": 409,
+      "description": "Editor 绑定处于 RECOVERING，需暂停受保护操作。"
+    },
+    {
+      "code": "LEASE_EXPIRED",
+      "retryable": true,
+      "http_status": 409,
+      "description": "租约已过期，需通过心跳重新获取。"
+    },
+    {
+      "code": "LEASE_REVOKED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "租约已被撤销，需重新认证并绑定。"
+    },
+    {
+      "code": "FENCING_TOKEN_STALE",
+      "retryable": false,
+      "http_status": 409,
+      "description": "存在更新的租约，旧连接不得继续写入。"
+    },
+    {
+      "code": "SNAPSHOT_UNAVAILABLE",
+      "retryable": true,
+      "http_status": 404,
+      "description": "没有可用于恢复的快照，需要全量重新同步。"
+    },
+    {
+      "code": "EVENT_SEQUENCE_GAP",
+      "retryable": true,
+      "http_status": 409,
+      "description": "事件序列无法补齐，需要重新请求快照。"
+    },
+    {
+      "code": "RUNTIME_UNAVAILABLE",
+      "retryable": true,
+      "http_status": 503,
+      "description": "Godot Runtime 不在线，不影响 Editor 连接。"
+    },
+    {
+      "code": "INVALID_STATE_TRANSITION",
+      "retryable": false,
+      "http_status": 409,
+      "description": "业务对象状态机不允许该迁移。"
+    },
+    {
+      "code": "VERSION_CONFLICT",
+      "retryable": true,
+      "http_status": 409,
+      "description": "乐观锁版本冲突，需要重新读取后重试。"
+    },
+    {
+      "code": "DEPENDENCY_CYCLE",
+      "retryable": false,
+      "http_status": 409,
+      "description": "任务依赖存在循环，不能建立该依赖。"
+    },
+    {
+      "code": "APPROVAL_EXPIRED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "审批已过期，不能继续使用。"
+    },
+    {
+      "code": "APPROVAL_HASH_MISMATCH",
+      "retryable": false,
+      "http_status": 409,
+      "description": "审批绑定的目标哈希与当前内容不一致，必须重新审批。"
     }
   ]
 }

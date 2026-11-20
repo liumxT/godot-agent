@@ -1,0 +1,71 @@
+@tool
+extends RefCounted
+## Bridge 连接状态机（E3-T05）。
+##
+## 状态：DISCONNECTED → CONNECTING → CONNECTED → (CLOSING → DISCONNECTED | CONNECTION_LOST)。
+## 关闭码到重连策略的映射集中在此，客户端与服务不得各自解释关闭码。
+
+
+const DISCONNECTED := "DISCONNECTED"
+const CONNECTING := "CONNECTING"
+const CONNECTED := "CONNECTED"
+const CLOSING := "CLOSING"
+const CONNECTION_LOST := "CONNECTION_LOST"
+
+const ALL_STATES := [DISCONNECTED, CONNECTING, CONNECTED, CLOSING, CONNECTION_LOST]
+
+const CLOSE_NORMAL := 1000
+const CLOSE_AUTH_FAILED := 4401
+const CLOSE_PERMISSION_DENIED := 4403
+const CLOSE_HANDSHAKE_TIMEOUT := 4408
+const CLOSE_MESSAGE_TOO_LARGE := 4409
+const CLOSE_SERVER_ERROR := 1011
+
+const ACTION_NONE := "NONE"
+const ACTION_RECONNECT := "RECONNECT"
+const ACTION_STOP_AUTH := "STOP_AUTH"
+const ACTION_STOP_PERMISSION := "STOP_PERMISSION"
+const ACTION_STOP_FIX := "STOP_FIX"
+
+const TRANSITIONS := {
+	DISCONNECTED: [CONNECTING],
+	CONNECTING: [CONNECTED, DISCONNECTED, CONNECTION_LOST],
+	CONNECTED: [CLOSING, CONNECTION_LOST, DISCONNECTED],
+	CLOSING: [DISCONNECTED, CONNECTION_LOST],
+	CONNECTION_LOST: [CONNECTING, DISCONNECTED],
+}
+
+
+static func can_transition(from_state: String, to_state: String) -> bool:
+	if from_state == to_state:
+		return false
+	if not TRANSITIONS.has(from_state):
+		return false
+	return TRANSITIONS[from_state].has(to_state)
+
+
+static func close_code_action(code: int) -> String:
+	match code:
+		CLOSE_NORMAL:
+			return ACTION_NONE
+		CLOSE_AUTH_FAILED:
+			return ACTION_STOP_AUTH
+		CLOSE_PERMISSION_DENIED:
+			return ACTION_STOP_PERMISSION
+		CLOSE_MESSAGE_TOO_LARGE:
+			return ACTION_STOP_FIX
+		CLOSE_HANDSHAKE_TIMEOUT, CLOSE_SERVER_ERROR:
+			return ACTION_RECONNECT
+		_:
+			return ACTION_RECONNECT
+
+
+static func should_reconnect(code: int) -> bool:
+	return close_code_action(code) == ACTION_RECONNECT
+
+
+static func is_known_close_code(code: int) -> bool:
+	return [
+		CLOSE_NORMAL, CLOSE_AUTH_FAILED, CLOSE_PERMISSION_DENIED,
+		CLOSE_HANDSHAKE_TIMEOUT, CLOSE_MESSAGE_TOO_LARGE, CLOSE_SERVER_ERROR,
+	].has(code)

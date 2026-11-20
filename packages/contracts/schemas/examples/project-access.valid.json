@@ -1,0 +1,11 @@
+{
+  "access_id": "acc_ab2cd3ef4g5h",
+  "project_id": "proj_demo_01",
+  "client_id": "cli_ab2cd3ef4g5h",
+  "session_id": "ses_ab2cd3ef4g5h",
+  "access_level": "editor",
+  "status": "ACTIVE",
+  "granted_by": "cli_zz3cd3ef4g5h",
+  "granted_at": "2026-11-18T10:00:00Z",
+  "expires_at": "2026-11-19T10:00:00Z"
+}

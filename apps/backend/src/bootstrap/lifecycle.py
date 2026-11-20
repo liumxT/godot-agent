@@ -1,37 +1,46 @@
-"""统一启动与关闭入口。
+"""FastAPI lifespan 适配器（E1-T01）。
 
-E0 阶段不注册业务资源；后续阶段在此装配数据库、事件、Worker 等，
-保持入口本身只做编排，不堆积逻辑。
+信号处理由 uvicorn 负责，本模块只把启动/关闭委托给 ``LifecycleManager``，
+不重复注册信号；重复关闭由 Manager 保证幂等。
 """
 
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from bootstrap.service_registry import ServiceRegistry
+from bootstrap.shutdown import register_shutdown_steps
+from bootstrap.startup import register_startup_steps
 from config.settings import Settings
-from core.errors import StartupError
+from core.lifecycle.manager import LifecycleManager
+from core.lifecycle.states import LifecycleState
 from core.logging import get_logger, log_event
 
-StartupHook = Callable[[], Awaitable[None] | None]
-ShutdownHook = Callable[[], Awaitable[None] | None]
+DEFAULT_SHUTDOWN_TIMEOUT = 10.0
 
 
 class Lifecycle:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        services: ServiceRegistry | None = None,
+        shutdown_timeout: float = DEFAULT_SHUTDOWN_TIMEOUT,
+    ) -> None:
         self._settings = settings
-        self._logger = get_logger("backend.lifecycle")
-        self._startup_hooks: list[StartupHook] = []
-        self._shutdown_hooks: list[ShutdownHook] = []
+        self._logger = get_logger("backend.bootstrap")
+        self.services = services if services is not None else ServiceRegistry()
+        self.manager = LifecycleManager(shutdown_timeout=shutdown_timeout)
+        register_startup_steps(self.manager, settings=settings, services=self.services)
+        register_shutdown_steps(self.manager, services=self.services)
 
-    def on_startup(self, hook: StartupHook) -> None:
-        self._startup_hooks.append(hook)
-
-    def on_shutdown(self, hook: ShutdownHook) -> None:
-        self._shutdown_hooks.append(hook)
+    @property
+    def state(self) -> LifecycleState:
+        return self.manager.state
 
     @asynccontextmanager
     async def lifespan(self, _: FastAPI) -> AsyncIterator[None]:
@@ -42,17 +51,9 @@ class Lifecycle:
             component="bootstrap",
             environment=self._settings.environment.value,
         )
+        await self.manager.startup()
         try:
-            await self._run(self._startup_hooks)
             yield
-        except Exception as exc:  # 启动失败必须显式转换
-            raise StartupError("应用启动失败", details={"reason": str(exc)}) from exc
         finally:
-            await self._run(self._shutdown_hooks)
+            await self.manager.shutdown()
             log_event(self._logger, logging.INFO, "application_stop", component="bootstrap")
-
-    async def _run(self, hooks: list[StartupHook] | list[ShutdownHook]) -> None:
-        for hook in hooks:
-            result = hook()
-            if result is not None:
-                await result

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.godot-ai.local/bridge/control.schema.json",
+  "title": "Bridge Control Frame",
+  "description": "Editor/Runtime WebSocket 握手阶段控制帧；业务消息复用 request/response/event/error 契约。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol_version",
+    "message_id",
+    "message_type",
+    "timestamp",
+    "session_id",
+    "project_id",
+    "correlation_id",
+    "payload"
+  ],
+  "properties": {
+    "protocol_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$"
+    },
+    "message_id": {
+      "type": "string",
+      "pattern": "^ctl_[a-z0-9]{8}$"
+    },
+    "message_type": {
+      "enum": ["HELLO", "AUTH_CHALLENGE", "AUTH_RESPONSE", "SESSION_CREATED", "RUNTIME_REGISTERED", "ERROR"]
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?Z$"
+    },
+    "session_id": {
+      "type": ["string", "null"],
+      "pattern": "^ses_[a-z0-9]{12}$"
+    },
+    "project_id": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+    },
+    "correlation_id": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+    },
+    "payload": {
+      "type": "object"
+    }
+  }
+}

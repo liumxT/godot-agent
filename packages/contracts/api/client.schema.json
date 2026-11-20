@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.godot-ai.local/api/client.schema.json",
+  "title": "Client Registration Response",
+  "description": "POST /api/v1/clients 的响应；client_secret 只返回一次。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["client_id", "client_secret", "client_type", "client_name", "status", "created_at"],
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "pattern": "^cli_[a-z0-9]{12}$"
+    },
+    "client_secret": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43}$"
+    },
+    "client_type": {
+      "enum": ["godot_editor", "admin", "tool"]
+    },
+    "client_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "status": {
+      "const": "active"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+    }
+  }
+}

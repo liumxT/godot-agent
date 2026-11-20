@@ -1,73 +1,70 @@
-﻿@tool
+@tool
 extends EditorPlugin
-## Godot AI Agent 插件入口（E0 骨架）。
+## Godot AI Agent 插件入口（E3-M1）。
 ##
-## 本阶段只负责：版本校验、状态面板的注册与释放、最小日志。
-## Editor Bridge / Session / Heartbeat 在 E3 实现，此处不得提前引入。
-
+## 只做生命周期转发：启用/关闭/逐帧调度均委托给 core/plugin_lifecycle.gd。
+## 连接、会话、心跳等通信细节由后续服务实现，本文件不得直接引用。
+## 另外提供「运行时探针」开关：只有用户显式启用后才注入 autoload，
+## 不静默修改 project.godot。
 
 const PLUGIN_VERSION := "0.1.0"
-const MIN_GODOT_MAJOR := 4
-const MIN_GODOT_MINOR := 5
 
 const PluginLog := preload("res://addons/godot_ai_agent/core/logger.gd")
-const StatusPanel := preload("res://addons/godot_ai_agent/ui/status_panel.gd")
+const PluginLifecycle := preload("res://addons/godot_ai_agent/core/plugin_lifecycle.gd")
+
+const RUNTIME_AUTOLOAD_NAME := "GodotAIRuntimeBridge"
+const RUNTIME_SCRIPT_PATH := "res://addons/godot_ai_agent/runtime/runtime_bridge.gd"
+const RUNTIME_MENU_ENABLE := "启用运行时探针"
+const RUNTIME_MENU_DISABLE := "禁用运行时探针"
 
 
-var _panel: Control = null
+var _lifecycle: Object = null
 var _enabled := false
 
 
 func _enter_tree() -> void:
-	# 重复启用保护：避免面板被重复注册
+	# 重复启用保护：避免服务与 Dock 被重复注册
 	if _enabled:
 		PluginLog.warn("plugin_already_enabled")
 		return
 
-	var version := Engine.get_version_info()
-	var version_text: String = str(version.get("string", "unknown"))
-
-	if not _is_supported(version):
-		PluginLog.error("unsupported_godot_version", {
-			"error_code": "UNSUPPORTED_GODOT_VERSION",
-			"version": version_text,
-			"required": "%d.%d+" % [MIN_GODOT_MAJOR, MIN_GODOT_MINOR],
-		})
-		_create_panel(version_text, false)
-		_enabled = true
-		return
-
-	_create_panel(version_text, true)
 	_enabled = true
-	PluginLog.info("plugin_enabled", {"version": PLUGIN_VERSION})
+	_lifecycle = PluginLifecycle.new()
+	_lifecycle.call("enable", self, DOCK_SLOT_RIGHT_UL, PLUGIN_VERSION, true)
+	add_tool_menu_item(RUNTIME_MENU_ENABLE, _enable_runtime_probe)
+	add_tool_menu_item(RUNTIME_MENU_DISABLE, _disable_runtime_probe)
+	set_process(true)
 
 
 func _exit_tree() -> void:
 	if not _enabled:
 		return
 
-	if is_instance_valid(_panel):
-		remove_control_from_docks(_panel)
-		_panel.queue_free()
-	_panel = null
+	set_process(false)
+	remove_tool_menu_item(RUNTIME_MENU_ENABLE)
+	remove_tool_menu_item(RUNTIME_MENU_DISABLE)
+	if _lifecycle != null:
+		_lifecycle.call("disable", "editor_plugin_disabled")
+	_lifecycle = null
 	_enabled = false
-	PluginLog.info("plugin_disabled")
 
 
-func _create_panel(version_text: String, supported: bool) -> void:
-	_panel = StatusPanel.new()
-	_panel.set_godot_version(version_text)
-	_panel.set_backend_status("未连接")
-	if supported:
-		_panel.set_plugin_status("已启用 v%s" % PLUGIN_VERSION)
-	else:
-		_panel.set_plugin_status("版本不支持（需 %d.%d+）" % [MIN_GODOT_MAJOR, MIN_GODOT_MINOR])
-	add_control_to_dock(DOCK_SLOT_RIGHT_UL, _panel)
+func _process(delta: float) -> void:
+	if _lifecycle != null:
+		_lifecycle.call("tick", delta)
 
 
-func _is_supported(version: Dictionary) -> bool:
-	var major := int(version.get("major", 0))
-	var minor := int(version.get("minor", 0))
-	if major != MIN_GODOT_MAJOR:
-		return false
-	return minor >= MIN_GODOT_MINOR
+func _enable_runtime_probe() -> void:
+	if ProjectSettings.has_setting("autoload/%s" % RUNTIME_AUTOLOAD_NAME):
+		PluginLog.info("runtime_probe_already_enabled")
+		return
+	add_autoload_singleton(RUNTIME_AUTOLOAD_NAME, RUNTIME_SCRIPT_PATH)
+	PluginLog.info("runtime_probe_enabled")
+
+
+func _disable_runtime_probe() -> void:
+	if not ProjectSettings.has_setting("autoload/%s" % RUNTIME_AUTOLOAD_NAME):
+		PluginLog.info("runtime_probe_not_enabled")
+		return
+	remove_autoload_singleton(RUNTIME_AUTOLOAD_NAME)
+	PluginLog.info("runtime_probe_disabled")

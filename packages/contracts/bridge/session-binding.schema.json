@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.godot-ai.local/bridge/session-binding.schema.json",
+  "title": "Editor Session Binding",
+  "description": "Editor 维度绑定；Session 状态权威仍在 e2_sessions，本对象只描述连接绑定。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "session_id",
+    "editor_instance_id",
+    "project_id",
+    "godot_version",
+    "plugin_version",
+    "transport",
+    "binding_status",
+    "connected_at",
+    "disconnected_at",
+    "last_seen_at",
+    "closed_at"
+  ],
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "pattern": "^ses_[a-z0-9]{12}$"
+    },
+    "editor_instance_id": {
+      "type": "string",
+      "pattern": "^edi_[a-z0-9]{12}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$"
+    },
+    "godot_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+([.-][A-Za-z0-9]+)*$"
+    },
+    "plugin_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+([.-][A-Za-z0-9]+)*$"
+    },
+    "transport": {
+      "const": "websocket"
+    },
+    "binding_status": {
+      "enum": ["CONNECTED", "DISCONNECTED", "RECOVERING", "CLOSED"]
+    },
+    "connected_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "disconnected_at": {
+      "type": ["string", "null"],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "last_seen_at": {
+      "type": ["string", "null"],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "closed_at": {
+      "type": ["string", "null"],
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+    }
+  }
+}

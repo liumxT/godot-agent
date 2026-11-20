@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.godot-ai.local/bridge/editor-state.schema.json",
+  "title": "Editor State",
+  "description": "编辑器状态上报；只描述 Editor 侧可观测状态，未保存资源必须显式标记。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "editor_status",
+    "project_status",
+    "active_scene",
+    "current_selection",
+    "unsaved_resources",
+    "run_status",
+    "import_status"
+  ],
+  "properties": {
+    "editor_status": {
+      "enum": ["READY", "BUSY", "IMPORTING", "UNKNOWN"]
+    },
+    "project_status": {
+      "enum": ["READY", "LOADING", "MISSING"]
+    },
+    "active_scene": {
+      "type": ["string", "null"],
+      "pattern": "^(res|user)://.+$"
+    },
+    "current_selection": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
+    },
+    "unsaved_resources": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "resource_type"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(res|user)://.+$"
+          },
+          "resource_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      }
+    },
+    "run_status": {
+      "enum": ["STOPPED", "RUNNING", "PAUSED"]
+    },
+    "import_status": {
+      "enum": ["IDLE", "IMPORTING", "FAILED"]
+    }
+  }
+}

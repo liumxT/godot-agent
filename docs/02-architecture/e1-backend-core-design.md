@@ -130,7 +130,7 @@ apps/backend/src/
 
 `DatabaseService` 持有 `AsyncEngine` 与会话工厂，负责初始化、健康检查、关闭和错误翻译：
 
-- 初始化：建目录 → 引擎（PRAGMA 沿用 `engine.py`）→ `SELECT 1` → `PRAGMA quick_check`。
+- 初始化：建目录 → 引擎（PRAGMA 沿用 `engine.py`）→ `SELECT 1` → `PRAGMA quick_check` → 回滚事务内的写探测（只读文件拒绝启动）。
 - 错误分类：`OperationalError` → `DatabaseError(DATABASE_UNAVAILABLE, retryable=True)`；
   `IntegrityError` → `DatabaseError(DATABASE_INTEGRITY_ERROR, retryable=False)`；
   文件不可写/只读在启动阶段直接 `StartupError`。
@@ -197,6 +197,11 @@ Alembic 仍是执行器与版本事实源（`alembic_version`），新增 `migra
 事件模型对齐 `packages/contracts/events/event.schema.json`：
 `event_id / event_type / event_version / occurred_at / producer / correlation_id / payload`。
 
+> 实施说明（2026-11-18）：契约 schema 使用 `timestamp / source`，内部字段为
+> `occurred_at / producer`，由 `Event.to_contract()` 映射；`event_version` 仅内部使用，
+> 不写入契约（schema 禁止额外字段）。详见
+> [事件与 Outbox/Inbox](../03-development/events.md)。
+
 - 发布：业务事务内只写 `event_outbox`；提交后由 `EventDispatcher` 轮询发送给进程内订阅者。
 - 派发：`pending → publishing → published`，失败 `failed` 并记录 `retry_count`、`last_error`；
   退避重试（上限可配），进程重启从 `pending` 继续（E1-FI-006/007）。
@@ -225,7 +230,7 @@ Alembic 仍是执行器与版本事实源（`alembic_version`），新增 `migra
 状态：`HEALTHY / DEGRADED / UNHEALTHY / STARTING / STOPPING`。检查不得执行危险写入；
 ready 不通过返回 503，`/health` 保留 200 但 `status` 反映真实状态（避免误报健康）。
 
-## 6. 数据模型（E1 新增迁移 `000002`）
+## 6. 数据模型（E1 新增迁移 `000002` / `000003`）
 
 ```text
 event_outbox
@@ -263,6 +268,10 @@ migration_history
   INDEX (revision, applied_at)
 ```
 
+> 实施说明（2026-11-18）：`migration_history` 必须先于事件表存在，才能记录 `000002`
+> 自身的执行结果。因此 M2-T04 落地为 `000002_migration_history`，M3-T10 的事件表顺延为
+> `000003_event_infrastructure`；三张表的字段定义不变。
+
 ## 7. 任务拆解与批次
 
 ```text
@@ -280,11 +289,11 @@ T01 生命周期 ─┬─> T03 数据库服务 ─┬─> T04 迁移服务     
 | M1 | T07 日志 | 文件输出、轮转、脱敏、测试工具 | T07 UT-001…004、IT-001 |
 | M1 | T08 异常 | 异常层级、映射、错误码登记 | T08 UT-001…004、IT-001 |
 | M2 | T03 数据库 | `database/service.py`、`health.py`、`errors.py` | T03 UT-001…004、IT-001…003 |
-| M2 | T04 迁移 | 历史表、checksum、版本检查、`000002` 前置 | T04 UT-001…005、IT-001 |
+| M2 | T04 迁移 | 历史表、checksum、版本检查、迁移 `000002` | T04 UT-001…005、IT-001 |
 | M2 | T06 事务 | `transaction.py`、超时、嵌套策略 | T06 UT-001…004、IT-001 |
 | M2 | T05 仓储 | `repository.py`、分页、隔离测试 | T05 UT-001…004、IT-001 |
 | M3 | T09 事件 | `core/events/*`、注册表、发布订阅 | T09 UT-001…004、IT-001 |
-| M3 | T10 Outbox/Inbox | `infrastructure/events/*`、迁移 `000002` | T10 UT-001…004、IT-001…002 |
+| M3 | T10 Outbox/Inbox | `infrastructure/events/*`、迁移 `000003` | T10 UT-001…004、IT-001…002 |
 | M4 | T11 备份恢复 | `backup.py`、元数据、恢复保护 | T11 UT-001…003、IT-001…003 |
 | M4 | T12 健康 | live/ready、依赖聚合 | T12 UT-001…004、IT-001 |
 | M4 | T13 诊断 | `/diagnostics/summary`、积压与错误摘要 | T13 UT-001…002、IT-001…002 |
@@ -294,6 +303,9 @@ T01 生命周期 ─┬─> T03 数据库服务 ─┬─> T04 迁移服务     
 `check_all.py` 通过；涉及契约变更时同步 `packages/contracts` 与双向契约测试。
 
 ## 8. 待确认项（评审时决定）
+
+> 2026-11-18 确认：按下表建议执行。E1-Q1（TOML 分层加载与变更策略）已在 M1 落地，
+> 其余项在对应批次实施时复核。
 
 | 编号 | 事项 | 建议 |
 | --- | --- | --- |

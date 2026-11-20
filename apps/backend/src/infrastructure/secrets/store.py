@@ -30,6 +30,25 @@ def validate_name(name: str) -> str:
     return name
 
 
+class MemorySecretStore:
+    """进程内实现，仅用于测试环境，避免污染本机凭证库。"""
+
+    def __init__(self) -> None:
+        self._data: dict[str, str] = {}
+
+    def get(self, name: str) -> str | None:
+        return self._data.get(name)
+
+    def set(self, name: str, value: str) -> None:
+        validate_name(name)
+        if not value:
+            raise ConfigError("密钥值不能为空", details={"secret": name})
+        self._data[name] = value
+
+    def delete(self, name: str) -> None:
+        self._data.pop(name, None)
+
+
 class KeyringSecretStore:
     """基于操作系统凭证库的实现（通过 keyring）。
 

@@ -14,8 +14,9 @@ from config.settings import load_settings
 
 config = context.config
 
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
+    # 应用内运行时由 core.logging 统一管理日志，迁移不得接管 root logger
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 
 def _database_url() -> str:
@@ -38,6 +39,18 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    # 应用内迁移传入运行时连接（含内存库的共享连接），避免另建引擎
+    external = config.attributes.get("connection")
+    if external is not None:
+        context.configure(
+            connection=external,
+            target_metadata=None,
+            render_as_batch=True,
+        )
+        with context.begin_transaction():
+            context.run_migrations()
+        return
+
     section = config.get_section(config.config_ini_section, {})
     section["sqlalchemy.url"] = _database_url()
     connectable = engine_from_config(section, prefix="sqlalchemy.", poolclass=pool.NullPool)

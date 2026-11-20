@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.godot-ai.local/api/system.schema.json",
+  "title": "System API Response",
+  "$defs": {
+    "info": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["app_name", "app_version", "api_version", "protocol_version", "environment"],
+      "properties": {
+        "app_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "app_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+([.-][A-Za-z0-9]+)*$"
+        },
+        "api_version": {
+          "const": "v1"
+        },
+        "protocol_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "environment": {
+          "enum": ["development", "test", "production"]
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "started_at", "uptime_seconds", "database_status"],
+      "properties": {
+        "state": {
+          "enum": [
+            "CREATED",
+            "INITIALIZING",
+            "STARTING",
+            "RUNNING",
+            "STOPPING",
+            "STOPPED",
+            "FAILED"
+          ]
+        },
+        "started_at": {
+          "type": ["string", "null"],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+        },
+        "uptime_seconds": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "database_status": {
+          "enum": ["ready", "unavailable"]
+        }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/info" },
+    { "$ref": "#/$defs/status" }
+  ]
+}

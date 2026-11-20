@@ -1,26 +1,28 @@
 # 项目进度表
 
-> 更新于 2026-11-18，对应提交 `a0035b2`。
+> 更新于 2026-11-18（E2-M10 完成，E2 验收通过）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
-> 单阶段细节见 [E0 验收报告](e0-acceptance-report.md) 与 [E0 测试报告](e0-test-report.md)。
+> 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
+> [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
+> [E2 安全测试报告](e2-security-test-report.md) 与 [E2 验收报告](e2-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E1 Backend Core（设计完成，待评审）** |
-| 阶段进度 | 1 / 13 完成（E0） |
+| 当前阶段 | **E2 Backend Services（已完成，待 E3）** |
+| 阶段进度 | 3 / 13 完成（E0、E1、E2） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job 通过（[run 44065613603](https://github.com/liumxT/godot-agent/actions/runs/44065613603)） |
-| 后端测试 | 52 passed（contract / integration / unit），ruff 全通过 |
+| 后端测试 | 299 passed（contract 28 / integration 112 / unit 159），ruff 全通过 |
 
 ## 2. 阶段总览
 
 | 阶段 | 名称 | 状态 | 说明 |
 | --- | --- | --- | --- |
 | E0 | Project Foundation | ✅ 已通过 | 2026-11-17 验收，条件 C1–C4 全部关闭 |
-| E1 | Backend Core | ⏳ 进行中 | 任务拆解与设计已完成，见 [设计文档](../02-architecture/e1-backend-core-design.md) |
-| E2 | Backend Services | ⬜ 未开始 | 依赖 E1 |
+| E1 | Backend Core | ✅ 已完成 | 14 / 14 任务，P0 全部通过，见 [E1 验收报告](e1-acceptance-report.md) |
+| E2 | Backend Services | ✅ 已完成 | 2026-11-18 验收，M6–M10 全部完成，见 [E2 验收报告](e2-acceptance-report.md) |
 | E3 | Godot Integration | ⬜ 未开始 | 依赖 E1/E2 |
 | E4 | Project & Workflow Systems | ⬜ 未开始 | |
 | E5 | AI & Tool Foundation | ⬜ 未开始 | |
@@ -51,39 +53,133 @@
 
 | 项 | 状态 / 数值 |
 | --- | --- |
-| Backend 测试 | 52 passed（pytest，asyncio auto） |
-| 契约校验 | 11 个 manifest 用例，Backend 与 Godot 双向验证 |
+| 后端测试 | 299 passed（pytest，asyncio auto） |
+| 契约校验 | 19 个 manifest 用例，Backend 与 Godot 双向验证 |
 | Godot 运行 | headless 编辑器模式加载插件、契约探针，`exit 0` |
 | 打包（onedir） | 39.1 MB，冷启动到 `/health` 1248 ms，迁移与健康检查通过 |
 | 打包（onefile） | 23.4 MB，冷启动 1757 ms，整棵进程树可正常结束 |
 | 技术基线 | Godot 4.5.1 / Python 3.14.2 / FastAPI / SQLite（WAL）/ Alembic / PyInstaller 6.22.3 |
 | 远程 CI | `Backend checks` + `Godot plugin checks` 通过（ubuntu-24.04） |
 
-## 5. E1 计划（设计完成，待实施）
+## 5. E1 实施进度
 
 设计文档：[E1 Backend Core 设计与任务拆解](../02-architecture/e1-backend-core-design.md)
 （模块边界、关键设计、数据模型、5 个实施批次与测试映射）。
 
-| 任务 | 内容 |
-| --- | --- |
-| E1-T01 | Backend 生命周期管理 |
-| E1-T02 | 配置服务实现 |
-| E1-T03 | SQLite 数据库服务 |
-| E1-T04 | 数据库 Migration 服务 |
-| E1-T05 | Repository 基础设施 |
-| E1-T06 | 事务管理服务 |
-| E1-T07 | 日志服务 |
-| E1-T08 | 统一异常处理服务 |
-| E1-T09 | 事件基础设施 |
-| E1-T10 | Outbox / Inbox 基础机制 |
-| E1-T11 | 数据库备份与恢复 |
-| E1-T12 | Health Check 健康检查 |
-| E1-T13 | 可观测性和诊断 |
-| E1-T14 | Core 集成测试和性能验证 |
+| 任务 | 内容 | 状态 |
+| --- | --- | --- |
+| E1-T01 | Backend 生命周期管理 | ✅ M1 |
+| E1-T02 | 配置服务实现 | ✅ M1 |
+| E1-T03 | SQLite 数据库服务 | ✅ M2 |
+| E1-T04 | 数据库 Migration 服务 | ✅ M2 |
+| E1-T05 | Repository 基础设施 | ✅ M2 |
+| E1-T06 | 事务管理服务 | ✅ M2 |
+| E1-T07 | 日志服务 | ✅ M1 |
+| E1-T08 | 统一异常处理服务 | ✅ M1 |
+| E1-T09 | 事件基础设施 | ✅ M3 |
+| E1-T10 | Outbox / Inbox 基础机制 | ✅ M3 |
+| E1-T11 | 数据库备份与恢复 | ✅ M4 |
+| E1-T12 | Health Check 健康检查 | ✅ M4 |
+| E1-T13 | 可观测性和诊断 | ✅ M4 |
+| E1-T14 | Core 集成测试和性能验证 | ✅ M5 |
 
-启动前动作：评审设计文档 §8 的 E1-Q1…Q6，确定后按 M1（生命周期 / 配置 / 日志 / 异常）启动实施。
+M1 交付：`core/lifecycle` 状态机与管理器、`bootstrap` 启动/关闭步骤与 `ServiceRegistry`、
+`config/layers` / `config/policies` / `config/service`、日志文件轮转与脱敏、
+完整异常层级与启动期错误码校验；新增 47 个测试（合计 99 passed）。
 
-## 6. 已知问题与待办
+M2 交付：`DatabaseService`（初始化/会话/健康/幂等关闭）、数据库异常翻译与健康探测、
+`MigrationService` 与 `000002_migration_history`（checksum、失败记录、head 校验、启动阻断）、
+`BaseRepository` / `Page` 分页与异常映射、`transaction()`（超时、嵌套加入外层、失效会话）；
+新增 29 个测试（合计 128 passed），启动失败保留领域错误码。
+
+M3 交付：`core/events/{model,registry,bus}.py`（契约对齐的事件模型、`consumer_id` 唯一注册、
+失败隔离的进程内发布）、`infrastructure/events/{outbox,inbox,dispatcher}.py` 与迁移
+`000003_event_infrastructure`（`event_outbox` / `event_inbox`）、
+启动 `events` 步骤与关闭 `events → database → flush_logging` 顺序、
+`event_poll_interval_ms / event_batch_size / event_max_retries` 配置、
+中断恢复（`publishing` 复位）与有界退避重试；新增 22 个测试（合计 150 passed），
+规范见 [事件与 Outbox/Inbox](../03-development/events.md)。
+
+M4 交付：`infrastructure/database/backup.py`（在线备份、元数据、校验、保留策略、
+停派发/保护副本/失败回滚的恢复流程）、`app/health.py` 与 `/health/live`、`/health/ready`、
+`/health` 聚合检查、`core/diagnostics.py` 最近错误环形缓冲 + `ERROR` 日志收集、
+`/diagnostics/summary`（积压、迁移、备份、最近错误，生产环境要求 `X-Diagnostics-Token`）、
+`backup_dir` / `backup_retention` 配置；新增 22 个测试（合计 172 passed），
+规范见 [健康检查与诊断](../03-development/observability.md)。
+
+M5 交付：`tests/integration/test_e1_core.py` 全链路集成（启动→配置→迁移→仓储→事务→事件→
+Outbox 恢复→备份→恢复→健康→关闭）、`scripts/testing/perf_e1.py` 性能基线脚本
+（产物 `artifacts/perf-e1.json`）、[E1 测试报告](e1-test-report.md)（14 项集成映射、
+任务覆盖、性能数据、故障注入与 DoD 核对）。
+
+E1 收尾：补齐只读数据库写探测与运行期损坏识别（新增 3 个测试，合计 176 passed），
+输出 [E1 验收报告](e1-acceptance-report.md)（E1-D16），10 项故障注入全部 PASS。
+
+下一步：E3 Godot Integration。
+
+## 6. E2 实施进度（M10 已完成，E2 验收通过）
+
+设计文档：[E2 Backend Services 设计与任务拆解](../02-architecture/e2-backend-services-design.md)
+（模块边界、认证/Token/Session/授权/审计设计、数据模型、5 个批次与验收映射）。
+设计已于 2026-11-18 按方案 A 评审通过。
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| M6 | T01 API Server、T02 路由与版本 | ✅ 已完成 |
+| M7 | T06 客户端注册、T03 挑战认证、T04 Token | ✅ 已完成 |
+| M8 | T05 Session、T07 Project Access | ✅ 已完成 |
+| M9 | T08 授权、T09 请求链、T10 限流 | ✅ 已完成 |
+| M10 | T11 审计、T12 文档与诊断、安全测试与验收 | ✅ 已完成 |
+
+M6 交付：`app/server.py`（端口探测、`SERVER_PORT_IN_USE`、uvicorn 监听封装）、
+`app/api/version.py` 与 `app/api/router.py`（`/api/v1` 汇总、路由/operationId/元数据校验）、
+`app/api/system.py`（`/system/info`、`/system/status`）、`api/system.schema.json` 与 3 个契约样例、
+`/api/v1/health*` 别名与根路径兼容、统一 404/405/422 错误输出、`docs/03-development/api.md`；
+新增 23 个测试（合计 199 passed），ruff 与 `check_all` 通过。
+
+评审确认项：设计文档 §8（E2-Q1…Q7，客户端凭证下发、Token/Refresh 策略、限流存储、
+审计失败策略、`/health` 兼容、项目授予权限）。
+
+M7 交付：`modules/client`（Client/Credential/AccessToken 实体、Repository、
+`ClientService` 与 `AuthService`）、`core/security/tokens.py`（前缀、哈希、HMAC、常量时间比较）、
+`infrastructure/security/{challenge,bootstrap,rate_limit}.py`、
+`POST /api/v1/clients`、`/auth/challenge`、`/auth/verify`、`/auth/refresh`、
+迁移 `000004_e2_clients_auth`（4 张表）、`api/client.schema.json` / `api/auth.schema.json`
+与 5 个契约样例、Godot 契约校验器同步；认证失败 10 次/分钟限流与 `Retry-After`，
+Token 过期/撤销与每小时清理任务；新增 35 个测试（合计 234 passed）。
+
+M8 交付：`modules/session`（`SessionModel`/Repository/`SessionService`，
+`CREATED → ACTIVE → (EXPIRED | REVOKED | CLOSED)` 状态机、`gds_` Token 摘要存储、
+TTL 与 `session_max_ttl` 双重限制）、`modules/access`（`ProjectAccessModel`/Repository/
+`ProjectAccessService`，Client + Session + Project 三重绑定）、
+`POST /api/v1/sessions`、`GET|DELETE /api/v1/sessions/current`、`/sessions/current/renew`、
+`POST /api/v1/projects/access`、`GET|DELETE /api/v1/projects/access/current`、
+迁移 `000005_e2_sessions_access`（2 张表）、`api/session.schema.json` /
+`api/project-access.schema.json` 与 5 个契约样例、Godot 契约校验器同步；
+新增 `SESSION_INVALID` / `SESSION_EXPIRED` / `SESSION_REVOKED` / `PROJECT_ACCESS_DENIED`；
+新增 20 个测试（合计 254 passed），ruff 与 `check_all` 通过。
+
+M9 交付：`core/security/principal.py`（Principal / Action / Resource）、
+`core/security/policy.py`（RBAC + ABAC + Capability 纯策略，未知 Action 默认 DENY）、
+`app/api/deps.py`（`require_authenticated` / `require_session` / `require_access_token` /
+`require_action` / `authorize_project_action` / `enforce_rate_limit`）、
+`app/middleware/{errors,size_limit,timeout}.py`（413 `REQUEST_TOO_LARGE`、504 `REQUEST_TIMEOUT`）、
+`infrastructure/security/rate_limit.py` 增加 `ConcurrencyLimiter`；
+所有受保护 `/api/v1` 路由在 Router 级挂载认证与限流依赖，`/system/status` 改为需认证，
+`/auth/refresh` 拆分到 `protected_router`；项目授予/撤销改由服务端访问记录判定角色；
+新增 `request_max_body_bytes` / `request_timeout_seconds` / `rate_limit_default_per_minute` /
+`rate_limit_max_concurrency` 配置与 429 `Retry-After`；
+新增 22 个测试（合计 276 passed），ruff 与 `check_all` 通过。
+
+M10 交付：`modules/audit`（`AuditEventModel` / Repository / `AuditService`；白名单 + 脱敏 details）、
+迁移 `000006_e2_audit_events`、`AUDIT_FAILED` 与 `audit_fail_closed`；
+注册/认证/Session/项目授予撤销/授权拒绝/诊断读取全部写入审计，
+敏感操作审计失败 fail-closed；`GET /api/v1/diagnostics/summary`（认证 + `diagnostics.read`）
+与 OpenAPI `bearerAuth` 安全方案；新增 23 个测试（合计 299 passed），
+输出 [E2 安全测试报告](e2-security-test-report.md)（12 项）与
+[E2 验收报告](e2-acceptance-report.md)（E2-D15）；ruff 与 `check_all` 通过。
+
+## 7. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
@@ -95,7 +191,7 @@
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 7. 维护规则
+## 8. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。

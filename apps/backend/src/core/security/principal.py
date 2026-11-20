@@ -1,0 +1,89 @@
+"""安全模型：Principal、Action 与 Resource（E2-T08）。
+
+本模块不依赖数据库与基础设施，只描述授权决策的输入。
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+ROLE_ADMIN = "admin"
+ROLE_OWNER = "owner"
+ROLE_EDITOR = "editor"
+ROLE_VIEWER = "viewer"
+ROLE_CLIENT = "client"
+
+ACTION_SYSTEM_READ = "system.read"
+ACTION_CLIENT_REGISTER = "client.register"
+ACTION_CLIENT_READ = "client.read"
+ACTION_SESSION_CREATE = "session.create"
+ACTION_SESSION_READ = "session.read"
+ACTION_SESSION_REVOKE = "session.revoke"
+ACTION_PROJECT_ACCESS_READ = "project.access.read"
+ACTION_PROJECT_ACCESS_GRANT = "project.access.grant"
+ACTION_PROJECT_ACCESS_REVOKE = "project.access.revoke"
+ACTION_DIAGNOSTICS_READ = "diagnostics.read"
+ACTION_BRIDGE_READ = "bridge.read"
+ACTION_BRIDGE_WRITE = "bridge.write"
+ACTION_E4_PROJECT_READ = "project.read"
+ACTION_E4_PROJECT_MANAGE = "project.manage"
+ACTION_E4_TASK_READ = "task.read"
+ACTION_E4_TASK_MANAGE = "task.manage"
+ACTION_E4_WORKFLOW_READ = "workflow.read"
+ACTION_E4_WORKFLOW_MANAGE = "workflow.manage"
+ACTION_E4_CHANGESET_READ = "changeset.read"
+ACTION_E4_CHANGESET_MANAGE = "changeset.manage"
+ACTION_E4_CHANGESET_APPROVE = "changeset.approve"
+ACTION_E4_APPROVAL_READ = "approval.read"
+ACTION_E4_APPROVAL_DECIDE = "approval.decide"
+
+E4_PROJECT_ACTIONS = frozenset(
+    {
+        ACTION_E4_PROJECT_READ,
+        ACTION_E4_PROJECT_MANAGE,
+        ACTION_E4_TASK_READ,
+        ACTION_E4_TASK_MANAGE,
+        ACTION_E4_WORKFLOW_READ,
+        ACTION_E4_WORKFLOW_MANAGE,
+        ACTION_E4_CHANGESET_READ,
+        ACTION_E4_CHANGESET_MANAGE,
+        ACTION_E4_CHANGESET_APPROVE,
+        ACTION_E4_APPROVAL_READ,
+        ACTION_E4_APPROVAL_DECIDE,
+    }
+)
+
+ACTIONS = frozenset(
+    {
+        ACTION_SYSTEM_READ,
+        ACTION_CLIENT_REGISTER,
+        ACTION_CLIENT_READ,
+        ACTION_SESSION_CREATE,
+        ACTION_SESSION_READ,
+        ACTION_SESSION_REVOKE,
+        ACTION_PROJECT_ACCESS_READ,
+        ACTION_PROJECT_ACCESS_GRANT,
+        ACTION_PROJECT_ACCESS_REVOKE,
+        ACTION_DIAGNOSTICS_READ,
+        ACTION_BRIDGE_READ,
+        ACTION_BRIDGE_WRITE,
+    }
+    | E4_PROJECT_ACTIONS
+)
+
+
+@dataclass(frozen=True)
+class Principal:
+    """已认证主体。``role`` 为 admin 时全局生效，其余角色只作用于 project_id。"""
+
+    client_id: str
+    client_type: str
+    session_id: str | None = None
+    role: str = ROLE_CLIENT
+    project_id: str | None = None
+
+
+@dataclass(frozen=True)
+class Resource:
+    kind: str
+    project_id: str | None = None

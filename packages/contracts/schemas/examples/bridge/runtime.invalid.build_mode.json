@@ -1,0 +1,10 @@
+{
+  "runtime_instance_id": "rti_0123456789ab",
+  "project_root": "res://",
+  "project_fingerprint": "fp_0123456789abcdef0123",
+  "process_id": 4242,
+  "started_at": "2026-11-18T09:00:00Z",
+  "godot_version": "4.5.1",
+  "build_mode": "editor",
+  "status": "RUNNING"
+}

@@ -1,0 +1,14 @@
+{
+  "editor_status": "READY",
+  "project_status": "READY",
+  "active_scene": "res://scenes/main.tscn",
+  "current_selection": ["/root/Main/Player"],
+  "unsaved_resources": [
+    {
+      "path": "res://scenes/main.tscn",
+      "resource_type": "PackedScene"
+    }
+  ],
+  "run_status": "STOPPED",
+  "import_status": "IDLE"
+}

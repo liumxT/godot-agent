@@ -66,6 +66,168 @@
       "schema": "errors/error.schema.json",
       "file": "examples/error.invalid.bad_code.json",
       "valid": false
+    },
+    {
+      "id": "system.info.valid",
+      "schema": "api/system.schema.json",
+      "file": "examples/system.info.valid.json",
+      "valid": true
+    },
+    {
+      "id": "system.status.valid",
+      "schema": "api/system.schema.json",
+      "file": "examples/system.status.valid.json",
+      "valid": true
+    },
+    {
+      "id": "system.info.invalid.missing_api_version",
+      "schema": "api/system.schema.json",
+      "file": "examples/system.info.invalid.missing_api_version.json",
+      "valid": false
+    },
+    {
+      "id": "client.register.valid",
+      "schema": "api/client.schema.json",
+      "file": "examples/client.register.valid.json",
+      "valid": true
+    },
+    {
+      "id": "client.register.invalid.missing_secret",
+      "schema": "api/client.schema.json",
+      "file": "examples/client.register.invalid.missing_secret.json",
+      "valid": false
+    },
+    {
+      "id": "auth.challenge.valid",
+      "schema": "api/auth.schema.json",
+      "file": "examples/auth.challenge.valid.json",
+      "valid": true
+    },
+    {
+      "id": "auth.token.valid",
+      "schema": "api/auth.schema.json",
+      "file": "examples/auth.token.valid.json",
+      "valid": true
+    },
+    {
+      "id": "auth.token.invalid.missing_expires_at",
+      "schema": "api/auth.schema.json",
+      "file": "examples/auth.token.invalid.missing_expires_at.json",
+      "valid": false
+    },
+    {
+      "id": "session.valid",
+      "schema": "api/session.schema.json",
+      "file": "examples/session.valid.json",
+      "valid": true
+    },
+    {
+      "id": "session.issued.valid",
+      "schema": "api/session.schema.json",
+      "file": "examples/session.issued.valid.json",
+      "valid": true
+    },
+    {
+      "id": "session.invalid.missing_expires_at",
+      "schema": "api/session.schema.json",
+      "file": "examples/session.invalid.missing_expires_at.json",
+      "valid": false
+    },
+    {
+      "id": "project-access.valid",
+      "schema": "api/project-access.schema.json",
+      "file": "examples/project-access.valid.json",
+      "valid": true
+    },
+    {
+      "id": "project-access.invalid.bad_level",
+      "schema": "api/project-access.schema.json",
+      "file": "examples/project-access.invalid.bad_level.json",
+      "valid": false
+    },
+    {
+      "id": "bridge.control.valid",
+      "schema": "bridge/control.schema.json",
+      "file": "examples/bridge/control.valid.json",
+      "valid": true
+    },
+    {
+      "id": "bridge.control.invalid.unknown_type",
+      "schema": "bridge/control.schema.json",
+      "file": "examples/bridge/control.invalid.unknown_type.json",
+      "valid": false
+    },
+    {
+      "id": "bridge.session-created.valid",
+      "schema": "bridge/session-created.schema.json",
+      "file": "examples/bridge/session-created.valid.json",
+      "valid": true
+    },
+    {
+      "id": "bridge.session-created.invalid.missing_lease",
+      "schema": "bridge/session-created.schema.json",
+      "file": "examples/bridge/session-created.invalid.missing_lease.json",
+      "valid": false
+    },
+    {
+      "id": "bridge.lease.valid",
+      "schema": "bridge/lease.schema.json",
+      "file": "examples/bridge/lease.valid.json",
+      "valid": true
+    },
+    {
+      "id": "bridge.lease.invalid.fencing_token",
+      "schema": "bridge/lease.schema.json",
+      "file": "examples/bridge/lease.invalid.fencing_token.json",
+      "valid": false
+    },
+    {
+      "id": "bridge.session-binding.valid",
+      "schema": "bridge/session-binding.schema.json",
+      "file": "examples/bridge/session-binding.valid.json",
+      "valid": true
+    },
+    {
+      "id": "bridge.session-binding.invalid.status",
+      "schema": "bridge/session-binding.schema.json",
+      "file": "examples/bridge/session-binding.invalid.status.json",
+      "valid": false
+    },
+    {
+      "id": "bridge.editor-state.valid",
+      "schema": "bridge/editor-state.schema.json",
+      "file": "examples/bridge/editor-state.valid.json",
+      "valid": true
+    },
+    {
+      "id": "bridge.editor-state.invalid.run_status",
+      "schema": "bridge/editor-state.schema.json",
+      "file": "examples/bridge/editor-state.invalid.run_status.json",
+      "valid": false
+    },
+    {
+      "id": "bridge.snapshot.valid",
+      "schema": "bridge/snapshot.schema.json",
+      "file": "examples/bridge/snapshot.valid.json",
+      "valid": true
+    },
+    {
+      "id": "bridge.snapshot.invalid.sequence",
+      "schema": "bridge/snapshot.schema.json",
+      "file": "examples/bridge/snapshot.invalid.sequence.json",
+      "valid": false
+    },
+    {
+      "id": "bridge.runtime.valid",
+      "schema": "bridge/runtime.schema.json",
+      "file": "examples/bridge/runtime.valid.json",
+      "valid": true
+    },
+    {
+      "id": "bridge.runtime.invalid.build_mode",
+      "schema": "bridge/runtime.schema.json",
+      "file": "examples/bridge/runtime.invalid.build_mode.json",
+      "valid": false
     }
   ]
 }

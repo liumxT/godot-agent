@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.godot-ai.local/api/session.schema.json",
+  "title": "Session Response",
+  "description": "POST /api/v1/sessions 返回会话与一次性 Session Token；其余接口返回会话视图。",
+  "$defs": {
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id",
+        "client_id",
+        "status",
+        "created_at",
+        "last_seen_at",
+        "expires_at",
+        "revoked_at",
+        "closed_at"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "pattern": "^ses_[a-z0-9]{12}$"
+        },
+        "client_id": {
+          "type": "string",
+          "pattern": "^cli_[a-z0-9]{12}$"
+        },
+        "status": {
+          "enum": ["ACTIVE", "EXPIRED", "REVOKED", "CLOSED"]
+        },
+        "created_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+        },
+        "last_seen_at": {
+          "type": ["string", "null"],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+        },
+        "expires_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+        },
+        "revoked_at": {
+          "type": ["string", "null"],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+        },
+        "closed_at": {
+          "type": ["string", "null"],
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+        }
+      }
+    },
+    "issued": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_token", "token_type", "expires_at", "session"],
+      "properties": {
+        "session_token": {
+          "type": "string",
+          "pattern": "^gds_[A-Za-z0-9_-]{43}$"
+        },
+        "token_type": {
+          "const": "Bearer"
+        },
+        "expires_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,6})?(Z|[+-]\\d{2}:\\d{2})$"
+        },
+        "session": {
+          "$ref": "#/$defs/session"
+        }
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/issued" },
+    { "$ref": "#/$defs/session" }
+  ]
+}
