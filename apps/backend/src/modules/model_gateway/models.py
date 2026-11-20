@@ -93,6 +93,7 @@ REQUEST_SUCCEEDED = "SUCCEEDED"
 REQUEST_FAILED = "FAILED"
 REQUEST_TIMEOUT = "TIMEOUT"
 REQUEST_UNKNOWN = "UNKNOWN"
+REQUEST_CANCELLED = "CANCELLED"
 REQUEST_STATUSES = frozenset(
     {
         REQUEST_CREATED,
@@ -104,6 +105,7 @@ REQUEST_STATUSES = frozenset(
         REQUEST_FAILED,
         REQUEST_TIMEOUT,
         REQUEST_UNKNOWN,
+        REQUEST_CANCELLED,
     }
 )
 
@@ -235,6 +237,7 @@ class ModelRequestModel(Base):
     task_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     attempt_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     agent_instance_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    workflow_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     provider_id: Mapped[str] = mapped_column(
         String(64), ForeignKey("model_providers.provider_id"), nullable=False
     )
@@ -274,4 +277,111 @@ class ModelResponseModel(Base):
 
     __table_args__ = (
         UniqueConstraint("request_id", name="uq_model_responses_request"),
+    )
+
+
+class ModelUsageRecordModel(Base):
+    """Token 使用记录（E5-T11）；维度字段冗余保存以便直接聚合。"""
+
+    __tablename__ = "model_usage_records"
+
+    usage_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    request_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("model_requests.request_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    project_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    attempt_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    agent_instance_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    provider_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cached_input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reasoning_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    usage_source: Mapped[str] = mapped_column(String(16), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("request_id", name="uq_model_usage_records_request"),
+        Index("ix_model_usage_records_project", "project_id", "recorded_at"),
+        Index("ix_model_usage_records_model", "model_id", "recorded_at"),
+    )
+
+
+class ModelCostRecordModel(Base):
+    """费用记录（E5-T12）；与价格版本绑定，缺少价格时标记 UNAVAILABLE。"""
+
+    __tablename__ = "model_cost_records"
+
+    cost_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    request_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("model_requests.request_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    project_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    attempt_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    agent_instance_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    provider_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    output_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    cached_input_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    additional_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
+    provider_reported_cost: Mapped[Decimal | None] = mapped_column(
+        Numeric(18, 6), nullable=True
+    )
+    currency: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    pricing_version_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    calculation_status: Mapped[str] = mapped_column(String(16), nullable=False)
+    calculated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("request_id", name="uq_model_cost_records_request"),
+        Index("ix_model_cost_records_project", "project_id", "calculated_at"),
+        Index("ix_model_cost_records_model", "model_id", "calculated_at"),
+    )
+
+
+class ModelCallAuditModel(Base):
+    """调用审计（E5-T13）；默认不保存 Prompt 与模型原始输出。"""
+
+    __tablename__ = "model_call_audits"
+
+    audit_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    request_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("model_requests.request_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    project_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    task_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    attempt_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    agent_instance_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    provider_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    error_category: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    responded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    usage_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    cost_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    request_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    response_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("request_id", name="uq_model_call_audits_request"),
+        Index("ix_model_call_audits_project", "project_id", "requested_at"),
+        Index("ix_model_call_audits_model", "model_id", "requested_at"),
     )

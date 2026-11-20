@@ -312,6 +312,18 @@
       "retryable": false,
       "http_status": 409,
       "description": "同一 Provider 下的模型键已登记。"
+    },
+    {
+      "code": "MODEL_CALL_FAILED",
+      "retryable": false,
+      "http_status": 502,
+      "description": "模型 Provider 调用失败，需按错误分类决定后续处理。"
+    },
+    {
+      "code": "MODEL_REQUEST_UNKNOWN",
+      "retryable": false,
+      "http_status": 409,
+      "description": "模型请求已发送但结果未知，不能直接按失败重试。"
     }
   ]
 }

@@ -1,8 +1,5 @@
 """模型 Provider 适配层（E5-T02 / T03）。
 
 外部 Provider 只通过本层接入；业务模块不得直接依赖厂商 SDK 或响应结构。
+为避免 ``schemas`` 与适配器循环导入，本包不做聚合导出，请按具体模块导入。
 """
-
-from modules.model_gateway.providers.registry import AdapterRegistry, default_adapter_registry
-
-__all__ = ["AdapterRegistry", "default_adapter_registry"]

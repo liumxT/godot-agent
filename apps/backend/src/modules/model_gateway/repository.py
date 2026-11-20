@@ -3,17 +3,21 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from infrastructure.database.repository import BaseRepository, Page
 from modules.model_gateway.models import (
+    ModelCallAuditModel,
     ModelCapabilityModel,
+    ModelCostRecordModel,
     ModelModel,
     ModelPriceVersionModel,
     ModelProviderModel,
     ModelRequestModel,
     ModelResponseModel,
+    ModelUsageRecordModel,
     ProviderConfigurationModel,
 )
 
@@ -138,6 +142,84 @@ class ModelPriceVersionRepository(BaseRepository[ModelPriceVersionModel]):
             .order_by(ModelPriceVersionModel.effective_at)
         )
         return list(rows.all())
+
+
+class ModelUsageRecordRepository(BaseRepository[ModelUsageRecordModel]):
+    model = ModelUsageRecordModel
+
+    async def get_by_request(self, request_id: str) -> ModelUsageRecordModel | None:
+        return await self.session.scalar(
+            select(ModelUsageRecordModel).where(
+                ModelUsageRecordModel.request_id == request_id
+            )
+        )
+
+    async def totals(self, project_id: str) -> tuple[int, int, int]:
+        row = (
+            await self.session.execute(
+                select(
+                    func.coalesce(func.sum(ModelUsageRecordModel.input_tokens), 0),
+                    func.coalesce(func.sum(ModelUsageRecordModel.output_tokens), 0),
+                    func.coalesce(func.sum(ModelUsageRecordModel.total_tokens), 0),
+                ).where(ModelUsageRecordModel.project_id == project_id)
+            )
+        ).one()
+        return int(row[0]), int(row[1]), int(row[2])
+
+    async def totals_by_model(
+        self, project_id: str
+    ) -> list[tuple[str, int, int, int]]:
+        rows = await self.session.execute(
+            select(
+                ModelUsageRecordModel.model_id,
+                func.coalesce(func.sum(ModelUsageRecordModel.input_tokens), 0),
+                func.coalesce(func.sum(ModelUsageRecordModel.output_tokens), 0),
+                func.coalesce(func.sum(ModelUsageRecordModel.total_tokens), 0),
+            )
+            .where(ModelUsageRecordModel.project_id == project_id)
+            .group_by(ModelUsageRecordModel.model_id)
+        )
+        return [(str(row[0]), int(row[1]), int(row[2]), int(row[3])) for row in rows]
+
+
+class ModelCostRecordRepository(BaseRepository[ModelCostRecordModel]):
+    model = ModelCostRecordModel
+
+    async def get_by_request(self, request_id: str) -> ModelCostRecordModel | None:
+        return await self.session.scalar(
+            select(ModelCostRecordModel).where(ModelCostRecordModel.request_id == request_id)
+        )
+
+    async def totals(self, project_id: str) -> tuple[Decimal, Decimal]:
+        row = (
+            await self.session.execute(
+                select(
+                    func.coalesce(func.sum(ModelCostRecordModel.input_cost), 0),
+                    func.coalesce(func.sum(ModelCostRecordModel.output_cost), 0),
+                ).where(ModelCostRecordModel.project_id == project_id)
+            )
+        ).one()
+        return Decimal(str(row[0])), Decimal(str(row[1]))
+
+    async def currencies(self, project_id: str) -> list[str]:
+        rows = await self.session.scalars(
+            select(ModelCostRecordModel.currency)
+            .where(
+                ModelCostRecordModel.project_id == project_id,
+                ModelCostRecordModel.currency.is_not(None),
+            )
+            .distinct()
+        )
+        return [str(item) for item in rows.all() if item is not None]
+
+
+class ModelCallAuditRepository(BaseRepository[ModelCallAuditModel]):
+    model = ModelCallAuditModel
+
+    async def get_by_request(self, request_id: str) -> ModelCallAuditModel | None:
+        return await self.session.scalar(
+            select(ModelCallAuditModel).where(ModelCallAuditModel.request_id == request_id)
+        )
 
 
 class ModelRequestRepository(BaseRepository[ModelRequestModel]):

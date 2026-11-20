@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+import httpx
+
 from core.errors import ProviderConfigurationInvalid, StartupError
 from modules.model_gateway.models import (
     PROVIDER_TYPE_ANTHROPIC,
@@ -55,6 +57,7 @@ class AdapterRegistry:
         api_key: str | None = None,
         timeout_seconds: int | None = None,
         models: tuple[ProviderModelDeclaration, ...] = (),
+        transport: httpx.AsyncBaseTransport | None = None,
     ) -> BaseProviderAdapter:
         factory = self._factories.get(provider_type)
         if factory is None:
@@ -69,6 +72,8 @@ class AdapterRegistry:
         }
         if timeout_seconds is not None:
             kwargs["timeout_seconds"] = timeout_seconds
+        if transport is not None:
+            kwargs["transport"] = transport
         return factory(**kwargs)
 
 

@@ -307,6 +307,20 @@ class ModelAlreadyRegistered(AppError):
     status_code = 409
 
 
+class ModelCallFailed(AppError):
+    """E5：Provider 调用失败；``details`` 中给出分类与请求 ID。"""
+
+    code = "MODEL_CALL_FAILED"
+    status_code = 502
+
+
+class ModelRequestUnknown(AppError):
+    """E5：请求已发送但结果未知，不能按失败直接重试。"""
+
+    code = "MODEL_REQUEST_UNKNOWN"
+    status_code = 409
+
+
 class RequestTooLarge(AppError):
     """请求体超过大小限制。"""
 

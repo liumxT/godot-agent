@@ -9,10 +9,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import json
+from collections.abc import AsyncIterator, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 from urllib.parse import urlsplit
+
+import httpx
 
 from core.errors import AppError, ProviderConfigurationInvalid, ProviderNotConfigured
 from modules.model_gateway.models import (
@@ -21,8 +24,15 @@ from modules.model_gateway.models import (
     CAPABILITY_UNKNOWN,
 )
 from modules.model_gateway.providers.errors import (
+    RETRYABLE_CATEGORIES,
     ProviderErrorCategory,
     ProviderErrorInfo,
+)
+from modules.model_gateway.schemas import (
+    ModelInvocationRequest,
+    ModelUsage,
+    StreamEvent,
+    ToolCall,
 )
 
 DEFAULT_TIMEOUT_SECONDS = 60
@@ -74,6 +84,24 @@ class ProviderHealth:
     detail: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class ProviderGenerationResult:
+    content: str | None
+    tool_calls: tuple[ToolCall, ...]
+    finish_reason: str
+    usage: ModelUsage | None
+    provider_request_id: str | None
+
+
+class ProviderCallFailure(Exception):
+    """Provider 调用失败；``sent`` 表示请求是否可能已被 Provider 接收。"""
+
+    def __init__(self, info: ProviderErrorInfo, *, sent: bool) -> None:
+        super().__init__(info.message)
+        self.info = info
+        self.sent = sent
+
+
 class ModelProviderAdapter(Protocol):
     """所有 Provider 适配器必须实现的稳定接口。"""
 
@@ -91,6 +119,12 @@ class ModelProviderAdapter(Protocol):
 
     def normalize_usage(self, usage: Mapping[str, Any]) -> dict[str, int]: ...
 
+    async def generate(self, request: ModelInvocationRequest) -> ProviderGenerationResult: ...
+
+    def generate_stream(
+        self, request: ModelInvocationRequest
+    ) -> AsyncIterator[StreamEvent]: ...
+
 
 class BaseProviderAdapter:
     """通用实现：负责配置校验、能力默认值与错误标准化。"""
@@ -107,6 +141,7 @@ class BaseProviderAdapter:
         api_key: str | None = None,
         timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
         models: tuple[ProviderModelDeclaration, ...] = (),
+        transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         if not self.provider_type:
             raise ProviderConfigurationInvalid("适配器缺少 provider_type 声明")
@@ -115,6 +150,7 @@ class BaseProviderAdapter:
         self._api_key = api_key
         self._timeout_seconds = timeout_seconds
         self._models = {model.model_key: model for model in models}
+        self._transport = transport
 
     def get_provider_info(self) -> ProviderInfo:
         return ProviderInfo(
@@ -196,6 +232,56 @@ class BaseProviderAdapter:
                 normalized[key] = value
         return normalized
 
+    async def generate(self, request: ModelInvocationRequest) -> ProviderGenerationResult:
+        raise NotImplementedError("Provider 适配器未实现非流式生成")
+
+    async def generate_stream(
+        self, request: ModelInvocationRequest
+    ) -> AsyncIterator[StreamEvent]:
+        raise NotImplementedError("Provider 适配器未实现流式生成")
+        yield  # pragma: no cover - 使函数成为异步生成器
+
+    def _client(self) -> httpx.AsyncClient:
+        return httpx.AsyncClient(
+            timeout=self._timeout_seconds,
+            transport=self._transport,
+            follow_redirects=False,
+        )
+
+    def _failure_from_response(self, response: httpx.Response) -> ProviderCallFailure:
+        category = _category_for_status(response.status_code)
+        provider_code, message = _response_error_detail(response)
+        return ProviderCallFailure(
+            ProviderErrorInfo(
+                category=category,
+                message=message or f"Provider 返回 HTTP {response.status_code}",
+                retryable=category in RETRYABLE_CATEGORIES,
+                provider_code=provider_code,
+                http_status=response.status_code,
+            ),
+            sent=True,
+        )
+
+    def _failure_from_exception(self, error: Exception) -> ProviderCallFailure:
+        if isinstance(error, httpx.ConnectError):
+            category, sent = ProviderErrorCategory.NETWORK_ERROR, False
+        elif isinstance(error, httpx.ConnectTimeout):
+            category, sent = ProviderErrorCategory.TIMEOUT, False
+        elif isinstance(error, httpx.TimeoutException):
+            category, sent = ProviderErrorCategory.TIMEOUT, True
+        elif isinstance(error, httpx.HTTPError):
+            category, sent = ProviderErrorCategory.NETWORK_ERROR, True
+        else:
+            category, sent = ProviderErrorCategory.UNKNOWN_RESULT, True
+        return ProviderCallFailure(
+            ProviderErrorInfo(
+                category=category,
+                message=str(error) or type(error).__name__,
+                retryable=category in RETRYABLE_CATEGORIES,
+            ),
+            sent=sent,
+        )
+
 
 _USAGE_FIELDS = (
     "input_tokens",
@@ -205,6 +291,95 @@ _USAGE_FIELDS = (
     "total_tokens",
 )
 _RETRYABLE_VALUES = frozenset({"RATE_LIMIT", "PROVIDER_UNAVAILABLE", "NETWORK_ERROR", "TIMEOUT"})
+
+
+class ToolCallAccumulator:
+    """聚合流式工具调用；只有完整 JSON 才能构造 :class:`ToolCall`。"""
+
+    def __init__(self) -> None:
+        self._entries: dict[int, dict[str, str]] = {}
+
+    def add(
+        self,
+        index: int,
+        *,
+        call_id: str | None = None,
+        name: str | None = None,
+        arguments_delta: str | None = None,
+    ) -> None:
+        entry = self._entries.setdefault(index, {"call_id": "", "name": "", "arguments": ""})
+        if call_id:
+            entry["call_id"] = call_id
+        if name:
+            entry["name"] = name
+        if arguments_delta:
+            entry["arguments"] += arguments_delta
+
+    def add_complete(self, call_id: str, name: str, arguments_json: str) -> None:
+        self._entries[len(self._entries)] = {
+            "call_id": call_id,
+            "name": name,
+            "arguments": arguments_json,
+        }
+
+    def build(self) -> tuple[ToolCall, ...]:
+        calls: list[ToolCall] = []
+        for index in sorted(self._entries):
+            entry = self._entries[index]
+            if not entry["call_id"] or not entry["name"]:
+                raise _invalid_tool_call("工具调用缺少标识或名称")
+            raw = entry["arguments"] or "{}"
+            try:
+                arguments = json.loads(raw)
+            except json.JSONDecodeError as exc:
+                raise _invalid_tool_call("工具调用参数不是合法 JSON") from exc
+            if not isinstance(arguments, dict):
+                raise _invalid_tool_call("工具调用参数必须是 JSON 对象")
+            calls.append(
+                ToolCall(call_id=entry["call_id"], name=entry["name"], arguments=arguments)
+            )
+        return tuple(calls)
+
+
+def _invalid_tool_call(message: str) -> ProviderCallFailure:
+    return ProviderCallFailure(
+        ProviderErrorInfo(
+            category=ProviderErrorCategory.INVALID_REQUEST,
+            message=message,
+            retryable=False,
+        ),
+        sent=True,
+    )
+
+
+def _category_for_status(status_code: int) -> ProviderErrorCategory:
+    if status_code in (401, 403):
+        return ProviderErrorCategory.AUTH_ERROR
+    if status_code == 429:
+        return ProviderErrorCategory.RATE_LIMIT
+    if status_code >= 500:
+        return ProviderErrorCategory.PROVIDER_UNAVAILABLE
+    return ProviderErrorCategory.INVALID_REQUEST
+
+
+def _response_error_detail(response: httpx.Response) -> tuple[str | None, str | None]:
+    try:
+        data = response.json()
+    except ValueError:
+        return None, None
+    if not isinstance(data, Mapping):
+        return None, None
+    error = data.get("error")
+    if isinstance(error, Mapping):
+        code = error.get("code") or error.get("type")
+        message = error.get("message")
+        return (
+            str(code) if code is not None else None,
+            str(message) if message is not None else None,
+        )
+    if isinstance(error, str):
+        return None, error
+    return None, None
 
 
 def _category_for(error: BaseException) -> ProviderErrorCategory:

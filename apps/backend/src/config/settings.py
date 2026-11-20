@@ -112,6 +112,10 @@ class Settings(BaseSettings):
 
     # E5 Model Gateway：Provider 配置未显式指定超时时的默认值
     model_gateway_default_timeout_seconds: int = Field(default=60, ge=1, le=600)
+    # E5 模型调用：失败重试次数（不含首次）、重试退避与请求体上限
+    model_gateway_max_retries: int = Field(default=2, ge=0, le=5)
+    model_gateway_retry_backoff_seconds: float = Field(default=0.5, ge=0, le=10)
+    model_gateway_max_request_bytes: int = Field(default=2 * 1024 * 1024, ge=1024)
 
     @field_validator("host")
     @classmethod
