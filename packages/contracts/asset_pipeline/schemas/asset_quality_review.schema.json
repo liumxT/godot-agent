@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset_quality_review.schema.json",
+  "title": "AssetQualityReview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["review_id", "asset_version_id", "review_type", "review_status", "created_at"],
+  "properties": {
+    "review_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "asset_version_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "review_type": {"enum": ["MACHINE", "HUMAN"]},
+    "machine_result": {"type": ["object", "null"]},
+    "human_result": {"type": ["object", "null"]},
+    "review_status": {
+      "enum": [
+        "QC_PENDING",
+        "MACHINE_PASSED",
+        "MACHINE_FAILED",
+        "HUMAN_REVIEW_REQUIRED",
+        "HUMAN_APPROVED",
+        "HUMAN_REJECTED"
+      ]
+    },
+    "evidence": {"type": "object"},
+    "reviewer_id": {"type": ["string", "null"], "maxLength": 64},
+    "notes": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset_provenance.schema.json",
+  "title": "AssetProvenance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["provenance_id", "asset_version_id", "source_type", "created_at"],
+  "properties": {
+    "provenance_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "asset_version_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "source_type": {
+      "enum": [
+        "USER_CREATED",
+        "USER_UPLOADED",
+        "AI_GENERATED",
+        "EXTERNAL_PURCHASED",
+        "OPEN_SOURCE",
+        "PUBLIC_DOMAIN",
+        "PROJECT_DERIVED",
+        "PROCEDURAL_GENERATED",
+        "UNKNOWN_SOURCE"
+      ]
+    },
+    "provider_id": {"type": ["string", "null"], "maxLength": 64},
+    "model_id": {"type": ["string", "null"], "maxLength": 128},
+    "model_version": {"type": ["string", "null"], "maxLength": 64},
+    "generation_id": {"type": ["string", "null"], "maxLength": 64},
+    "request_reference": {"type": ["string", "null"], "maxLength": 512},
+    "prompt_version_id": {"type": ["string", "null"], "maxLength": 64},
+    "seed": {"type": ["string", "null"], "maxLength": 128},
+    "input_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
+    "output_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
+    "processing_graph": {"type": ["object", "null"]},
+    "processor_versions": {"type": "array", "items": {"type": "string"}},
+    "operator_agent_id": {"type": ["string", "null"], "maxLength": 64},
+    "operator_user_id": {"type": ["string", "null"], "maxLength": 64},
+    "license_reference": {"type": ["string", "null"], "maxLength": 128},
+    "external_source_reference": {"type": ["string", "null"], "maxLength": 512},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

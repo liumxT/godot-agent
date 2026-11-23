@@ -13,6 +13,10 @@ from core.security.principal import (
     ACTION_E4_APPROVAL_DECIDE,
     ACTION_E4_CHANGESET_APPROVE,
     ACTION_E5_MODEL_MANAGE,
+    ACTION_E8_ASSET_APPROVE,
+    ACTION_E8_ASSET_ARCHIVE,
+    ACTION_E8_ASSET_DELIVER,
+    ACTION_E8_ASSET_ROLLBACK,
     ACTION_PROJECT_ACCESS_GRANT,
     ACTION_PROJECT_ACCESS_READ,
     ACTION_PROJECT_ACCESS_REVOKE,
@@ -21,6 +25,7 @@ from core.security.principal import (
     E5_PROJECT_ACTIONS,
     E6_PROJECT_ACTIONS,
     E7_PROJECT_ACTIONS,
+    E8_PROJECT_ACTIONS,
     ROLE_ADMIN,
     ROLE_EDITOR,
     ROLE_OWNER,
@@ -48,6 +53,7 @@ _PROJECT_ACTIONS = frozenset(
     | E5_PROJECT_ACTIONS
     | E6_PROJECT_ACTIONS
     | E7_PROJECT_ACTIONS
+    | E8_PROJECT_ACTIONS
 )
 _PROJECT_READ_ROLES = frozenset({ROLE_OWNER, ROLE_EDITOR, ROLE_VIEWER})
 _PROJECT_MANAGE_ROLES = frozenset({ROLE_OWNER})
@@ -55,9 +61,21 @@ _PROJECT_EDIT_ROLES = frozenset({ROLE_OWNER, ROLE_EDITOR})
 _PROJECT_READ_ACTIONS = frozenset(
     action
     for action in (
-        E4_PROJECT_ACTIONS | E5_PROJECT_ACTIONS | E6_PROJECT_ACTIONS | E7_PROJECT_ACTIONS
+        E4_PROJECT_ACTIONS
+        | E5_PROJECT_ACTIONS
+        | E6_PROJECT_ACTIONS
+        | E7_PROJECT_ACTIONS
+        | E8_PROJECT_ACTIONS
     )
     if action.endswith(".read")
+)
+_E8_OWNER_ONLY_ACTIONS = frozenset(
+    {
+        ACTION_E8_ASSET_APPROVE,
+        ACTION_E8_ASSET_DELIVER,
+        ACTION_E8_ASSET_ROLLBACK,
+        ACTION_E8_ASSET_ARCHIVE,
+    }
 )
 
 
@@ -133,6 +151,10 @@ def evaluate(
         if principal.role in _PROJECT_EDIT_ROLES:
             return _allow("abac.changeset.approve")
         return _deny(REASON_ROLE_DENIED, "rbac.changeset.approve")
+    if action in _E8_OWNER_ONLY_ACTIONS:
+        if principal.role in _PROJECT_MANAGE_ROLES:
+            return _allow("abac.asset.owner")
+        return _deny(REASON_ROLE_DENIED, "rbac.asset.owner")
     if principal.role in _PROJECT_EDIT_ROLES:
         if action.startswith("project."):
             if principal.role in _PROJECT_MANAGE_ROLES:

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset_import_job.schema.json",
+  "title": "AssetImportJob",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "import_job_id",
+    "project_id",
+    "asset_version_id",
+    "target_path",
+    "import_status",
+    "created_at"
+  ],
+  "properties": {
+    "import_job_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "asset_version_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "target_path": {"type": "string", "pattern": "^res://"},
+    "godot_resource_type": {"type": ["string", "null"], "maxLength": 64},
+    "import_status": {
+      "enum": ["NOT_IMPORTED", "IMPORT_REQUESTED", "IMPORTING", "IMPORTED", "FAILED", "UNKNOWN"]
+    },
+    "godot_uid": {"type": ["string", "null"], "maxLength": 128},
+    "import_evidence_id": {"type": ["string", "null"], "maxLength": 64},
+    "changeset_id": {"type": ["string", "null"], "maxLength": 64},
+    "created_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

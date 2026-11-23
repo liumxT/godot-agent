@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset_version.schema.json",
+  "title": "AssetVersion",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version_id",
+    "asset_id",
+    "version_number",
+    "content_hash",
+    "source_type",
+    "created_at"
+  ],
+  "properties": {
+    "version_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "asset_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "version_number": {"type": "integer", "minimum": 1},
+    "parent_version_id": {"type": ["string", "null"], "maxLength": 64},
+    "content_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "metadata": {"type": "object"},
+    "source_type": {
+      "enum": [
+        "USER_CREATED",
+        "USER_UPLOADED",
+        "AI_GENERATED",
+        "EXTERNAL_PURCHASED",
+        "OPEN_SOURCE",
+        "PUBLIC_DOMAIN",
+        "PROJECT_DERIVED",
+        "PROCEDURAL_GENERATED",
+        "UNKNOWN_SOURCE"
+      ]
+    },
+    "change_reason": {"type": ["string", "null"]},
+    "created_by": {"type": ["string", "null"], "maxLength": 64},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

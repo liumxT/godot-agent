@@ -44,6 +44,35 @@ ACTION_E6_AGENT_READ = "agent.read"
 ACTION_E6_AGENT_MANAGE = "agent.manage"
 ACTION_E7_MULTI_AGENT_READ = "multi_agent.read"
 ACTION_E7_MULTI_AGENT_MANAGE = "multi_agent.manage"
+ACTION_E8_ASSET_READ = "asset.read"
+ACTION_E8_ASSET_CREATE = "asset.create"
+ACTION_E8_ASSET_UPDATE = "asset.update_metadata"
+ACTION_E8_ASSET_GENERATE = "asset.generate"
+ACTION_E8_ASSET_PROCESS = "asset.process"
+ACTION_E8_ASSET_REVIEW_QUALITY = "asset.review.quality"
+ACTION_E8_ASSET_REVIEW_LICENSE = "asset.review.license"
+ACTION_E8_ASSET_APPROVE = "asset.approve"
+ACTION_E8_ASSET_IMPORT = "asset.import"
+ACTION_E8_ASSET_DELIVER = "asset.deliver"
+ACTION_E8_ASSET_ROLLBACK = "asset.rollback"
+ACTION_E8_ASSET_ARCHIVE = "asset.archive"
+
+E8_PROJECT_ACTIONS = frozenset(
+    {
+        ACTION_E8_ASSET_READ,
+        ACTION_E8_ASSET_CREATE,
+        ACTION_E8_ASSET_UPDATE,
+        ACTION_E8_ASSET_GENERATE,
+        ACTION_E8_ASSET_PROCESS,
+        ACTION_E8_ASSET_REVIEW_QUALITY,
+        ACTION_E8_ASSET_REVIEW_LICENSE,
+        ACTION_E8_ASSET_APPROVE,
+        ACTION_E8_ASSET_IMPORT,
+        ACTION_E8_ASSET_DELIVER,
+        ACTION_E8_ASSET_ROLLBACK,
+        ACTION_E8_ASSET_ARCHIVE,
+    }
+)
 
 E4_PROJECT_ACTIONS = frozenset(
     {
@@ -103,6 +132,7 @@ ACTIONS = frozenset(
     | E5_PROJECT_ACTIONS
     | E6_PROJECT_ACTIONS
     | E7_PROJECT_ACTIONS
+    | E8_PROJECT_ACTIONS
 )
 
 

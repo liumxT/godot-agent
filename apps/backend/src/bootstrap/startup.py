@@ -46,6 +46,8 @@ from modules.agent_runtime.service import DefinitionRegistryService
 from modules.agent_runtime.tool_binding import AgentToolBindingService
 from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
+from modules.asset_pipeline.service import AssetService
+from modules.asset_pipeline.storage import AssetStorage
 from modules.audit.service import AuditService
 from modules.bridge_event.service import BridgeEventService
 from modules.bridge_metrics import BridgeMetrics
@@ -761,6 +763,10 @@ def register_startup_steps(
         )
         if settings.environment != "test":
             await services.get("generic_agent_service", GenericAgentService).ensure()
+        services.register(
+            "asset_storage", AssetStorage(Path(settings.data_dir) / "assets")
+        )
+        services.register("asset_service", AssetService(database, events=bus))
         await dispatcher.start()
 
     async def _stop_events() -> None:

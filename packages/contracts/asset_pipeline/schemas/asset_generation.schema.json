@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset_generation.schema.json",
+  "title": "AssetGeneration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generation_id",
+    "asset_id",
+    "requested_spec",
+    "generation_status",
+    "idempotency_key",
+    "request_hash",
+    "created_at"
+  ],
+  "properties": {
+    "generation_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "asset_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "brief_id": {"type": ["string", "null"], "maxLength": 64},
+    "requested_spec": {"type": "object"},
+    "provider_id": {"type": ["string", "null"], "maxLength": 64},
+    "model_id": {"type": ["string", "null"], "maxLength": 128},
+    "provider_job_id": {"type": ["string", "null"], "maxLength": 128},
+    "generation_status": {
+      "enum": ["CREATED", "SUBMITTED", "RUNNING", "SUCCEEDED", "FAILED", "UNKNOWN", "CANCELLED"]
+    },
+    "result_version_id": {"type": ["string", "null"], "maxLength": 64},
+    "error_code": {"type": ["string", "null"], "maxLength": 64},
+    "idempotency_key": {"type": "string", "minLength": 1, "maxLength": 128},
+    "request_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "created_by": {"type": ["string", "null"], "maxLength": 64},
+    "created_at": {"type": "string", "format": "date-time"},
+    "submitted_at": {"type": ["string", "null"], "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

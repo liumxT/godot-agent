@@ -1,0 +1,19 @@
+{
+  "license_id": "lic_000000000001",
+  "asset_version_id": "asv_000000000002",
+  "license_name": "AI-Generated-Acceptable-Use",
+  "license_family": "provider_terms",
+  "source_type": "AI_GENERATED",
+  "source_reference": "https://example.invalid/terms",
+  "commercial_use": true,
+  "modification_allowed": true,
+  "redistribution_allowed": true,
+  "attribution_required": false,
+  "attribution_text": null,
+  "expiration_at": null,
+  "territory": "worldwide",
+  "evidence_reference": "evidence://license/001",
+  "verification_status": "VERIFIED",
+  "reviewer_id": "user:art_lead",
+  "reviewed_at": "2026-11-23T09:00:00Z"
+}

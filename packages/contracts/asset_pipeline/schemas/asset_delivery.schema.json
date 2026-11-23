@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset_delivery.schema.json",
+  "title": "AssetDelivery",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "delivery_id",
+    "asset_id",
+    "asset_version_id",
+    "project_id",
+    "delivery_status",
+    "created_at"
+  ],
+  "properties": {
+    "delivery_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "asset_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "asset_version_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "changeset_id": {"type": ["string", "null"], "maxLength": 64},
+    "approval_id": {"type": ["string", "null"], "maxLength": 64},
+    "import_job_id": {"type": ["string", "null"], "maxLength": 64},
+    "delivery_status": {
+      "enum": [
+        "DRAFT",
+        "READY",
+        "WAITING_APPROVAL",
+        "APPROVED",
+        "APPLYING",
+        "IMPORTING",
+        "VERIFYING",
+        "DELIVERED",
+        "FAILED",
+        "UNKNOWN",
+        "CANCELLED"
+      ]
+    },
+    "delivered_at": {"type": ["string", "null"], "format": "date-time"},
+    "created_by": {"type": ["string", "null"], "maxLength": 64},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

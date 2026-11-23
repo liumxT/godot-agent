@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset_processing_job.schema.json",
+  "title": "AssetProcessingJob",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "job_id",
+    "asset_id",
+    "input_version_id",
+    "processing_graph",
+    "processing_status",
+    "created_at"
+  ],
+  "properties": {
+    "job_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "asset_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "input_version_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "output_version_id": {"type": ["string", "null"], "maxLength": 64},
+    "processing_graph": {"type": "object"},
+    "processing_status": {"enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "UNKNOWN"]},
+    "execution_metadata": {"type": "object"},
+    "created_by": {"type": ["string", "null"], "maxLength": 64},
+    "created_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

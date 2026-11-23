@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset_brief.schema.json",
+  "title": "AssetBrief",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["brief_id", "project_id", "title", "asset_category", "status"],
+  "properties": {
+    "brief_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "task_id": {"type": ["string", "null"], "maxLength": 64},
+    "asset_id": {"type": ["string", "null"], "maxLength": 64},
+    "title": {"type": "string", "minLength": 1, "maxLength": 256},
+    "asset_category": {"enum": ["IMAGE", "AUDIO", "MODEL_3D", "RESOURCE"]},
+    "visual_direction": {"type": "string"},
+    "style_reference": {"type": "string"},
+    "technical_constraints": {"type": "object"},
+    "animation_requirements": {"type": "object"},
+    "delivery_requirements": {"type": "object"},
+    "license_requirements": {"type": "object"},
+    "acceptance_criteria": {"type": "array", "items": {"type": "string"}},
+    "status": {"enum": ["DRAFT", "PROPOSED", "APPROVED", "REJECTED", "SUPERSEDED"]},
+    "created_by": {"type": ["string", "null"], "maxLength": 64},
+    "version": {"type": "integer", "minimum": 1}
+  }
+}

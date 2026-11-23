@@ -1,0 +1,16 @@
+{
+  "asset_id": "ast_1a2b3c4d5e6f",
+  "project_id": "prj_platformer",
+  "name": "hero_idle",
+  "category": "IMAGE",
+  "asset_type": "CHARACTER",
+  "description": "Platformer 主角待机动画",
+  "tags": ["platformer", "hero", "idle"],
+  "current_version_id": "asv_000000000001",
+  "lifecycle_status": "ACTIVE",
+  "created_by": "agent:artist",
+  "version": 2,
+  "created_at": "2026-11-23T08:00:00Z",
+  "updated_at": "2026-11-23T08:05:00Z",
+  "deleted_at": null
+}

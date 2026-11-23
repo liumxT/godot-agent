@@ -649,6 +649,105 @@ class AgentOrchestrationUnauthorized(AppError):
     status_code = 403
 
 
+class AssetStateInvalid(AppError):
+    """E8：资产或资产生命周期不允许该状态迁移。"""
+
+    code = "ASSET_STATE_INVALID"
+    status_code = 409
+
+
+class AssetVersionImmutable(AppError):
+    """E8：已创建版本的内容不可修改。"""
+
+    code = "ASSET_VERSION_IMMUTABLE"
+    status_code = 409
+
+
+class AssetBriefInvalid(AppError):
+    """E8：Asset Brief 缺少必要规格或内容非法。"""
+
+    code = "ASSET_BRIEF_INVALID"
+    status_code = 422
+
+
+class AssetGenerationInvalid(AppError):
+    """E8：生成请求与 Brief、Provider 能力或状态不兼容。"""
+
+    code = "ASSET_GENERATION_INVALID"
+    status_code = 422
+
+
+class AssetGenerationUnknown(AppError):
+    """E8：生成任务结果不确定，禁止盲目重试。"""
+
+    code = "ASSET_GENERATION_UNKNOWN"
+    status_code = 409
+
+
+class AssetProcessingInvalid(AppError):
+    """E8：处理图、处理器参数或任务状态不合法。"""
+
+    code = "ASSET_PROCESSING_INVALID"
+    status_code = 422
+
+
+class AssetQualityInvalid(AppError):
+    """E8：质量审核类型、结果或状态不合法。"""
+
+    code = "ASSET_QUALITY_INVALID"
+    status_code = 422
+
+
+class AssetLicenseInvalid(AppError):
+    """E8：授权记录、凭证或状态不合法。"""
+
+    code = "ASSET_LICENSE_INVALID"
+    status_code = 422
+
+
+class AssetImportInvalid(AppError):
+    """E8：导入目标、证据或状态不合法。"""
+
+    code = "ASSET_IMPORT_INVALID"
+    status_code = 422
+
+
+class AssetDependencyInvalid(AppError):
+    """E8：资产依赖记录或引用关系不合法。"""
+
+    code = "ASSET_DEPENDENCY_INVALID"
+    status_code = 422
+
+
+class AssetDeliveryBlocked(AppError):
+    """E8：质量、License、审批或导入门禁未通过，不能交付。"""
+
+    code = "ASSET_DELIVERY_BLOCKED"
+    status_code = 409
+
+
+class AssetPathInvalid(AppError):
+    """E8：资产内部路径非法或试图越界。"""
+
+    code = "ASSET_PATH_INVALID"
+    status_code = 400
+
+
+class AssetStorageError(AppError):
+    """E8：资产文件系统读写失败。"""
+
+    code = "ASSET_STORAGE_ERROR"
+    status_code = 500
+    retryable = True
+
+
+class AssetRecoveryRequired(AppError):
+    """E8：存在 UNKNOWN 状态，必须先完成状态核对。"""
+
+    code = "ASSET_RECOVERY_REQUIRED"
+    status_code = 409
+
+
 def iter_error_types() -> list[type[AppError]]:
     """返回 AppError 及其全部子类，用于错误码登记检查。"""
 

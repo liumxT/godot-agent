@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "asset_pipeline/asset.schema.json",
+  "title": "Asset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "asset_id",
+    "project_id",
+    "name",
+    "category",
+    "asset_type",
+    "lifecycle_status",
+    "version",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "asset_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "name": {"type": "string", "minLength": 1, "maxLength": 256},
+    "category": {"enum": ["IMAGE", "AUDIO", "MODEL_3D", "RESOURCE"]},
+    "asset_type": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,63}$"},
+    "description": {"type": ["string", "null"]},
+    "tags": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 64}},
+    "current_version_id": {"type": ["string", "null"], "maxLength": 64},
+    "lifecycle_status": {"enum": ["DRAFT", "ACTIVE", "DEPRECATED", "ARCHIVED"]},
+    "created_by": {"type": ["string", "null"], "maxLength": 64},
+    "version": {"type": "integer", "minimum": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"},
+    "deleted_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

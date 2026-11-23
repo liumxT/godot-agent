@@ -528,6 +528,90 @@
       "retryable": false,
       "http_status": 403,
       "description": "编排请求没有得到 Task System 授权。"
+    },
+    {
+      "code": "ASSET_STATE_INVALID",
+      "retryable": false,
+      "http_status": 409,
+      "description": "资产或资产生命周期不允许该状态迁移。"
+    },
+    {
+      "code": "ASSET_VERSION_IMMUTABLE",
+      "retryable": false,
+      "http_status": 409,
+      "description": "已创建版本的内容不可修改。"
+    },
+    {
+      "code": "ASSET_BRIEF_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Asset Brief 缺少必要规格或内容非法。"
+    },
+    {
+      "code": "ASSET_GENERATION_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "生成请求与 Brief、Provider 能力或状态不兼容。"
+    },
+    {
+      "code": "ASSET_GENERATION_UNKNOWN",
+      "retryable": false,
+      "http_status": 409,
+      "description": "生成任务结果不确定，禁止盲目重试。"
+    },
+    {
+      "code": "ASSET_PROCESSING_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "处理图、处理器参数或任务状态不合法。"
+    },
+    {
+      "code": "ASSET_QUALITY_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "质量审核类型、结果或状态不合法。"
+    },
+    {
+      "code": "ASSET_LICENSE_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "授权记录、凭证或状态不合法。"
+    },
+    {
+      "code": "ASSET_IMPORT_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "导入目标、证据或状态不合法。"
+    },
+    {
+      "code": "ASSET_DEPENDENCY_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "资产依赖记录或引用关系不合法。"
+    },
+    {
+      "code": "ASSET_DELIVERY_BLOCKED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "质量、License、审批或导入门禁未通过，不能交付。"
+    },
+    {
+      "code": "ASSET_PATH_INVALID",
+      "retryable": false,
+      "http_status": 400,
+      "description": "资产内部路径非法或试图越界。"
+    },
+    {
+      "code": "ASSET_STORAGE_ERROR",
+      "retryable": true,
+      "http_status": 500,
+      "description": "资产文件系统读写失败。"
+    },
+    {
+      "code": "ASSET_RECOVERY_REQUIRED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "存在 UNKNOWN 状态，必须先完成状态核对。"
     }
   ]
 }

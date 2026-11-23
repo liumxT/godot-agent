@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E7 完成）。
+> 更新于 2026-11-23（E8 进行中，M1 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -13,13 +13,13 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E8 Asset Pipeline（待开始）** |
-| 阶段进度 | 8 / 13 完成（E0–E7） |
+| 当前阶段 | **E8 Asset Pipeline（进行中，M1 / 8）** |
+| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 1 / 8 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 591 passed（unit + integration 549 / contract 42），ruff 全通过 |
+| 后端测试 | 626 passed（unit + integration 584 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000021` |
+| 数据库迁移 | head 为 `000022` |
 
 ## 2. 阶段总览
 
@@ -33,7 +33,7 @@
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
 | E7 | Multi-Agent & Game Development | ✅ 已完成 | 2026-11-23 验收，7 批次 / 22 任务，见 [E7 验收报告](e7-acceptance-report.md) |
-| E8 | Asset Pipeline | ⬜ 未开始 | |
+| E8 | Asset Pipeline | ⏳ 进行中 | M1 完成（T01 + T02）：领域模型、注册中心、内部存储、契约 |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
 | E11 | Platformer Demo | ⬜ 未开始 | 系统级集成验收 |
@@ -490,7 +490,33 @@ RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断�
 访问 `/api/v1/agent-teams` 返回 403。后端 591 passed（unit + integration 549 / contract
 42），ruff 全通过，迁移 head `000021`。
 
-## 12. 已知问题与待办
+## 12. E8 实施进度（8 批次，进行中）
+
+设计文档：[E8 Asset Pipeline](../../完整开发计划细分/E8.md)。批次按依赖划分：
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E8-M1 | T01 资产领域与契约、T02 资产注册中心 | ✅ 已完成 |
+| E8-M2 | T03 版本管理、T04 Asset Brief 与规格 | ⬜ 未开始 |
+| E8-M3 | T05 生成编排、T06/T07/T08 图像/音频/3D 适配器 | ⬜ 未开始 |
+| E8-M4 | T09 处理流水线、T10 质量门控与人工审核 | ⬜ 未开始 |
+| E8-M5 | T11 Godot 导入、T12 来源追踪、T13 License | ⬜ 未开始 |
+| E8-M6 | T14 依赖图、T15 交付与 ChangeSet、T16 恢复 | ⬜ 未开始 |
+| E8-M7 | T17 资产界面、T18 Agent 集成、T19 API 与事件 | ⬜ 未开始 |
+| E8-M8 | T20 测试与 Platformer Demo 资产实战、验收报告 | ⬜ 未开始 |
+
+M1 交付：`modules/asset_pipeline/{models,repository,storage,service}.py`，
+迁移 `000022` 建立 19 张资产表（Asset / Version / Variant / Brief / Generation /
+Processing / Import / Evidence / Provenance / License / Quality / Dependency /
+Delivery / Storage / Provider Job），`AssetRegistry` 服务支持创建、查询、
+类别/类型/标签/状态/来源/License 状态过滤、重复资产、孤儿资产、引用查询、
+生命周期迁移与软删除；内部存储按项目与区域隔离，拒绝绝对路径、`..`、
+平台保留名与静默覆盖，写入采用原子替换；新增 15 个 E8 错误码与 12 个
+`asset.*` 权限动作（审批/交付/回滚/归档仅 Owner）；新增 10 个共享契约 schema、
+5 个样例与契约测试；新增 35 个单元/集成测试。后端 626 passed，ruff 全通过，
+迁移 head `000022`。
+
+## 13. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
@@ -509,7 +535,7 @@ RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断�
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 12. 维护规则
+## 14. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。
