@@ -6,7 +6,7 @@ Repository 只承载查询与写入，不提交事务；跨模块状态通过 ID
 
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 from infrastructure.database.repository import BaseRepository, Page
 from modules.multi_agent.models import (
@@ -64,6 +64,30 @@ class AgentTeamRepository(BaseRepository[AgentTeamModel]):
             .limit(1)
         )
 
+    async def transition_status(
+        self,
+        team_id: str,
+        *,
+        from_statuses: frozenset[str],
+        to_status: str,
+        expected_version: int,
+        now,
+        completed_at=None,
+    ) -> bool:
+        values = {"status": to_status, "version": AgentTeamModel.version + 1, "updated_at": now}
+        if completed_at is not None:
+            values["completed_at"] = completed_at
+        result = await self.session.execute(
+            update(AgentTeamModel)
+            .where(
+                AgentTeamModel.team_id == team_id,
+                AgentTeamModel.version == expected_version,
+                AgentTeamModel.status.in_(from_statuses),
+            )
+            .values(**values)
+        )
+        return result.rowcount == 1
+
     async def list_page(
         self,
         *,
@@ -97,6 +121,13 @@ class AgentTeamMemberRepository(BaseRepository[AgentTeamMemberModel]):
         )
         return list(rows)
 
+    async def get_by_assignment(self, assignment_id: str) -> AgentTeamMemberModel | None:
+        return await self.session.scalar(
+            select(AgentTeamMemberModel).where(
+                AgentTeamMemberModel.assignment_id == assignment_id
+            )
+        )
+
 
 class AgentAssignmentRepository(BaseRepository[AgentAssignmentModel]):
     model = AgentAssignmentModel
@@ -129,6 +160,61 @@ class AgentAssignmentRepository(BaseRepository[AgentAssignmentModel]):
             )
             or 0
         )
+
+    async def transition_status(
+        self,
+        assignment_id: str,
+        *,
+        from_statuses: frozenset[str],
+        to_status: str,
+        expected_version: int,
+        now,
+        started_at=None,
+        completed_at=None,
+    ) -> bool:
+        values = {
+            "status": to_status,
+            "version": AgentAssignmentModel.version + 1,
+        }
+        if started_at is not None:
+            values["started_at"] = started_at
+        if completed_at is not None:
+            values["completed_at"] = completed_at
+        result = await self.session.execute(
+            update(AgentAssignmentModel)
+            .where(
+                AgentAssignmentModel.assignment_id == assignment_id,
+                AgentAssignmentModel.version == expected_version,
+                AgentAssignmentModel.status.in_(from_statuses),
+            )
+            .values(**values)
+        )
+        return result.rowcount == 1
+
+    async def claim(
+        self,
+        assignment_id: str,
+        *,
+        agent_instance_id: str,
+        allowed_statuses: frozenset[str],
+        to_status: str,
+        expected_version: int,
+    ) -> bool:
+        result = await self.session.execute(
+            update(AgentAssignmentModel)
+            .where(
+                AgentAssignmentModel.assignment_id == assignment_id,
+                AgentAssignmentModel.version == expected_version,
+                AgentAssignmentModel.status.in_(allowed_statuses),
+                AgentAssignmentModel.agent_instance_id.is_(None),
+            )
+            .values(
+                status=to_status,
+                agent_instance_id=agent_instance_id,
+                version=AgentAssignmentModel.version + 1,
+            )
+        )
+        return result.rowcount == 1
 
 
 class AgentAssignmentDependencyRepository(BaseRepository[AgentAssignmentDependencyModel]):

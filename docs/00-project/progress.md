@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E7 M1 完成）。
+> 更新于 2026-11-23（E7 M2 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -13,10 +13,10 @@
 | 项 | 状态 |
 | --- | --- |
 | 当前阶段 | **E7 Multi-Agent & Game Development（进行中）** |
-| 阶段进度 | 7 / 13 完成（E0–E6），E7 进行中（M1 / 7） |
+| 阶段进度 | 7 / 13 完成（E0–E6），E7 进行中（M2 / 7） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 532 passed（unit + integration 490 / contract 42），ruff 全通过 |
+| 后端测试 | 545 passed（unit + integration 503 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000019` |
 
@@ -31,7 +31,7 @@
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
-| E7 | Multi-Agent & Game Development | 🚧 进行中 | M1 完成：Domain & Capability Registry |
+| E7 | Multi-Agent & Game Development | 🚧 进行中 | M2 完成：Orchestrator、Team Manager、Task Decomposition、Assignment |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
@@ -382,7 +382,7 @@ Tool System 工作。新增 5 个测试（4 验收集成 + 1 架构单元），�
 | 批次 | 任务 | 状态 |
 | --- | --- | --- |
 | E7-M1 | T01 Multi-Agent Domain & Contract、T02 Capability Registry | ✅ 已完成 |
-| E7-M2 | T03 Orchestrator、T04 Team Manager、T05 Task Decomposition、T06 Assignment | ⬜ 待开始 |
+| E7-M2 | T03 Orchestrator、T04 Team Manager、T05 Task Decomposition、T06 Assignment | ✅ 已完成 |
 | E7-M3 | T07 Handoff、T08 Lead Agent、T09 Context Coordination、T12 Agent Communication | ⬜ 待开始 |
 | E7-M4 | T10 Parallel Execution、T11 Resource/Conflict Coordination、T17 Conflict Resolution | ⬜ 待开始 |
 | E7-M5 | T13 Specialized Definitions、T14 Workflows、T15 Result Integration、T16 Review | ⬜ 待开始 |
@@ -401,6 +401,19 @@ Tool、Model 能力、项目访问与预算为硬性过滤，能力覆盖度、�
 复用并新增 `AGENT_TEAM_INVALID` / `AGENT_ASSIGNMENT_INVALID` /
 `AGENT_ASSIGNMENT_UNAUTHORIZED` / `AGENT_HANDOFF_INVALID` / `AGENT_COLLABORATION_INVALID`。
 新增 16 个测试（10 单元匹配 + 6 集成领域），后端 532 passed，ruff 全通过。
+
+交付（M2）：`modules/multi_agent/{decomposition,orchestrator}.py`，并扩展 `models`、`repository`
+与 `service`。Task Decomposition 以 `SubtaskSpec` / `DecompositionPlan` 描述子任务，校验唯一
+key、目标/能力/验收非空、风险合法、依赖存在、无自依赖、Kahn 拓扑无环，并要求原始验收条目被
+子任务覆盖；复杂度按子任务数判定（1 个为 SIMPLE 单 Agent，多个为 COMPLEX 多 Agent）。
+Orchestrator 仅接受 `TASK_SYSTEM` 授权，依次校验 Task/Attempt 可运行、同一 Attempt 无活动
+Team，取 ACTIVE Definition 并通过 Capability Registry 两阶段匹配选择 Agent（Definition 的
+`tool_whitelist` 存的是 tool_id，经 ToolRegistry 映射回工具名后参与匹配）；随后创建 Team
+（CREATED → INITIALIZING → READY）、按拓扑序创建 Assignment（无依赖 READY、有依赖 BLOCKED）
+并登记成员，失败时 Team 置 FAILED。Team Manager 新增状态迁移（乐观锁）、成员登记/移除、Lead
+设置与关闭（存在未完成 Assignment 时拒绝）；Assignment 新增状态迁移、claim（条件 UPDATE 防
+并发抢占）与 replace（旧记录 FAILED，新记录继承 parent_assignment_id）。新增 13 个测试
+（7 单元分解 + 6 集成编排），后端 545 passed，ruff 全通过。
 
 ## 12. 已知问题与待办
 

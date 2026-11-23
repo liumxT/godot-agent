@@ -40,8 +40,17 @@ from modules.multi_agent.capabilities import (
     match_candidates,
 )
 from modules.multi_agent.models import (
+    ASSIGNMENT_ASSIGNED,
+    ASSIGNMENT_BLOCKED,
     ASSIGNMENT_CREATED,
+    ASSIGNMENT_FAILED,
+    ASSIGNMENT_HANDOFF_PENDING,
+    ASSIGNMENT_INTEGRATING,
+    ASSIGNMENT_READY,
+    ASSIGNMENT_RUNNING,
+    ASSIGNMENT_STARTING,
     ASSIGNMENT_TERMINAL_STATUSES,
+    ASSIGNMENT_TRANSITIONS,
     AUTHORITY_ORCHESTRATOR,
     CAPABILITY_CATEGORIES,
     COLLABORATION_ACTIVE,
@@ -49,13 +58,20 @@ from modules.multi_agent.models import (
     HANDOFF_REQUESTED,
     HANDOFF_TYPES,
     RISK_PROFILES,
+    TEAM_COMPLETED,
     TEAM_CREATED,
+    TEAM_MEMBER_LEAD,
+    TEAM_MEMBER_ROLES,
+    TEAM_MEMBER_WORKER,
     TEAM_STATUSES,
+    TEAM_TERMINAL_STATUSES,
+    TEAM_TRANSITIONS,
     AgentAssignmentDependencyModel,
     AgentAssignmentModel,
     AgentCapabilityModel,
     AgentCollaborationModel,
     AgentHandoffModel,
+    AgentTeamMemberModel,
     AgentTeamModel,
 )
 from modules.multi_agent.repository import (
@@ -63,6 +79,7 @@ from modules.multi_agent.repository import (
     AgentAssignmentRepository,
     AgentCollaborationRepository,
     AgentHandoffRepository,
+    AgentTeamMemberRepository,
     AgentTeamRepository,
     CapabilityRepository,
 )
@@ -107,6 +124,16 @@ class TeamView:
     created_at: datetime
     updated_at: datetime
     completed_at: datetime | None
+
+
+@dataclass(frozen=True, slots=True)
+class TeamMemberView:
+    member_id: str
+    team_id: str
+    assignment_id: str
+    agent_instance_id: str | None
+    role: str
+    joined_at: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -205,6 +232,17 @@ def _team_view(entity: AgentTeamModel) -> TeamView:
         created_at=entity.created_at,
         updated_at=entity.updated_at,
         completed_at=entity.completed_at,
+    )
+
+
+def _member_view(entity: AgentTeamMemberModel) -> TeamMemberView:
+    return TeamMemberView(
+        member_id=entity.member_id,
+        team_id=entity.team_id,
+        assignment_id=entity.assignment_id,
+        agent_instance_id=entity.agent_instance_id,
+        role=entity.role,
+        joined_at=entity.joined_at,
     )
 
 
@@ -492,6 +530,176 @@ class AgentTeamService:
             "offset": page.offset,
         }
 
+    async def transition(
+        self, team_id: str, to_status: str, *, expected_version: int
+    ) -> TeamView:
+        if to_status not in TEAM_STATUSES:
+            raise AgentTeamInvalid(
+                "Team 状态非法", details={"reasons": ["UNKNOWN_STATUS"], "status": to_status}
+            )
+        now = self._clock()
+        async with self._database.session() as session, transaction(session):
+            repository = AgentTeamRepository(session)
+            entity = await repository.get(team_id)
+            if entity is None:
+                raise NotFoundError("Agent Team 不存在", details={"team_id": team_id})
+            if entity.version != expected_version:
+                raise VersionConflict(
+                    "Agent Team 版本已变化",
+                    details={"expected": expected_version, "actual": entity.version},
+                )
+            if to_status not in TEAM_TRANSITIONS.get(entity.status, frozenset()):
+                raise AgentTeamInvalid(
+                    "Team 状态迁移非法",
+                    details={
+                        "reasons": ["INVALID_TRANSITION"],
+                        "from": entity.status,
+                        "to": to_status,
+                    },
+                )
+            completed_at = now if to_status in TEAM_TERMINAL_STATUSES else None
+            updated = await repository.transition_status(
+                team_id,
+                from_statuses=frozenset({entity.status}),
+                to_status=to_status,
+                expected_version=expected_version,
+                now=now,
+                completed_at=completed_at,
+            )
+            if not updated:
+                raise VersionConflict(
+                    "Agent Team 版本已变化", details={"expected": expected_version}
+                )
+            await session.refresh(entity)
+            return _team_view(entity)
+
+    async def add_member(
+        self, team_id: str, assignment_id: str, *, role: str = TEAM_MEMBER_WORKER
+    ) -> TeamMemberView:
+        if role not in TEAM_MEMBER_ROLES:
+            raise AgentTeamInvalid(
+                "Team 成员角色非法", details={"reasons": ["UNKNOWN_ROLE"], "role": role}
+            )
+        now = self._clock()
+        async with self._database.session() as session, transaction(session):
+            team = await AgentTeamRepository(session).get(team_id)
+            if team is None:
+                raise NotFoundError("Agent Team 不存在", details={"team_id": team_id})
+            assignment = await AgentAssignmentRepository(session).get(assignment_id)
+            if assignment is None or assignment.team_id != team_id:
+                raise AgentTeamInvalid(
+                    "Assignment 不属于该 Team",
+                    details={"reasons": ["UNKNOWN_ASSIGNMENT"], "assignment_id": assignment_id},
+                )
+            members = AgentTeamMemberRepository(session)
+            if await members.get_by_assignment(assignment_id) is not None:
+                raise AgentTeamInvalid(
+                    "Assignment 已加入 Team",
+                    details={"reasons": ["MEMBER_EXISTS"], "assignment_id": assignment_id},
+                )
+            if role == TEAM_MEMBER_LEAD:
+                for existing in await members.list_for_team(team_id):
+                    existing.role = TEAM_MEMBER_WORKER
+                team.lead_agent_instance_id = assignment.agent_instance_id
+                team.version += 1
+                team.updated_at = now
+            member = AgentTeamMemberModel(
+                member_id=_new_id("mem_"),
+                team_id=team_id,
+                assignment_id=assignment_id,
+                agent_instance_id=assignment.agent_instance_id,
+                role=role,
+                joined_at=now,
+            )
+            await members.add(member)
+            return _member_view(member)
+
+    async def get_members(self, team_id: str) -> list[TeamMemberView]:
+        async with self._database.session() as session:
+            team = await AgentTeamRepository(session).get(team_id)
+            if team is None:
+                raise NotFoundError("Agent Team 不存在", details={"team_id": team_id})
+            rows = await AgentTeamMemberRepository(session).list_for_team(team_id)
+        return [_member_view(row) for row in rows]
+
+    async def set_lead(
+        self, team_id: str, assignment_id: str, *, expected_version: int
+    ) -> TeamView:
+        now = self._clock()
+        async with self._database.session() as session, transaction(session):
+            repository = AgentTeamRepository(session)
+            team = await repository.get(team_id)
+            if team is None:
+                raise NotFoundError("Agent Team 不存在", details={"team_id": team_id})
+            if team.version != expected_version:
+                raise VersionConflict(
+                    "Agent Team 版本已变化",
+                    details={"expected": expected_version, "actual": team.version},
+                )
+            members = AgentTeamMemberRepository(session)
+            member = await members.get_by_assignment(assignment_id)
+            if member is None or member.team_id != team_id:
+                raise AgentTeamInvalid(
+                    "Assignment 未加入 Team",
+                    details={"reasons": ["MEMBER_NOT_FOUND"], "assignment_id": assignment_id},
+                )
+            for existing in await members.list_for_team(team_id):
+                existing.role = TEAM_MEMBER_LEAD if existing.member_id == member.member_id else (
+                    TEAM_MEMBER_WORKER
+                )
+            team.lead_agent_instance_id = member.agent_instance_id
+            team.version += 1
+            team.updated_at = now
+            await session.flush()
+            return _team_view(team)
+
+    async def remove_member(self, team_id: str, member_id: str) -> None:
+        async with self._database.session() as session, transaction(session):
+            team = await AgentTeamRepository(session).get(team_id)
+            if team is None:
+                raise NotFoundError("Agent Team 不存在", details={"team_id": team_id})
+            members = AgentTeamMemberRepository(session)
+            member = await members.get(member_id)
+            if member is None or member.team_id != team_id:
+                raise NotFoundError("Team 成员不存在", details={"member_id": member_id})
+            assignment = await AgentAssignmentRepository(session).get(member.assignment_id)
+            if assignment is not None and assignment.status not in {
+                ASSIGNMENT_CREATED,
+                ASSIGNMENT_READY,
+                "BLOCKED",
+            }:
+                raise AgentTeamInvalid(
+                    "Assignment 已开始，不能移出 Team",
+                    details={
+                        "reasons": ["ASSIGNMENT_STARTED"],
+                        "assignment_id": member.assignment_id,
+                        "status": assignment.status,
+                    },
+                )
+            if member.role == TEAM_MEMBER_LEAD:
+                team.lead_agent_instance_id = None
+                team.version += 1
+                team.updated_at = self._clock()
+            await members.delete(member)
+
+    async def close(
+        self, team_id: str, *, status: str = TEAM_COMPLETED, expected_version: int
+    ) -> TeamView:
+        if status not in TEAM_TERMINAL_STATUSES:
+            raise AgentTeamInvalid(
+                "Team 关闭状态非法", details={"reasons": ["TERMINAL_STATUS_REQUIRED"]}
+            )
+        async with self._database.session() as session:
+            unfinished = await AgentAssignmentRepository(session).count_unfinished(
+                team_id, ASSIGNMENT_TERMINAL_STATUSES
+            )
+        if unfinished:
+            raise AgentTeamInvalid(
+                "仍有未完成的 Assignment，不能关闭 Team",
+                details={"reasons": ["TEAM_HAS_UNFINISHED_ASSIGNMENTS"], "count": unfinished},
+            )
+        return await self.transition(team_id, status, expected_version=expected_version)
+
 
 class AssignmentService:
     """Assignment 创建与依赖维护；只有 Orchestrator 可以创建。"""
@@ -696,6 +904,153 @@ class AssignmentService:
             if await self._has_path(session, dependency_id, target, depth=depth + 1):
                 return True
         return False
+
+    async def transition(
+        self, assignment_id: str, to_status: str, *, expected_version: int
+    ) -> AssignmentView:
+        if to_status not in ASSIGNMENT_TRANSITIONS:
+            raise AgentAssignmentInvalid(
+                "Assignment 状态非法",
+                details={"reasons": ["UNKNOWN_STATUS"], "status": to_status},
+            )
+        now = self._clock()
+        async with self._database.session() as session, transaction(session):
+            repository = AgentAssignmentRepository(session)
+            entity = await repository.get(assignment_id)
+            if entity is None:
+                raise NotFoundError("Assignment 不存在", details={"assignment_id": assignment_id})
+            if entity.version != expected_version:
+                raise VersionConflict(
+                    "Assignment 版本已变化",
+                    details={"expected": expected_version, "actual": entity.version},
+                )
+            if to_status not in ASSIGNMENT_TRANSITIONS.get(entity.status, frozenset()):
+                raise AgentAssignmentInvalid(
+                    "Assignment 状态迁移非法",
+                    details={
+                        "reasons": ["INVALID_TRANSITION"],
+                        "from": entity.status,
+                        "to": to_status,
+                    },
+                )
+            updated = await repository.transition_status(
+                assignment_id,
+                from_statuses=frozenset({entity.status}),
+                to_status=to_status,
+                expected_version=expected_version,
+                now=now,
+                started_at=now if to_status == ASSIGNMENT_STARTING else None,
+                completed_at=now if to_status in ASSIGNMENT_TERMINAL_STATUSES else None,
+            )
+            if not updated:
+                raise VersionConflict(
+                    "Assignment 版本已变化", details={"expected": expected_version}
+                )
+            await session.refresh(entity)
+            return _assignment_view(entity)
+
+    async def claim(
+        self, assignment_id: str, agent_instance_id: str, *, expected_version: int
+    ) -> AssignmentView:
+        async with self._database.session() as session, transaction(session):
+            repository = AgentAssignmentRepository(session)
+            entity = await repository.get(assignment_id)
+            if entity is None:
+                raise NotFoundError("Assignment 不存在", details={"assignment_id": assignment_id})
+            if entity.version != expected_version:
+                raise VersionConflict(
+                    "Assignment 版本已变化",
+                    details={"expected": expected_version, "actual": entity.version},
+                )
+            if entity.agent_instance_id is not None:
+                raise AgentAssignmentInvalid(
+                    "Assignment 已有负责人",
+                    details={
+                        "reasons": ["ASSIGNMENT_ALREADY_CLAIMED"],
+                        "agent_instance_id": entity.agent_instance_id,
+                    },
+                )
+            if entity.status not in {ASSIGNMENT_CREATED, ASSIGNMENT_READY}:
+                raise AgentAssignmentInvalid(
+                    "Assignment 当前状态不可领取",
+                    details={"reasons": ["ASSIGNMENT_NOT_CLAIMABLE"], "status": entity.status},
+                )
+            claimed = await repository.claim(
+                assignment_id,
+                agent_instance_id=agent_instance_id,
+                allowed_statuses=frozenset({ASSIGNMENT_CREATED, ASSIGNMENT_READY}),
+                to_status=ASSIGNMENT_ASSIGNED,
+                expected_version=expected_version,
+            )
+            if not claimed:
+                raise AgentAssignmentInvalid(
+                    "Assignment 领取竞争失败",
+                    details={"reasons": ["ASSIGNMENT_ALREADY_CLAIMED"]},
+                )
+            await session.refresh(entity)
+            return _assignment_view(entity)
+
+    async def replace(
+        self,
+        assignment_id: str,
+        *,
+        agent_definition_id: str,
+        agent_definition_version: str,
+        expected_version: int,
+        authorized_by: str = AUTHORITY_ORCHESTRATOR,
+    ) -> AssignmentView:
+        """用新的 Assignment 接替旧负责人；旧记录保留为失败状态。"""
+
+        old = await self.get(assignment_id)
+        if old.version != expected_version:
+            raise VersionConflict(
+                "Assignment 版本已变化",
+                details={"expected": expected_version, "actual": old.version},
+            )
+        if old.status in ASSIGNMENT_TERMINAL_STATUSES:
+            raise AgentAssignmentInvalid(
+                "已结束的 Assignment 不能替换",
+                details={"reasons": ["ASSIGNMENT_TERMINAL"], "status": old.status},
+            )
+        if old.status in {
+            ASSIGNMENT_RUNNING,
+            ASSIGNMENT_STARTING,
+            ASSIGNMENT_HANDOFF_PENDING,
+            ASSIGNMENT_INTEGRATING,
+        }:
+            raise AgentAssignmentInvalid(
+                "运行中的 Assignment 不能直接替换",
+                details={"reasons": ["ASSIGNMENT_ACTIVE"], "status": old.status},
+            )
+        replacement = await self.create(
+            team_id=old.team_id,
+            agent_definition_id=agent_definition_id,
+            agent_definition_version=agent_definition_version,
+            task_id=old.task_id,
+            attempt_id=old.attempt_id,
+            assigned_objective=old.assigned_objective,
+            authorized_by=authorized_by,
+            acceptance_criteria=old.acceptance_criteria,
+            required_capabilities=old.required_capabilities,
+            required_tools=old.required_tools,
+            permission_requirements=old.permission_requirements,
+            budget=old.budget,
+            priority=old.priority,
+            risk_level=old.risk_level,
+            scope=old.scope,
+            input_reference=old.input_reference,
+            parent_assignment_id=old.assignment_id,
+            estimated_duration_seconds=old.estimated_duration_seconds,
+            dependencies=old.dependencies,
+        )
+        target_status = ASSIGNMENT_BLOCKED if replacement.dependencies else ASSIGNMENT_READY
+        replacement = await self.transition(
+            replacement.assignment_id, target_status, expected_version=replacement.version
+        )
+        await self.transition(
+            assignment_id, ASSIGNMENT_FAILED, expected_version=old.version
+        )
+        return replacement
 
 
 class HandoffService:

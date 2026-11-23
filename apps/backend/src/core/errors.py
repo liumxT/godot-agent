@@ -578,6 +578,27 @@ class AgentCollaborationInvalid(AppError):
     status_code = 422
 
 
+class AgentDecompositionInvalid(AppError):
+    """任务分解未覆盖原始验收标准或依赖不合法。"""
+
+    code = "AGENT_DECOMPOSITION_INVALID"
+    status_code = 422
+
+
+class AgentOrchestrationInvalid(AppError):
+    """编排请求与 Task/Attempt 状态不兼容。"""
+
+    code = "AGENT_ORCHESTRATION_INVALID"
+    status_code = 422
+
+
+class AgentOrchestrationUnauthorized(AppError):
+    """编排请求没有得到 Task System 授权。"""
+
+    code = "AGENT_ORCHESTRATION_UNAUTHORIZED"
+    status_code = 403
+
+
 def iter_error_types() -> list[type[AppError]]:
     """返回 AppError 及其全部子类，用于错误码登记检查。"""
 

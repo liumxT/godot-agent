@@ -62,6 +62,7 @@ from modules.model_gateway.gateway import ModelGatewayService
 from modules.model_gateway.providers.registry import default_adapter_registry
 from modules.model_gateway.registry import ModelRegistryService
 from modules.model_gateway.routing import ModelRoutingService
+from modules.multi_agent.orchestrator import OrchestratorService
 from modules.multi_agent.service import (
     AgentTeamService,
     AssignmentService,
@@ -360,6 +361,16 @@ def register_startup_steps(
         assignment_service = AssignmentService(database)
         handoff_service = HandoffService(database)
         collaboration_service = CollaborationService(database)
+        orchestrator_service = OrchestratorService(
+            database,
+            tasks=task_service,
+            attempts=task_attempt_service,
+            definitions=agent_definition_registry_service,
+            capabilities=capability_registry_service,
+            teams=agent_team_service,
+            assignments=assignment_service,
+            tools=tool_registry_service,
+        )
         agent_event_service = AgentEventService(database)
         agent_instance_service = AgentInstanceService(
             database,
@@ -505,6 +516,7 @@ def register_startup_steps(
         services.register("assignment_service", assignment_service)
         services.register("handoff_service", handoff_service)
         services.register("collaboration_service", collaboration_service)
+        services.register("orchestrator_service", orchestrator_service)
         services.register("agent_event_service", agent_event_service)
         services.register("agent_instance_service", agent_instance_service)
         services.register("agent_lifecycle_service", agent_lifecycle_service)

@@ -29,6 +29,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from infrastructure.database.base import Base
 from modules.context.models import CONTEXT_PROFILE_DEFAULT, CONTEXT_PROFILES
+from modules.multi_agent.capabilities import BUILTIN_CAPABILITY_NAMES
 from modules.tool.models import (
     RISK_HIGH,
     RISK_LOW_WRITE,
@@ -58,7 +59,7 @@ AGENT_CAPABILITIES = frozenset(
         "user_interaction",
         "recovery",
     }
-)
+) | BUILTIN_CAPABILITY_NAMES
 
 MODEL_POLICY_DEFAULT = "default_agent_policy"
 PERMISSION_CEILINGS = frozenset(TOOL_RISK_LEVELS)

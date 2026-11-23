@@ -468,6 +468,24 @@
       "retryable": false,
       "http_status": 422,
       "description": "Collaboration 参与者或目标不合法。"
+    },
+    {
+      "code": "AGENT_DECOMPOSITION_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "任务分解未覆盖原始验收标准或依赖不合法。"
+    },
+    {
+      "code": "AGENT_ORCHESTRATION_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "编排请求与 Task/Attempt 状态不兼容。"
+    },
+    {
+      "code": "AGENT_ORCHESTRATION_UNAUTHORIZED",
+      "retryable": false,
+      "http_status": 403,
+      "description": "编排请求没有得到 Task System 授权。"
     }
   ]
 }
