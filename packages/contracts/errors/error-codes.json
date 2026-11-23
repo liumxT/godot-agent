@@ -488,6 +488,12 @@
       "description": "Agent 消息的发送者、接收者、类型或内容不合法。"
     },
     {
+      "code": "AGENT_REVIEW_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Review 类型、审查人独立性或评审结果不合法。"
+    },
+    {
       "code": "AGENT_RESOURCE_CONFLICT",
       "retryable": true,
       "http_status": 409,

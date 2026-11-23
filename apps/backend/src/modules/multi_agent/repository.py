@@ -374,6 +374,22 @@ class AgentIntegrationRepository(BaseRepository[AgentIntegrationModel]):
 class AgentReviewRepository(BaseRepository[AgentReviewModel]):
     model = AgentReviewModel
 
+    async def list_for_team(self, team_id: str) -> list[AgentReviewModel]:
+        rows = await self.session.scalars(
+            select(AgentReviewModel)
+            .where(AgentReviewModel.team_id == team_id)
+            .order_by(AgentReviewModel.created_at)
+        )
+        return list(rows)
+
+    async def list_for_target(self, assignment_id: str) -> list[AgentReviewModel]:
+        rows = await self.session.scalars(
+            select(AgentReviewModel)
+            .where(AgentReviewModel.target_assignment_id == assignment_id)
+            .order_by(AgentReviewModel.created_at)
+        )
+        return list(rows)
+
 
 class AgentTeamBudgetRepository(BaseRepository[AgentTeamBudgetModel]):
     model = AgentTeamBudgetModel

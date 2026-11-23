@@ -599,6 +599,13 @@ class AgentMessageInvalid(AppError):
     status_code = 422
 
 
+class AgentReviewInvalid(AppError):
+    """Review 类型、审查人独立性或评审结果不合法。"""
+
+    code = "AGENT_REVIEW_INVALID"
+    status_code = 422
+
+
 class AgentResourceConflict(AppError):
     """资源访问与现有锁冲突，必须串行或等待释放。"""
 

@@ -71,6 +71,7 @@ from modules.multi_agent.resources import (
     ParallelExecutionManager,
     ResourceCoordinatorService,
 )
+from modules.multi_agent.review import ReviewService
 from modules.multi_agent.service import (
     AgentTeamService,
     AssignmentService,
@@ -78,6 +79,8 @@ from modules.multi_agent.service import (
     CollaborationService,
     HandoffService,
 )
+from modules.multi_agent.specialized import SpecializedAgentCatalog
+from modules.multi_agent.workflows import GameWorkflowService
 from modules.project.service import ProjectService
 from modules.project_registry.service import (
     ProjectConfigurationService,
@@ -387,6 +390,15 @@ def register_startup_steps(
             database,
             assignments=assignment_service,
         )
+        specialized_agent_catalog = SpecializedAgentCatalog(
+            definitions=agent_definition_registry_service,
+            prompts=prompt_service,
+        )
+        game_workflow_service = GameWorkflowService(
+            definitions=workflow_definition_service,
+            instances=workflow_instance_service,
+        )
+        review_service = ReviewService(database, assignments=assignment_service)
         orchestrator_service = OrchestratorService(
             database,
             tasks=task_service,
@@ -551,6 +563,9 @@ def register_startup_steps(
         services.register("resource_coordinator_service", resource_coordinator_service)
         services.register("parallel_execution_manager", parallel_execution_manager)
         services.register("conflict_service", conflict_service)
+        services.register("specialized_agent_catalog", specialized_agent_catalog)
+        services.register("game_workflow_service", game_workflow_service)
+        services.register("review_service", review_service)
         services.register("orchestrator_service", orchestrator_service)
         services.register("agent_event_service", agent_event_service)
         services.register("agent_instance_service", agent_instance_service)

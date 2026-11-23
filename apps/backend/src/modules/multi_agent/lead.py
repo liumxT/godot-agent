@@ -20,10 +20,13 @@ from infrastructure.database.transaction import transaction
 from modules.multi_agent.models import (
     ASSIGNMENT_COMPLETED,
     ASSIGNMENT_FAILED,
+    INTEGRATION_APPLYING,
+    INTEGRATION_COMPLETED,
     INTEGRATION_FAILED,
     INTEGRATION_PENDING,
     INTEGRATION_READY,
     INTEGRATION_TRANSITIONS,
+    INTEGRATION_VERIFYING,
     AgentIntegrationModel,
 )
 from modules.multi_agent.repository import (
@@ -90,6 +93,12 @@ class LeadExecutionSummary:
     results: tuple[tuple[str, str], ...]
     missing_outputs: tuple[str, ...]
     conflicts: tuple[InterfaceConflict, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class IntegrationPreparation:
+    integration: IntegrationView
+    sources: tuple[AssignmentView, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -220,7 +229,7 @@ class IntegrationService:
                 )
             entity.status = to_status
             entity.version += 1
-            if to_status == INTEGRATION_FAILED:
+            if to_status in {INTEGRATION_FAILED, INTEGRATION_COMPLETED}:
                 entity.completed_at = now
             await session.flush()
             return _integration_view(entity)
@@ -249,6 +258,122 @@ class IntegrationService:
             entity.version += 1
             await session.flush()
             return _integration_view(entity)
+
+    async def prepare(
+        self,
+        *,
+        team_id: str,
+        owner_assignment_id: str | None = None,
+        plan: str | None = None,
+    ) -> IntegrationPreparation:
+        """严格集成前检查：所有结果完成、接口唯一、依赖完整。"""
+
+        async with self._database.session() as session:
+            team = await AgentTeamRepository(session).get(team_id)
+            if team is None:
+                raise NotFoundError("Agent Team 不存在", details={"team_id": team_id})
+            rows = await AgentAssignmentRepository(session).list_for_team(team_id)
+        assignments = tuple(_assignment_view(row) for row in rows)
+        missing = tuple(
+            item.assignment_id
+            for item in assignments
+            if item.status != ASSIGNMENT_COMPLETED or not item.output_reference
+        )
+        if missing:
+            raise AgentTeamInvalid(
+                "存在未完成或缺少输出的 Assignment，不能集成",
+                details={"reasons": ["MISSING_RESULTS"], "assignments": list(missing)},
+            )
+        grouped: dict[str, list[str]] = {}
+        for item in assignments:
+            grouped.setdefault(item.output_reference or "", []).append(item.assignment_id)
+        duplicates = {
+            reference: ids for reference, ids in grouped.items() if len(ids) > 1
+        }
+        if duplicates:
+            raise AgentTeamInvalid(
+                "集成结果存在接口冲突",
+                details={"reasons": ["INTERFACE_CONFLICT"], "conflicts": duplicates},
+            )
+        integration = await self.create(
+            team_id=team_id,
+            source_assignment_ids=[item.assignment_id for item in assignments],
+            integration_owner=owner_assignment_id,
+            plan=plan,
+        )
+        if plan:
+            integration = await self.set_plan(
+                integration.integration_id, plan, expected_version=integration.version
+            )
+        return IntegrationPreparation(integration=integration, sources=assignments)
+
+    async def start_apply(self, integration_id: str, *, expected_version: int) -> IntegrationView:
+        return await self.transition(
+            integration_id, INTEGRATION_APPLYING, expected_version=expected_version
+        )
+
+    async def start_verification(
+        self, integration_id: str, *, expected_version: int
+    ) -> IntegrationView:
+        return await self.transition(
+            integration_id, INTEGRATION_VERIFYING, expected_version=expected_version
+        )
+
+    async def submit_verification(
+        self, integration_id: str, *, verification_reference: str, expected_version: int
+    ) -> IntegrationView:
+        if not (verification_reference or "").strip():
+            raise AgentTeamInvalid(
+                "提交验证必须引用验证结果",
+                details={"reasons": ["VERIFICATION_REFERENCE_REQUIRED"]},
+            )
+        await self.assert_sources_complete(integration_id)
+        now = self._clock()
+        async with self._database.session() as session, transaction(session):
+            repository = AgentIntegrationRepository(session)
+            entity = await repository.get(integration_id)
+            if entity is None:
+                raise NotFoundError(
+                    "Integration 不存在", details={"integration_id": integration_id}
+                )
+            if entity.version != expected_version:
+                raise VersionConflict(
+                    "Integration 版本已变化",
+                    details={"expected": expected_version, "actual": entity.version},
+                )
+            if INTEGRATION_COMPLETED not in INTEGRATION_TRANSITIONS.get(
+                entity.status, frozenset()
+            ):
+                raise AgentTeamInvalid(
+                    "Integration 当前状态不可提交验证",
+                    details={"reasons": ["INVALID_TRANSITION"], "status": entity.status},
+                )
+            if not entity.integration_plan:
+                raise AgentTeamInvalid(
+                    "缺少集成计划，不能提交验证",
+                    details={"reasons": ["PLAN_REQUIRED"]},
+                )
+            entity.verification_reference = verification_reference
+            entity.status = INTEGRATION_COMPLETED
+            entity.completed_at = now
+            entity.version += 1
+            await session.flush()
+            return _integration_view(entity)
+
+    async def assert_sources_complete(self, integration_id: str) -> None:
+        integration = await self.get(integration_id)
+        async with self._database.session() as session:
+            repository = AgentAssignmentRepository(session)
+            for assignment_id in integration.source_assignment_ids:
+                assignment = await repository.get(assignment_id)
+                if assignment is None or assignment.status != ASSIGNMENT_COMPLETED:
+                    raise AgentTeamInvalid(
+                        "集成来源 Assignment 未完成",
+                        details={
+                            "reasons": ["SOURCE_INCOMPLETE"],
+                            "assignment_id": assignment_id,
+                        },
+                    )
 
 
 class LeadAgentService:
@@ -379,6 +504,7 @@ class LeadAgentService:
 __all__ = [
     "LEAD_PERMISSIONS",
     "WRITE_PERMISSIONS",
+    "IntegrationPreparation",
     "IntegrationService",
     "IntegrationView",
     "InterfaceConflict",

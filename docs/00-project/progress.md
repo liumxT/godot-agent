@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E7 M4 完成）。
+> 更新于 2026-11-23（E7 M5 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -13,10 +13,10 @@
 | 项 | 状态 |
 | --- | --- |
 | 当前阶段 | **E7 Multi-Agent & Game Development（进行中）** |
-| 阶段进度 | 7 / 13 完成（E0–E6），E7 进行中（M4 / 7） |
+| 阶段进度 | 7 / 13 完成（E0–E6），E7 进行中（M5 / 7） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 568 passed（unit + integration 526 / contract 42），ruff 全通过 |
+| 后端测试 | 580 passed（unit + integration 538 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000020` |
 
@@ -31,7 +31,7 @@
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
-| E7 | Multi-Agent & Game Development | 🚧 进行中 | M4 完成：并行执行、资源锁、冲突解决 |
+| E7 | Multi-Agent & Game Development | 🚧 进行中 | M5 完成：专用 Agent、工作流模板、结果集成与评审 |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
@@ -385,7 +385,7 @@ Tool System 工作。新增 5 个测试（4 验收集成 + 1 架构单元），�
 | E7-M2 | T03 Orchestrator、T04 Team Manager、T05 Task Decomposition、T06 Assignment | ✅ 已完成 |
 | E7-M3 | T07 Handoff、T08 Lead Agent、T09 Context Coordination、T12 Agent Communication | ✅ 已完成 |
 | E7-M4 | T10 Parallel Execution、T11 Resource/Conflict Coordination、T17 Conflict Resolution | ✅ 已完成 |
-| E7-M5 | T13 Specialized Definitions、T14 Workflows、T15 Result Integration、T16 Review | ⬜ 待开始 |
+| E7-M5 | T13 Specialized Definitions、T14 Workflows、T15 Result Integration、T16 Review | ✅ 已完成 |
 | E7-M6 | T18 Team Budget、T19 Observability、T20 API、T21 UI、T22 Platformer Demo | ⬜ 待开始 |
 | E7-M7 | 综合测试与验收、E7 验收报告 | ⬜ 待开始 |
 
@@ -439,6 +439,24 @@ Assignment，保留无关任务继续执行。冲突服务记录参与方/资源
 WAITING、READY→BLOCKED；接口/Schema 冲突若影响用户目标自动升级，必须 USER_DECISION 解决；
 策略白名单不含 LAST_WRITE_WINS，避免静默覆盖。新增 10 个测试（4 单元策略 + 6 集成资源/并行/
 冲突，集成文件累计 13 个并复用 M3 夹具），后端 568 passed，ruff 全通过。
+
+交付（M5）：新增 `modules/multi_agent/{specialized,workflows,review}.py` 并扩展 `lead.py`。
+专用 Agent 目录登记 38 个角色（15 P0 / 18 P1 / 5 P2），统一提供身份、职责、能力、工具、
+权限上限、输入/输出契约、验收标准与协作规则；其中 6 个 P0 角色标记为可执行，能力映射到
+已登记的 32 个内置能力，启动自检校验能力/权限/验收完整性。`SpecializedAgentCatalog` 会为
+每个角色创建专属 Prompt（Draft v1）并幂等创建/发布 Definition，重复调用返回同一已发布
+Definition。游戏工作流模板包含概念设计、核心玩法、UI、TileMap 关卡与代码质量 5 条，每条
+步骤对应一个 Phase（review_required=True）与一个已登记 Agent，末尾为用户确认或客观验证节点；
+服务复用 E4 Definition/Instance，实例化后 Workflow 处于 READY，Phase/Node 状态仍由 Workflow
+Engine 独占。结果集成新增严格 `prepare`：要求 Team 内全部 Assignment 完成且有输出，重复
+output_reference 视为接口冲突，随后可 APPLYING → VERIFYING → COMPLETED，提交验证必须携带
+verification_reference、已存在集成计划且来源仍完成。评审服务支持 7 种 Review 类型与
+ACCEPTED/NEEDS_REVISION/REJECTED 结论；被审查 Assignment 必须完成且有输出，审查人需属于
+同一 Team 且与被审查者独立（不同 Definition 或同 Definition 的不同实例），自审拒绝；非通过
+评审必须提供 findings 与修改建议，完成时必须提供证据，Review 明确标记 `requires_verification`
+且不替代 Verification System。启动注册 `specialized_agent_catalog`、`game_workflow_service`
+与 `review_service`。新增 12 个测试（6 单元目录/模板 + 6 集成目录/工作流/集成/评审），
+后端 580 passed，ruff 全通过。
 
 ## 12. 已知问题与待办
 
