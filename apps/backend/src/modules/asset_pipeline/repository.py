@@ -17,6 +17,7 @@ from modules.asset_pipeline.models import (
     AssetGenerationOutputModel,
     AssetImportEvidenceModel,
     AssetImportJobModel,
+    AssetLicenseEvidenceModel,
     AssetLicenseModel,
     AssetModel,
     AssetProcessingJobModel,
@@ -372,6 +373,15 @@ class AssetImportJobRepository(BaseRepository[AssetImportJobModel]):
         )
         return list(rows)
 
+    async def get_by_idempotency(
+        self, idempotency_key: str
+    ) -> AssetImportJobModel | None:
+        return await self.session.scalar(
+            select(AssetImportJobModel).where(
+                AssetImportJobModel.idempotency_key == idempotency_key
+            )
+        )
+
 
 class AssetImportEvidenceRepository(BaseRepository[AssetImportEvidenceModel]):
     model = AssetImportEvidenceModel
@@ -412,6 +422,18 @@ class AssetLicenseRepository(BaseRepository[AssetLicenseModel]):
             select(AssetLicenseModel)
             .where(AssetLicenseModel.asset_version_id == asset_version_id)
             .order_by(AssetLicenseModel.created_at)
+        )
+        return list(rows)
+
+
+class AssetLicenseEvidenceRepository(BaseRepository[AssetLicenseEvidenceModel]):
+    model = AssetLicenseEvidenceModel
+
+    async def list_for_license(self, license_id: str) -> list[AssetLicenseEvidenceModel]:
+        rows = await self.session.scalars(
+            select(AssetLicenseEvidenceModel)
+            .where(AssetLicenseEvidenceModel.license_id == license_id)
+            .order_by(AssetLicenseEvidenceModel.created_at)
         )
         return list(rows)
 

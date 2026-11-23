@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E8 进行中，M4 完成）。
+> 更新于 2026-11-23（E8 进行中，M5 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -13,11 +13,11 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E8 Asset Pipeline（进行中，M4 / 8）** |
-| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 4 / 8 |
+| 当前阶段 | **E8 Asset Pipeline（进行中，M5 / 8）** |
+| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 5 / 8 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 692 passed（unit + integration 650 / contract 42），ruff 全通过 |
+| 后端测试 | 701 passed（unit + integration 659 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000022` |
 
@@ -33,7 +33,7 @@
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
 | E7 | Multi-Agent & Game Development | ✅ 已完成 | 2026-11-23 验收，7 批次 / 22 任务，见 [E7 验收报告](e7-acceptance-report.md) |
-| E8 | Asset Pipeline | ⏳ 进行中 | M4 完成（T09 处理流水线、T10 质量检查与人工审核） |
+| E8 | Asset Pipeline | ⏳ 进行中 | M5 完成（T11 Godot 导入、T12 来源追踪、T13 License） |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
 | E11 | Platformer Demo | ⬜ 未开始 | 系统级集成验收 |
@@ -500,7 +500,7 @@ RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断�
 | E8-M2 | T03 版本管理、T04 Asset Brief 与规格 | ✅ 已完成 |
 | E8-M3 | T05 生成编排、T06/T07/T08 图像/音频/3D 适配器 | ✅ 已完成 |
 | E8-M4 | T09 处理流水线、T10 质量门控与人工审核 | ✅ 已完成 |
-| E8-M5 | T11 Godot 导入、T12 来源追踪、T13 License | ⬜ 未开始 |
+| E8-M5 | T11 Godot 导入、T12 来源追踪、T13 License | ✅ 已完成 |
 | E8-M6 | T14 依赖图、T15 交付与 ChangeSet、T16 恢复 | ⬜ 未开始 |
 | E8-M7 | T17 资产界面、T18 Agent 集成、T19 API 与事件 | ⬜ 未开始 |
 | E8-M8 | T20 测试与 Platformer Demo 资产实战、验收报告 | ⬜ 未开始 |
@@ -552,6 +552,20 @@ UV/材质/贴图/骨骼，重复内容检测；机器检查与人工审核独立
 `AssetQualityFindingRepository`；启动注册 `asset_processing_pipeline` 与
 `asset_quality_control`；新增 18 个单元/集成测试。后端 692 passed
 （unit + integration 650 / contract 42），ruff 全通过。
+
+M5 交付：新增 `modules/asset_pipeline/imports.py`（真实验证目标文件 Hash 属于版本
+存储对象、解析已连接 Editor Session、经 Editor Bridge 下发 `godot.asset.import` 并
+读取真实 `uid://`、`REQUESTED→IMPORTING→IMPORTED/FAILED`、超时/断线记 `UNKNOWN`
+且不重复导入、`refresh` 通过只读 `godot.asset.import_status` 恢复、每次终态写入
+导入证据含源文件 Hash/会话/Godot 版本/UID）、`provenance.py`（按版本唯一来源记录、
+重复请求幂等、冲突拒绝、沿父版本追溯、AI 生成与衍生资产的交付完整性校验）与
+`license.py`（有凭证才进入 `PENDING_REVIEW`、未知来源保持 `UNKNOWN`、人工核验才
+`VERIFIED`、权限字段与署名完整性、追加证据、过期自动 `EXPIRED`、`check_deliverable`
+门禁）；处理流水线在创建衍生版本时同步写入 `PROJECT_DERIVED` 来源；Godot 插件新增
+`godot.asset.import` / `import_status` / `resource_uid` 工具；启动注册
+`asset_import_service`、`asset_provenance_service`、`asset_license_service`；
+新增 9 个集成测试。后端 701 passed（unit + integration 659 / contract 42），
+ruff 全通过。
 
 ## 13. 已知问题与待办
 

@@ -39,6 +39,7 @@ from modules.asset_pipeline.models import (
     STORAGE_PROCESSED,
     AssetProcessingJobModel,
     AssetProcessingStepModel,
+    AssetProvenanceModel,
     AssetStorageObjectModel,
 )
 from modules.asset_pipeline.processing_types import (
@@ -53,6 +54,7 @@ from modules.asset_pipeline.processors import default_processing_registry
 from modules.asset_pipeline.repository import (
     AssetProcessingJobRepository,
     AssetProcessingStepRepository,
+    AssetProvenanceRepository,
     AssetRepository,
     AssetStorageObjectRepository,
     AssetVersionRepository,
@@ -310,6 +312,7 @@ class ProcessingPipelineService:
             graph,
             snapshot.artifacts,
             limits,
+            snapshot.content_hash,
         )
         return await self.get(entity.job_id)
 
@@ -474,6 +477,7 @@ class ProcessingPipelineService:
         graph: ProcessingGraph,
         input_artifacts: tuple[ProcessingArtifact, ...],
         limits: ProcessingLimits,
+        input_content_hash: str,
     ) -> None:
         await self._mark_job(job_id, PROCESSING_RUNNING, started_at=self._clock())
         await self._publish(
@@ -556,6 +560,7 @@ class ProcessingPipelineService:
                 request,
                 graph,
                 payloads[graph.terminal],
+                input_content_hash,
             )
         except Exception as error:
             await self._fail(job_id, error)
@@ -576,6 +581,7 @@ class ProcessingPipelineService:
         request: ProcessingRequest,
         graph: ProcessingGraph,
         payload: ProcessingPayload,
+        input_content_hash: str,
     ) -> None:
         outputs: list[dict[str, Any]] = []
         hashes: list[str] = []
@@ -602,6 +608,16 @@ class ProcessingPipelineService:
             {"node_id": node.node_id, "processor_id": node.processor}
             for node in graph.nodes
         ]
+        processor_versions = []
+        for node in graph.nodes:
+            processor = self._processors.get(node.processor)
+            processor_versions.append(
+                {
+                    "node_id": node.node_id,
+                    "processor_id": processor.processor_id,
+                    "processor_version": processor.version,
+                }
+            )
         version = await self._versions.create_version(
             request.asset_id,
             content_hash=composite_hash,
@@ -627,6 +643,32 @@ class ProcessingPipelineService:
         )
         now = self._clock()
         async with self._database.session() as session, transaction(session):
+            provenance_repository = AssetProvenanceRepository(session)
+            if await provenance_repository.get_for_version(version.version_id) is None:
+                await provenance_repository.add(
+                    AssetProvenanceModel(
+                        provenance_id="prv_" + uuid4().hex[:12],
+                        asset_id=request.asset_id,
+                        asset_version_id=version.version_id,
+                        source_type=SOURCE_PROJECT_DERIVED,
+                        provider_id=None,
+                        model_id=None,
+                        model_version=None,
+                        generation_id=None,
+                        request_reference=job_id,
+                        prompt_version_id=None,
+                        seed=None,
+                        input_hashes_json=_dump([input_content_hash]),
+                        output_hashes_json=_dump(hashes),
+                        processing_graph_json=_dump(graph.as_mapping()),
+                        processor_versions_json=_dump(processor_versions),
+                        operator_agent_id=None,
+                        operator_user_id=request.created_by,
+                        license_reference=None,
+                        external_source_reference=None,
+                        created_at=now,
+                    )
+                )
             storage_repository = AssetStorageObjectRepository(session)
             for item in outputs:
                 await storage_repository.add(

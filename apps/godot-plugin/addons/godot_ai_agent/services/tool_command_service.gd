@@ -41,6 +41,8 @@ const READ_ONLY_PREFIXES := [
 	"godot.tilemap.get_",
 	"godot.runtime.get_status",
 	"godot.debug.get_",
+	"godot.asset.import_status",
+	"godot.asset.resource_uid",
 ]
 
 var _session: Object = null
@@ -192,6 +194,12 @@ func _dispatch(tool_name: String, arguments: Dictionary, phase: String) -> Dicti
 			return _error(ERROR_UNSUPPORTED, "当前 Editor API 不提供调试输出读取")
 		"godot.editor.refresh":
 			return _editor_refresh(arguments)
+		"godot.asset.import":
+			return _asset_import(arguments)
+		"godot.asset.import_status":
+			return _asset_import_status(arguments)
+		"godot.asset.resource_uid":
+			return _asset_resource_uid(arguments)
 	return _error(ERROR_UNSUPPORTED, "工具未实现：%s（%s）" % [tool_name, phase])
 
 
@@ -763,6 +771,130 @@ func _editor_refresh(arguments: Dictionary) -> Dictionary:
 	if filesystem != null:
 		filesystem.scan()
 	return _ok({"rescanned": true, "paths": paths.size()})
+
+
+# --- 资产导入（E8-T11） ---
+
+
+func _asset_import(arguments: Dictionary) -> Dictionary:
+	var path := _asset_path(arguments)
+	if path.is_empty():
+		return _error(ERROR_ARGUMENT_INVALID, "缺少或非法的 res:// 资产路径")
+	if not FileAccess.file_exists(path):
+		return _error(ERROR_EXECUTION_FAILED, "目标文件不存在：%s" % path)
+	var filesystem := EditorInterface.get_resource_filesystem()
+	if filesystem == null:
+		return _error(ERROR_UNSUPPORTED, "EditorFileSystem 不可用")
+	if filesystem.has_method("update_file"):
+		filesystem.update_file(path)
+	filesystem.scan()
+	return _asset_import_result(path, true)
+
+
+func _asset_import_status(arguments: Dictionary) -> Dictionary:
+	var path := _asset_path(arguments)
+	if path.is_empty():
+		return _error(ERROR_ARGUMENT_INVALID, "缺少或非法的 res:// 资产路径")
+	return _asset_import_result(path, false)
+
+
+func _asset_resource_uid(arguments: Dictionary) -> Dictionary:
+	var path := _asset_path(arguments)
+	if path.is_empty():
+		return _error(ERROR_ARGUMENT_INVALID, "缺少或非法的 res:// 资产路径")
+	var imported := ResourceLoader.exists(path)
+	var uid_id: int = ResourceLoader.get_resource_uid(path) if imported else ResourceUID.INVALID_ID
+	var uid := ResourceUID.id_to_text(uid_id) if uid_id != ResourceUID.INVALID_ID else ""
+	return _ok(
+		{
+			"path": path,
+			"imported": imported,
+			"resource_uid": uid,
+			"resource_type": _asset_resource_type(
+				EditorInterface.get_resource_filesystem(), path
+			),
+		},
+		[{"name": "uid_resolved", "passed": not uid.is_empty(), "detail": uid}],
+		[uid] if not uid.is_empty() else []
+	)
+
+
+func _asset_import_result(path: String, requested: bool) -> Dictionary:
+	var filesystem := EditorInterface.get_resource_filesystem()
+	var scanning := false
+	if filesystem != null and filesystem.has_method("is_scanning"):
+		scanning = bool(filesystem.is_scanning())
+	var file_exists := FileAccess.file_exists(path)
+	var imported := ResourceLoader.exists(path)
+	var uid_id: int = ResourceLoader.get_resource_uid(path) if imported else ResourceUID.INVALID_ID
+	var uid := ResourceUID.id_to_text(uid_id) if uid_id != ResourceUID.INVALID_ID else ""
+	var resource_type := _asset_resource_type(filesystem, path)
+	var phase := "FAILED"
+	if imported and not scanning:
+		phase = "IMPORTED"
+	elif scanning:
+		phase = "IMPORTING"
+	var output := {
+		"path": path,
+		"phase": phase,
+		"requested_import": requested,
+		"file_exists": file_exists,
+		"imported": imported and not scanning,
+		"scanning": scanning,
+		"resource_uid": uid,
+		"resource_type": resource_type,
+		"file_size": _asset_file_size(path),
+		"modified_time": FileAccess.get_modified_time(path) if file_exists else 0,
+		"godot_version": str(Engine.get_version_info().get("string", "")),
+	}
+	var checks := [
+		{"name": "file_exists", "passed": file_exists, "detail": path},
+		{"name": "resource_imported", "passed": imported and not scanning, "detail": path},
+		{"name": "uid_resolved", "passed": not uid.is_empty(), "detail": uid},
+	]
+	var evidence: Array = []
+	if not uid.is_empty():
+		evidence.append(uid)
+	if phase == "FAILED":
+		return {
+			"status": STATUS_FAILED,
+			"output": output,
+			"checks": checks,
+			"evidence_refs": evidence,
+		}
+	return _ok(output, checks, evidence)
+
+
+func _asset_path(arguments: Dictionary) -> String:
+	var path := str(arguments.get("path", "")).strip_edges().replace("\\", "/")
+	if not path.begins_with("res://"):
+		return ""
+	if path.contains("..") or path.begins_with("res://.godot/"):
+		return ""
+	return path
+
+
+func _asset_file_size(path: String) -> int:
+	if not FileAccess.file_exists(path):
+		return 0
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return 0
+	var size := int(file.get_length())
+	file.close()
+	return size
+
+
+func _asset_resource_type(filesystem: Variant, path: String) -> String:
+	if filesystem == null or not filesystem.has_method("get_filesystem_path"):
+		return ""
+	var directory: Variant = filesystem.get_filesystem_path(path.get_base_dir())
+	if directory == null or not directory.has_method("find_file_index"):
+		return ""
+	var index := int(directory.find_file_index(path.get_file()))
+	if index < 0 or not directory.has_method("get_file_type"):
+		return ""
+	return str(directory.get_file_type(index))
 
 
 # --- 通用工具 ---

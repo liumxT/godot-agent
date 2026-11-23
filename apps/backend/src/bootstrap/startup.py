@@ -48,7 +48,10 @@ from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
 from modules.asset_pipeline.briefs import AssetBriefService
 from modules.asset_pipeline.generation import GenerationOrchestrator
+from modules.asset_pipeline.imports import GodotImportService
+from modules.asset_pipeline.license import LicenseService
 from modules.asset_pipeline.processing import ProcessingPipelineService
+from modules.asset_pipeline.provenance import ProvenanceService
 from modules.asset_pipeline.quality import QualityControlService
 from modules.asset_pipeline.service import AssetService
 from modules.asset_pipeline.storage import AssetStorage
@@ -807,6 +810,23 @@ def register_startup_steps(
                 storage=services.get("asset_storage", AssetStorage),
                 events=bus,
             ),
+        )
+        services.register(
+            "asset_import_service",
+            GodotImportService(
+                database,
+                hub=services.get("editor_command_hub", EditorCommandHub),
+                projects=services.get(
+                    "project_registry_service", ProjectRegistryService
+                ),
+                events=bus,
+            ),
+        )
+        services.register(
+            "asset_provenance_service", ProvenanceService(database, events=bus)
+        )
+        services.register(
+            "asset_license_service", LicenseService(database, events=bus)
         )
         await dispatcher.start()
 
