@@ -47,12 +47,15 @@ from modules.agent_runtime.tool_binding import AgentToolBindingService
 from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
 from modules.asset_pipeline.briefs import AssetBriefService
+from modules.asset_pipeline.delivery import AssetDeliveryService
+from modules.asset_pipeline.dependencies import AssetDependencyService
 from modules.asset_pipeline.generation import GenerationOrchestrator
 from modules.asset_pipeline.imports import GodotImportService
 from modules.asset_pipeline.license import LicenseService
 from modules.asset_pipeline.processing import ProcessingPipelineService
 from modules.asset_pipeline.provenance import ProvenanceService
 from modules.asset_pipeline.quality import QualityControlService
+from modules.asset_pipeline.recovery import AssetRecoveryService
 from modules.asset_pipeline.service import AssetService
 from modules.asset_pipeline.storage import AssetStorage
 from modules.asset_pipeline.versioning import AssetVersionService
@@ -827,6 +830,42 @@ def register_startup_steps(
         )
         services.register(
             "asset_license_service", LicenseService(database, events=bus)
+        )
+        services.register(
+            "asset_dependency_service", AssetDependencyService(database, events=bus)
+        )
+        services.register(
+            "asset_delivery_service",
+            AssetDeliveryService(
+                database,
+                changesets=services.get("changeset_service", ChangeSetService),
+                quality=services.get(
+                    "asset_quality_control", QualityControlService
+                ),
+                licenses=services.get("asset_license_service", LicenseService),
+                provenance=services.get(
+                    "asset_provenance_service", ProvenanceService
+                ),
+                approvals=services.get("approval_service", ApprovalService),
+                events=bus,
+            ),
+        )
+        services.register(
+            "asset_recovery_service",
+            AssetRecoveryService(
+                database,
+                generations=services.get(
+                    "asset_generation_orchestrator", GenerationOrchestrator
+                ),
+                processing=services.get(
+                    "asset_processing_pipeline", ProcessingPipelineService
+                ),
+                imports=services.get("asset_import_service", GodotImportService),
+                deliveries=services.get(
+                    "asset_delivery_service", AssetDeliveryService
+                ),
+                events=bus,
+            ),
         )
         await dispatcher.start()
 

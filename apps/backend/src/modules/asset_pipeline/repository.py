@@ -204,6 +204,17 @@ class AssetRepository(BaseRepository[AssetModel]):
             or 0
         )
 
+    async def list_all_for_project(self, project_id: str) -> list[AssetModel]:
+        rows = await self.session.scalars(
+            select(AssetModel)
+            .where(
+                AssetModel.project_id == project_id,
+                AssetModel.deleted_at.is_(None),
+            )
+            .order_by(AssetModel.created_at)
+        )
+        return list(rows)
+
 
 class AssetVersionRepository(BaseRepository[AssetVersionModel]):
     model = AssetVersionModel
@@ -299,6 +310,14 @@ class AssetDependencyRepository(BaseRepository[AssetDependencyModel]):
         )
         return list(rows)
 
+    async def list_for_project(self, project_id: str) -> list[AssetDependencyModel]:
+        rows = await self.session.scalars(
+            select(AssetDependencyModel)
+            .where(AssetDependencyModel.project_id == project_id)
+            .order_by(AssetDependencyModel.created_at)
+        )
+        return list(rows)
+
 
 class AssetGenerationRepository(BaseRepository[AssetGenerationModel]):
     model = AssetGenerationModel
@@ -307,6 +326,14 @@ class AssetGenerationRepository(BaseRepository[AssetGenerationModel]):
         return await self.session.scalar(
             select(AssetGenerationModel).where(AssetGenerationModel.idempotency_key == key)
         )
+
+    async def list_by_status(self, status: str) -> list[AssetGenerationModel]:
+        rows = await self.session.scalars(
+            select(AssetGenerationModel)
+            .where(AssetGenerationModel.generation_status == status)
+            .order_by(AssetGenerationModel.created_at)
+        )
+        return list(rows)
 
     async def list_for_asset(self, asset_id: str) -> list[AssetGenerationModel]:
         rows = await self.session.scalars(
@@ -349,6 +376,14 @@ class AssetProcessingJobRepository(BaseRepository[AssetProcessingJobModel]):
             )
         )
 
+    async def list_by_status(self, status: str) -> list[AssetProcessingJobModel]:
+        rows = await self.session.scalars(
+            select(AssetProcessingJobModel)
+            .where(AssetProcessingJobModel.processing_status == status)
+            .order_by(AssetProcessingJobModel.created_at)
+        )
+        return list(rows)
+
 
 class AssetProcessingStepRepository(BaseRepository[AssetProcessingStepModel]):
     model = AssetProcessingStepModel
@@ -381,6 +416,14 @@ class AssetImportJobRepository(BaseRepository[AssetImportJobModel]):
                 AssetImportJobModel.idempotency_key == idempotency_key
             )
         )
+
+    async def list_by_status(self, status: str) -> list[AssetImportJobModel]:
+        rows = await self.session.scalars(
+            select(AssetImportJobModel)
+            .where(AssetImportJobModel.import_status == status)
+            .order_by(AssetImportJobModel.created_at)
+        )
+        return list(rows)
 
 
 class AssetImportEvidenceRepository(BaseRepository[AssetImportEvidenceModel]):
@@ -469,6 +512,14 @@ class AssetDeliveryRepository(BaseRepository[AssetDeliveryModel]):
         rows = await self.session.scalars(
             select(AssetDeliveryModel)
             .where(AssetDeliveryModel.asset_id == asset_id)
+            .order_by(AssetDeliveryModel.created_at)
+        )
+        return list(rows)
+
+    async def list_by_status(self, status: str) -> list[AssetDeliveryModel]:
+        rows = await self.session.scalars(
+            select(AssetDeliveryModel)
+            .where(AssetDeliveryModel.delivery_status == status)
             .order_by(AssetDeliveryModel.created_at)
         )
         return list(rows)
