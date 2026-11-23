@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E7 M3 完成）。
+> 更新于 2026-11-23（E7 M4 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -13,12 +13,12 @@
 | 项 | 状态 |
 | --- | --- |
 | 当前阶段 | **E7 Multi-Agent & Game Development（进行中）** |
-| 阶段进度 | 7 / 13 完成（E0–E6），E7 进行中（M3 / 7） |
+| 阶段进度 | 7 / 13 完成（E0–E6），E7 进行中（M4 / 7） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 558 passed（unit + integration 516 / contract 42），ruff 全通过 |
+| 后端测试 | 568 passed（unit + integration 526 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000019` |
+| 数据库迁移 | head 为 `000020` |
 
 ## 2. 阶段总览
 
@@ -31,7 +31,7 @@
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
-| E7 | Multi-Agent & Game Development | 🚧 进行中 | M3 完成：Handoff、Lead Agent、Shared Context、Agent Messaging |
+| E7 | Multi-Agent & Game Development | 🚧 进行中 | M4 完成：并行执行、资源锁、冲突解决 |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
@@ -384,7 +384,7 @@ Tool System 工作。新增 5 个测试（4 验收集成 + 1 架构单元），�
 | E7-M1 | T01 Multi-Agent Domain & Contract、T02 Capability Registry | ✅ 已完成 |
 | E7-M2 | T03 Orchestrator、T04 Team Manager、T05 Task Decomposition、T06 Assignment | ✅ 已完成 |
 | E7-M3 | T07 Handoff、T08 Lead Agent、T09 Context Coordination、T12 Agent Communication | ✅ 已完成 |
-| E7-M4 | T10 Parallel Execution、T11 Resource/Conflict Coordination、T17 Conflict Resolution | ⬜ 待开始 |
+| E7-M4 | T10 Parallel Execution、T11 Resource/Conflict Coordination、T17 Conflict Resolution | ✅ 已完成 |
 | E7-M5 | T13 Specialized Definitions、T14 Workflows、T15 Result Integration、T16 Review | ⬜ 待开始 |
 | E7-M6 | T18 Team Budget、T19 Observability、T20 API、T21 UI、T22 Platformer Demo | ⬜ 待开始 |
 | E7-M7 | 综合测试与验收、E7 验收报告 | ⬜ 待开始 |
@@ -428,6 +428,17 @@ Shared Context 以引用+哈希版本化，`PRIVATE` 不可共享，同内容重
 冲突报告），写权限必须显式授予；提供状态看板、缺失输出、接口冲突检测（重复 output_reference）、
 集成计划创建与执行摘要。新增 13 个测试（6 单元 payload/权限 + 7 集成交接/Context/消息/Lead），
 后端 558 passed，ruff 全通过。
+
+交付（M4）：新增迁移 `000020_e7_resource_locks.py`（`agent_resource_locks` 表，含 READ/WRITE
+资源锁与单调 Fencing Token；`agent_conflicts` 增加解决策略与解决人字段），并新增
+`modules/multi_agent/{resources,conflicts}.py`。资源协调保证同一资源同一时刻最多一个写者，
+读锁可并行但排斥写锁；写冲突失败关闭并返回冲突持有者；旧 Fencing Token 的释放与有效性检查
+均被拒绝；Assignment 结束可批量释放锁。并行管理器支持依赖完成后将 BLOCKED 提升为 READY、
+按优先级与资源集合生成受 `max_parallel` 限制的批次，并在失败时只阻塞依赖失败结果的
+Assignment，保留无关任务继续执行。冲突服务记录参与方/资源/严重级别，检测时暂停 RUNNING→
+WAITING、READY→BLOCKED；接口/Schema 冲突若影响用户目标自动升级，必须 USER_DECISION 解决；
+策略白名单不含 LAST_WRITE_WINS，避免静默覆盖。新增 10 个测试（4 单元策略 + 6 集成资源/并行/
+冲突，集成文件累计 13 个并复用 M3 夹具），后端 568 passed，ruff 全通过。
 
 ## 12. 已知问题与待办
 

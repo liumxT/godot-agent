@@ -488,6 +488,24 @@
       "description": "Agent 消息的发送者、接收者、类型或内容不合法。"
     },
     {
+      "code": "AGENT_RESOURCE_CONFLICT",
+      "retryable": true,
+      "http_status": 409,
+      "description": "资源访问与现有锁冲突，必须串行或等待释放。"
+    },
+    {
+      "code": "AGENT_RESOURCE_LOCK_INVALID",
+      "retryable": false,
+      "http_status": 409,
+      "description": "资源锁不存在、已释放或 Fencing Token 过期。"
+    },
+    {
+      "code": "AGENT_CONFLICT_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "冲突记录的类型、状态或解决策略不合法。"
+    },
+    {
       "code": "AGENT_DECOMPOSITION_INVALID",
       "retryable": false,
       "http_status": 422,

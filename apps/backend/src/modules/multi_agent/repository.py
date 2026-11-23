@@ -10,6 +10,7 @@ from sqlalchemy import func, select, update
 
 from infrastructure.database.repository import BaseRepository, Page
 from modules.multi_agent.models import (
+    LOCK_ACTIVE,
     AgentAssignmentDependencyModel,
     AgentAssignmentModel,
     AgentCapabilityModel,
@@ -18,6 +19,7 @@ from modules.multi_agent.models import (
     AgentHandoffModel,
     AgentIntegrationModel,
     AgentMessageModel,
+    AgentResourceLockModel,
     AgentReviewModel,
     AgentSharedContextModel,
     AgentTeamBudgetModel,
@@ -228,6 +230,17 @@ class AgentAssignmentDependencyRepository(BaseRepository[AgentAssignmentDependen
         )
         return list(rows)
 
+    async def list_dependents(
+        self, depends_on_assignment_id: str
+    ) -> list[AgentAssignmentDependencyModel]:
+        rows = await self.session.scalars(
+            select(AgentAssignmentDependencyModel).where(
+                AgentAssignmentDependencyModel.depends_on_assignment_id
+                == depends_on_assignment_id
+            )
+        )
+        return list(rows)
+
     async def get_pair(
         self, assignment_id: str, depends_on_assignment_id: str
     ) -> AgentAssignmentDependencyModel | None:
@@ -299,6 +312,51 @@ class AgentMessageRepository(BaseRepository[AgentMessageModel]):
 
 class AgentConflictRepository(BaseRepository[AgentConflictModel]):
     model = AgentConflictModel
+
+    async def list_for_team(self, team_id: str) -> list[AgentConflictModel]:
+        rows = await self.session.scalars(
+            select(AgentConflictModel)
+            .where(AgentConflictModel.team_id == team_id)
+            .order_by(AgentConflictModel.created_at)
+        )
+        return list(rows)
+
+
+class AgentResourceLockRepository(BaseRepository[AgentResourceLockModel]):
+    model = AgentResourceLockModel
+
+    async def list_active_for_resource(self, resource_key: str) -> list[AgentResourceLockModel]:
+        rows = await self.session.scalars(
+            select(AgentResourceLockModel).where(
+                AgentResourceLockModel.resource_key == resource_key,
+                AgentResourceLockModel.status == LOCK_ACTIVE,
+            )
+        )
+        return list(rows)
+
+    async def max_fencing_token(self, resource_key: str) -> int:
+        value = await self.session.scalar(
+            select(func.max(AgentResourceLockModel.fencing_token)).where(
+                AgentResourceLockModel.resource_key == resource_key
+            )
+        )
+        return int(value or 0)
+
+    async def list_for_team(self, team_id: str) -> list[AgentResourceLockModel]:
+        rows = await self.session.scalars(
+            select(AgentResourceLockModel)
+            .where(AgentResourceLockModel.team_id == team_id)
+            .order_by(AgentResourceLockModel.acquired_at)
+        )
+        return list(rows)
+
+    async def list_for_assignment(self, assignment_id: str) -> list[AgentResourceLockModel]:
+        rows = await self.session.scalars(
+            select(AgentResourceLockModel).where(
+                AgentResourceLockModel.assignment_id == assignment_id
+            )
+        )
+        return list(rows)
 
 
 class AgentIntegrationRepository(BaseRepository[AgentIntegrationModel]):

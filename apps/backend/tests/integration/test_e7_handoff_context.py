@@ -10,18 +10,27 @@ import pytest
 from bootstrap.application import create_app
 from config.settings import load_settings
 from core.errors import (
+    AgentConflictInvalid,
     AgentContextInvalid,
     AgentContextStale,
     AgentHandoffInvalid,
     AgentMessageInvalid,
     AgentOrchestrationUnauthorized,
+    AgentResourceConflict,
+    AgentResourceLockInvalid,
 )
 from modules.agent_runtime.service import DefinitionRegistryService
 from modules.multi_agent.communication import MessageService
+from modules.multi_agent.conflicts import ConflictService
 from modules.multi_agent.context import SharedContextService
 from modules.multi_agent.decomposition import DecompositionPlan, SubtaskSpec
 from modules.multi_agent.lead import IntegrationService, LeadAgentService
 from modules.multi_agent.orchestrator import OrchestratorService
+from modules.multi_agent.resources import (
+    ParallelExecutionManager,
+    ResourceCoordinatorService,
+    ResourceRequest,
+)
 from modules.multi_agent.service import (
     AgentTeamService,
     AssignmentService,
@@ -440,3 +449,242 @@ async def test_lead_status_conflicts_and_integration_plan(tmp_path: Path) -> Non
         assert summary.completed_assignments == 2
         assert len(summary.results) == 2
         assert len(summary.conflicts) == 1
+
+
+async def test_resource_write_locks_are_exclusive_and_fenced(tmp_path: Path) -> None:
+    async with _running(tmp_path) as app:
+        ctx = await _prepare(app, tmp_path)
+        result = await _orchestrate(app, ctx, _platformer_plan())
+        by_key = {item.key: item.assignment for item in result.assignments}
+        coordinator = _service(
+            app, "resource_coordinator_service", ResourceCoordinatorService
+        )
+        scene = ResourceRequest(resource_type="SCENE", resource_key="res://player.tscn")
+
+        first = await coordinator.acquire(
+            team_id=result.team.team_id,
+            assignment_id=by_key["code"].assignment_id,
+            resources=[scene],
+        )
+        assert first.locks[0].mode == "WRITE"
+        with pytest.raises(AgentResourceConflict) as exc_info:
+            await coordinator.acquire(
+                team_id=result.team.team_id,
+                assignment_id=by_key["hud"].assignment_id,
+                resources=[scene],
+            )
+        assert exc_info.value.details["reasons"] == ["LOCK_CONFLICT"]
+
+        lock = first.locks[0]
+        with pytest.raises(AgentResourceLockInvalid):
+            await coordinator.release(lock.lock_id, fencing_token=lock.fencing_token + 1)
+        released = await coordinator.release(lock.lock_id, fencing_token=lock.fencing_token)
+        assert released.status == "RELEASED"
+
+        second = await coordinator.acquire(
+            team_id=result.team.team_id,
+            assignment_id=by_key["hud"].assignment_id,
+            resources=[scene],
+        )
+        assert second.locks[0].fencing_token > lock.fencing_token
+        with pytest.raises(AgentResourceLockInvalid):
+            await coordinator.assert_valid(lock.lock_id, fencing_token=lock.fencing_token)
+
+
+async def test_read_locks_allow_parallel_but_block_writers(tmp_path: Path) -> None:
+    async with _running(tmp_path) as app:
+        ctx = await _prepare(app, tmp_path)
+        result = await _orchestrate(app, ctx, _platformer_plan())
+        by_key = {item.key: item.assignment for item in result.assignments}
+        coordinator = _service(
+            app, "resource_coordinator_service", ResourceCoordinatorService
+        )
+        script = "res://scripts/player.gd"
+
+        reader_one = await coordinator.acquire(
+            team_id=result.team.team_id,
+            assignment_id=by_key["design"].assignment_id,
+            resources=[ResourceRequest("SCRIPT", script, "READ")],
+        )
+        reader_two = await coordinator.acquire(
+            team_id=result.team.team_id,
+            assignment_id=by_key["code"].assignment_id,
+            resources=[ResourceRequest("SCRIPT", script, "READ")],
+        )
+        assert len(reader_one.locks) == len(reader_two.locks) == 1
+
+        with pytest.raises(AgentResourceConflict):
+            await coordinator.acquire(
+                team_id=result.team.team_id,
+                assignment_id=by_key["hud"].assignment_id,
+                resources=[ResourceRequest("SCRIPT", script, "WRITE")],
+            )
+
+        for grant in (reader_one, reader_two):
+            lock = grant.locks[0]
+            await coordinator.release(lock.lock_id, fencing_token=lock.fencing_token)
+        writer = await coordinator.acquire(
+            team_id=result.team.team_id,
+            assignment_id=by_key["hud"].assignment_id,
+            resources=[ResourceRequest("SCRIPT", script, "WRITE")],
+        )
+        assert writer.locks[0].mode == "WRITE"
+
+
+async def test_parallel_plan_respects_limit_and_resources(tmp_path: Path) -> None:
+    async with _running(tmp_path) as app:
+        ctx = await _prepare(app, tmp_path)
+        result = await _orchestrate(app, ctx, _platformer_plan())
+        by_key = {item.key: item.assignment for item in result.assignments}
+        assignments = _service(app, "assignment_service", AssignmentService)
+        manager = _service(app, "parallel_execution_manager", ParallelExecutionManager)
+
+        for key in ("code", "hud"):
+            await assignments.transition(
+                by_key[key].assignment_id, "READY", expected_version=by_key[key].version
+            )
+
+        bounded = await manager.plan_batches(result.team.team_id, max_parallel=2)
+        assert [len(batch.assignments) for batch in bounded.batches] == [2, 1]
+
+        resource_map = {
+            by_key["design"].assignment_id: {"scene"},
+            by_key["code"].assignment_id: {"scene"},
+            by_key["hud"].assignment_id: {"ui"},
+        }
+        planned = await manager.plan_batches(
+            result.team.team_id,
+            resources_by_assignment=resource_map,
+            max_parallel=4,
+        )
+        assert [{item.assignment_id for item in batch.assignments} for batch in planned.batches] == [
+            {by_key["design"].assignment_id},
+            {by_key["code"].assignment_id, by_key["hud"].assignment_id},
+        ]
+
+
+async def test_refresh_readiness_unblocks_after_dependencies_complete(tmp_path: Path) -> None:
+    async with _running(tmp_path) as app:
+        ctx = await _prepare(app, tmp_path)
+        result = await _orchestrate(app, ctx, _platformer_plan())
+        by_key = {item.key: item.assignment for item in result.assignments}
+        assignments = _service(app, "assignment_service", AssignmentService)
+        manager = _service(app, "parallel_execution_manager", ParallelExecutionManager)
+
+        design = await _run_to_completion(
+            assignments,
+            by_key["design"],
+            agent_instance_id="instance_design",
+            output_reference="context://result/design",
+        )
+        code_ready = await assignments.transition(
+            by_key["code"].assignment_id, "READY", expected_version=by_key["code"].version
+        )
+        code = await _run_to_completion(
+            assignments,
+            code_ready,
+            agent_instance_id="instance_code",
+            output_reference="context://result/code",
+        )
+        hud_ready = await assignments.transition(
+            by_key["hud"].assignment_id, "READY", expected_version=by_key["hud"].version
+        )
+        hud = await _run_to_completion(
+            assignments,
+            hud_ready,
+            agent_instance_id="instance_hud",
+            output_reference="context://result/hud",
+        )
+        assert design.status == code.status == hud.status == "COMPLETED"
+
+        promoted = await manager.refresh_readiness(result.team.team_id)
+        assert [item.assignment_id for item in promoted] == [by_key["qa"].assignment_id]
+        assert promoted[0].status == "READY"
+
+
+async def test_failure_isolation_blocks_only_dependents(tmp_path: Path) -> None:
+    async with _running(tmp_path) as app:
+        ctx = await _prepare(app, tmp_path)
+        result = await _orchestrate(app, ctx, _platformer_plan())
+        by_key = {item.key: item.assignment for item in result.assignments}
+        assignments = _service(app, "assignment_service", AssignmentService)
+        manager = _service(app, "parallel_execution_manager", ParallelExecutionManager)
+
+        impact = await manager.handle_failure(
+            by_key["design"].assignment_id,
+            expected_version=by_key["design"].version,
+            failure_reason="设计无法满足跳跃需求",
+        )
+        assert set(impact.blocked_assignment_ids) == {
+            by_key["code"].assignment_id,
+            by_key["hud"].assignment_id,
+        }
+        assert impact.unaffected_assignments == 1
+        assert (await assignments.get(by_key["design"].assignment_id)).status == "FAILED"
+        assert (await assignments.get(by_key["code"].assignment_id)).status == "BLOCKED"
+        assert (await assignments.get(by_key["qa"].assignment_id)).status == "BLOCKED"
+
+
+async def test_conflict_report_pauses_and_escalates(tmp_path: Path) -> None:
+    async with _running(tmp_path) as app:
+        ctx = await _prepare(app, tmp_path)
+        result = await _orchestrate(app, ctx, _platformer_plan())
+        by_key = {item.key: item.assignment for item in result.assignments}
+        assignments = _service(app, "assignment_service", AssignmentService)
+        conflicts = _service(app, "conflict_service", ConflictService)
+        team_id = result.team.team_id
+        participants = [by_key["design"].assignment_id, by_key["code"].assignment_id]
+
+        reported = await conflicts.report(
+            team_id=team_id,
+            conflict_type="WRITE_WRITE",
+            conflicting_assignment_ids=participants,
+            severity="HIGH",
+            resource_id="SCENE:res://player.tscn",
+        )
+        assert reported.conflict.resolution_status == "DETECTED"
+        assert (await assignments.get(by_key["design"].assignment_id)).status == "BLOCKED"
+        assert reported.paused_assignments
+
+        with pytest.raises(AgentConflictInvalid) as exc_info:
+            await conflicts.resolve(
+                reported.conflict.conflict_id,
+                strategy="LAST_WRITE_WINS",
+                resolution_reference="resolution://last-write",
+                resolved_by="ORCHESTRATOR",
+            )
+        assert exc_info.value.details["reasons"] == ["UNKNOWN_STRATEGY"]
+
+        resolved = await conflicts.resolve(
+            reported.conflict.conflict_id,
+            strategy="SEQUENTIAL_EXECUTION",
+            resolution_reference="resolution://serialize/1",
+            resolved_by="ORCHESTRATOR",
+        )
+        assert resolved.resolution_status == "RESOLVED"
+        assert resolved.resolution_strategy == "SEQUENTIAL_EXECUTION"
+
+        escalated = await conflicts.report(
+            team_id=team_id,
+            conflict_type="INTERFACE_CONFLICT",
+            conflicting_assignment_ids=participants,
+            severity="HIGH",
+            affects_user_goal=True,
+            pause=False,
+        )
+        assert escalated.conflict.resolution_status == "ESCALATED"
+        with pytest.raises(AgentConflictInvalid) as exc_info:
+            await conflicts.resolve(
+                escalated.conflict.conflict_id,
+                strategy="MERGE_PROPOSAL",
+                resolution_reference="resolution://merge/1",
+                resolved_by="ORCHESTRATOR",
+            )
+        assert exc_info.value.details["reasons"] == ["USER_DECISION_REQUIRED"]
+        user_choice = await conflicts.resolve(
+            escalated.conflict.conflict_id,
+            strategy="USER_DECISION",
+            resolution_reference="resolution://user/1",
+            resolved_by="USER",
+        )
+        assert user_choice.resolution_status == "RESOLVED"

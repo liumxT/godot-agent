@@ -63,9 +63,14 @@ from modules.model_gateway.providers.registry import default_adapter_registry
 from modules.model_gateway.registry import ModelRegistryService
 from modules.model_gateway.routing import ModelRoutingService
 from modules.multi_agent.communication import MessageService
+from modules.multi_agent.conflicts import ConflictService
 from modules.multi_agent.context import SharedContextService
 from modules.multi_agent.lead import IntegrationService, LeadAgentService
 from modules.multi_agent.orchestrator import OrchestratorService
+from modules.multi_agent.resources import (
+    ParallelExecutionManager,
+    ResourceCoordinatorService,
+)
 from modules.multi_agent.service import (
     AgentTeamService,
     AssignmentService,
@@ -372,6 +377,16 @@ def register_startup_steps(
             teams=agent_team_service,
             integrations=integration_service,
         )
+        resource_coordinator_service = ResourceCoordinatorService(database)
+        parallel_execution_manager = ParallelExecutionManager(
+            database,
+            teams=agent_team_service,
+            assignments=assignment_service,
+        )
+        conflict_service = ConflictService(
+            database,
+            assignments=assignment_service,
+        )
         orchestrator_service = OrchestratorService(
             database,
             tasks=task_service,
@@ -533,6 +548,9 @@ def register_startup_steps(
         services.register("message_service", message_service)
         services.register("integration_service", integration_service)
         services.register("lead_agent_service", lead_agent_service)
+        services.register("resource_coordinator_service", resource_coordinator_service)
+        services.register("parallel_execution_manager", parallel_execution_manager)
+        services.register("conflict_service", conflict_service)
         services.register("orchestrator_service", orchestrator_service)
         services.register("agent_event_service", agent_event_service)
         services.register("agent_instance_service", agent_instance_service)

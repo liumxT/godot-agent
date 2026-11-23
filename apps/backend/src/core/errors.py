@@ -599,6 +599,28 @@ class AgentMessageInvalid(AppError):
     status_code = 422
 
 
+class AgentResourceConflict(AppError):
+    """资源访问与现有锁冲突，必须串行或等待释放。"""
+
+    code = "AGENT_RESOURCE_CONFLICT"
+    status_code = 409
+    retryable = True
+
+
+class AgentResourceLockInvalid(AppError):
+    """资源锁不存在、已释放或 Fencing Token 过期。"""
+
+    code = "AGENT_RESOURCE_LOCK_INVALID"
+    status_code = 409
+
+
+class AgentConflictInvalid(AppError):
+    """冲突记录的类型、状态或解决策略不合法。"""
+
+    code = "AGENT_CONFLICT_INVALID"
+    status_code = 422
+
+
 class AgentDecompositionInvalid(AppError):
     """任务分解未覆盖原始验收标准或依赖不合法。"""
 

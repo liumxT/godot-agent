@@ -28,6 +28,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -325,6 +326,85 @@ CONTEXT_STALE_POLICIES = frozenset(
     {CONTEXT_STALE_ACCEPT, CONTEXT_STALE_REFRESH, CONTEXT_STALE_PAUSE, CONTEXT_STALE_REANALYZE}
 )
 
+RESOURCE_TYPE_PROJECT_FILE = "PROJECT_FILE"
+RESOURCE_TYPE_SCENE = "SCENE"
+RESOURCE_TYPE_SCRIPT = "SCRIPT"
+RESOURCE_TYPE_RESOURCE = "RESOURCE"
+RESOURCE_TYPE_PROJECT_SETTINGS = "PROJECT_SETTINGS"
+RESOURCE_TYPE_INPUT_MAP = "INPUT_MAP"
+RESOURCE_TYPE_ASSET = "ASSET"
+RESOURCE_TYPE_TILESET = "TILESET"
+RESOURCE_TYPE_ANIMATION = "ANIMATION"
+RESOURCE_TYPE_SHARED_INTERFACE = "SHARED_INTERFACE"
+RESOURCE_TYPE_DATABASE = "DATABASE_RESOURCE"
+RESOURCE_TYPES = frozenset(
+    {
+        RESOURCE_TYPE_PROJECT_FILE,
+        RESOURCE_TYPE_SCENE,
+        RESOURCE_TYPE_SCRIPT,
+        RESOURCE_TYPE_RESOURCE,
+        RESOURCE_TYPE_PROJECT_SETTINGS,
+        RESOURCE_TYPE_INPUT_MAP,
+        RESOURCE_TYPE_ASSET,
+        RESOURCE_TYPE_TILESET,
+        RESOURCE_TYPE_ANIMATION,
+        RESOURCE_TYPE_SHARED_INTERFACE,
+        RESOURCE_TYPE_DATABASE,
+    }
+)
+
+LOCK_MODE_READ = "READ"
+LOCK_MODE_WRITE = "WRITE"
+LOCK_MODES = frozenset({LOCK_MODE_READ, LOCK_MODE_WRITE})
+LOCK_ACTIVE = "ACTIVE"
+LOCK_RELEASED = "RELEASED"
+LOCK_STATUSES = frozenset({LOCK_ACTIVE, LOCK_RELEASED})
+
+CONFLICT_WRITE_WRITE = "WRITE_WRITE"
+CONFLICT_READ_WRITE = "READ_WRITE"
+CONFLICT_STALE_CONTEXT = "STALE_CONTEXT"
+CONFLICT_SCHEMA = "SCHEMA_CONFLICT"
+CONFLICT_INTERFACE = "INTERFACE_CONFLICT"
+CONFLICT_CHANGESET = "CHANGESET_CONFLICT"
+CONFLICT_RESOURCE_LOCK = "RESOURCE_LOCK_CONFLICT"
+CONFLICT_TYPES = frozenset(
+    {
+        CONFLICT_WRITE_WRITE,
+        CONFLICT_READ_WRITE,
+        CONFLICT_STALE_CONTEXT,
+        CONFLICT_SCHEMA,
+        CONFLICT_INTERFACE,
+        CONFLICT_CHANGESET,
+        CONFLICT_RESOURCE_LOCK,
+    }
+)
+CONFLICT_TRANSITIONS: dict[str, frozenset[str]] = {
+    CONFLICT_DETECTED: frozenset(
+        {CONFLICT_ANALYZING, CONFLICT_ESCALATED, CONFLICT_RESOLVED}
+    ),
+    CONFLICT_ANALYZING: frozenset(
+        {CONFLICT_RESOLVING, CONFLICT_ESCALATED, CONFLICT_RESOLVED}
+    ),
+    CONFLICT_RESOLVING: frozenset({CONFLICT_RESOLVED, CONFLICT_ESCALATED}),
+    CONFLICT_ESCALATED: frozenset({CONFLICT_RESOLVED}),
+    CONFLICT_RESOLVED: frozenset(),
+}
+
+RESOLUTION_SEQUENTIAL = "SEQUENTIAL_EXECUTION"
+RESOLUTION_REBASE = "REBASE"
+RESOLUTION_MERGE_PROPOSAL = "MERGE_PROPOSAL"
+RESOLUTION_REASSIGN = "REASSIGN"
+RESOLUTION_USER_DECISION = "USER_DECISION"
+RESOLUTION_STRATEGIES = frozenset(
+    {
+        RESOLUTION_SEQUENTIAL,
+        RESOLUTION_REBASE,
+        RESOLUTION_MERGE_PROPOSAL,
+        RESOLUTION_REASSIGN,
+        RESOLUTION_USER_DECISION,
+    }
+)
+
 TEAM_MEMBER_LEAD = "LEAD"
 TEAM_MEMBER_WORKER = "WORKER"
 TEAM_MEMBER_REVIEWER = "REVIEWER"
@@ -574,11 +654,44 @@ class AgentConflictModel(Base):
     resolution_status: Mapped[str] = mapped_column(
         String(16), nullable=False, default=CONFLICT_DETECTED
     )
+    resolution_strategy: Mapped[str | None] = mapped_column(String(32), nullable=True)
     resolution_reference: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    resolved_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (Index("ix_agent_conflicts_team", "team_id", "resolution_status"),)
+
+
+class AgentResourceLockModel(Base):
+    __tablename__ = "agent_resource_locks"
+
+    lock_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    team_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("agent_teams.team_id", ondelete="CASCADE"), nullable=False
+    )
+    assignment_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"), nullable=False
+    )
+    resource_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    resource_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    mode: Mapped[str] = mapped_column(String(8), nullable=False)
+    fencing_token: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default=LOCK_ACTIVE)
+    acquired_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("ix_agent_resource_locks_resource", "resource_key", "status"),
+        Index("ix_agent_resource_locks_assignment", "assignment_id", "status"),
+        Index(
+            "uq_agent_resource_locks_active_write",
+            "resource_key",
+            unique=True,
+            sqlite_where=text("status = 'ACTIVE' AND mode = 'WRITE'"),
+            postgresql_where=text("status = 'ACTIVE' AND mode = 'WRITE'"),
+        ),
+    )
 
 
 class AgentIntegrationModel(Base):
@@ -677,6 +790,8 @@ __all__ = [
     "COLLABORATION_STATUSES",
     "CONFLICT_SEVERITIES",
     "CONFLICT_STATUSES",
+    "CONFLICT_TRANSITIONS",
+    "CONFLICT_TYPES",
     "CONTEXT_SCOPE_ASSIGNMENT",
     "CONTEXT_SCOPE_GLOBAL",
     "CONTEXT_SCOPE_PRIVATE",
@@ -695,7 +810,11 @@ __all__ = [
     "HANDOFF_TYPES",
     "INTEGRATION_STATUSES",
     "INTEGRATION_TRANSITIONS",
+    "LOCK_MODES",
+    "LOCK_STATUSES",
     "MESSAGE_TYPES",
+    "RESOLUTION_STRATEGIES",
+    "RESOURCE_TYPES",
     "REVIEW_STATUSES",
     "RISK_PROFILES",
     "SHARED_CONTEXT_SCOPES",
@@ -711,6 +830,7 @@ __all__ = [
     "AgentHandoffModel",
     "AgentIntegrationModel",
     "AgentMessageModel",
+    "AgentResourceLockModel",
     "AgentReviewModel",
     "AgentSharedContextModel",
     "AgentTeamBudgetModel",
