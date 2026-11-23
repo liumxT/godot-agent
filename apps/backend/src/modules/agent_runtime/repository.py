@@ -6,7 +6,7 @@ Repository 只承载查询与写入，不提交事务；顺序号生成在同一
 
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
 from infrastructure.database.repository import BaseRepository, Page
 from modules.agent_runtime.models import (
@@ -116,6 +116,43 @@ class AgentInstanceRepository(BaseRepository[AgentInstanceModel]):
             .order_by(AgentInstanceModel.created_at.desc())
             .limit(1)
         )
+
+    async def compare_and_set_status(
+        self,
+        instance_id: str,
+        *,
+        expected_version: int,
+        from_status: str,
+        to_status: str,
+        now,
+        started_at=None,
+        completed_at=None,
+        termination_reason: str | None = None,
+    ) -> int:
+        """条件更新状态，避免并发 worker 同时迁移同一实例。"""
+
+        values: dict[str, object] = {
+            "status": to_status,
+            "version": expected_version + 1,
+            "updated_at": now,
+        }
+        if started_at is not None:
+            values["started_at"] = started_at
+        if completed_at is not None:
+            values["completed_at"] = completed_at
+        if termination_reason is not None:
+            values["termination_reason"] = termination_reason
+        result = await self.session.execute(
+            update(AgentInstanceModel)
+            .where(
+                AgentInstanceModel.instance_id == instance_id,
+                AgentInstanceModel.version == expected_version,
+                AgentInstanceModel.status == from_status,
+            )
+            .values(**values)
+            .execution_options(synchronize_session=False)
+        )
+        return int(result.rowcount or 0)
 
     def _order_columns(self):
         return (AgentInstanceModel.created_at, AgentInstanceModel.instance_id)

@@ -27,6 +27,10 @@ from infrastructure.secrets.store import KeyringSecretStore, MemorySecretStore
 from infrastructure.security.bootstrap import BootstrapTokenStore
 from infrastructure.security.rate_limit import ConcurrencyLimiter, SlidingWindowRateLimiter
 from modules.access.service import ProjectAccessService
+from modules.agent_runtime.events import AgentEventService
+from modules.agent_runtime.instance import AgentInstanceService
+from modules.agent_runtime.lifecycle import AgentLifecycleService
+from modules.agent_runtime.scheduler import AgentScheduler
 from modules.agent_runtime.service import DefinitionRegistryService
 from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
@@ -332,6 +336,23 @@ def register_startup_steps(
             prompts=prompt_service,
             tools=tool_registry_service,
         )
+        agent_event_service = AgentEventService(database)
+        agent_instance_service = AgentInstanceService(
+            database,
+            definitions=agent_definition_registry_service,
+            tasks=task_service,
+            attempts=task_attempt_service,
+            events=agent_event_service,
+        )
+        agent_lifecycle_service = AgentLifecycleService(
+            database,
+            instances=agent_instance_service,
+            events=agent_event_service,
+            definitions=agent_definition_registry_service,
+            prompts=prompt_service,
+            tools=tool_registry_service,
+        )
+        agent_scheduler = AgentScheduler(database, lifecycle=agent_lifecycle_service)
         tool_approval_gate = ToolApprovalGate(approval_service)
         tool_permission_engine = ToolPermissionEngine(
             access=access_service,
@@ -446,6 +467,10 @@ def register_startup_steps(
         services.register(
             "agent_definition_registry_service", agent_definition_registry_service
         )
+        services.register("agent_event_service", agent_event_service)
+        services.register("agent_instance_service", agent_instance_service)
+        services.register("agent_lifecycle_service", agent_lifecycle_service)
+        services.register("agent_scheduler", agent_scheduler)
         services.register("tool_approval_gate", tool_approval_gate)
         services.register("tool_permission_engine", tool_permission_engine)
         services.register("tool_adapter_registry", tool_adapter_registry)

@@ -258,6 +258,17 @@ class DefinitionRegistryService:
             )
         return _version_view(entity)
 
+    def model_policy(self, policy_id: str) -> ModelPolicy:
+        """返回已登记的 Model Policy；不存在时失败关闭。"""
+
+        policy = self._policies.get(policy_id or "")
+        if policy is None:
+            raise AgentDefinitionInvalid(
+                "Model Policy 不存在",
+                details={"reasons": ["UNKNOWN_MODEL_POLICY"], "policy_id": policy_id},
+            )
+        return policy
+
     # ---- 创建与更新 ----
 
     async def create(
