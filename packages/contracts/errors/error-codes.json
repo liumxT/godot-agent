@@ -390,6 +390,54 @@
       "retryable": false,
       "http_status": 504,
       "description": "编辑器命令已发送但未在期限内返回结果，副作用未知。"
+    },
+    {
+      "code": "AGENT_DEFINITION_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Agent Definition 内容不合法或引用不可用。"
+    },
+    {
+      "code": "AGENT_VERSION_IMMUTABLE",
+      "retryable": false,
+      "http_status": 409,
+      "description": "已发布版本不可修改，或版本重复发布。"
+    },
+    {
+      "code": "AGENT_CAPABILITY_UNSUPPORTED",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Agent 能力声明不受支持。"
+    },
+    {
+      "code": "AGENT_STATE_INVALID",
+      "retryable": false,
+      "http_status": 409,
+      "description": "Agent Instance / Execution 当前状态不允许该操作。"
+    },
+    {
+      "code": "AGENT_BUDGET_EXCEEDED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "Agent 运行预算已耗尽。"
+    },
+    {
+      "code": "AGENT_ACTION_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "模型返回的结构化动作不可解析或不被允许。"
+    },
+    {
+      "code": "AGENT_PERMISSION_DENIED",
+      "retryable": false,
+      "http_status": 403,
+      "description": "Agent 权限上限或任务授权拒绝该操作。"
+    },
+    {
+      "code": "AGENT_RECOVERY_REQUIRED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "存在未知状态，必须先完成恢复检查。"
     }
   ]
 }

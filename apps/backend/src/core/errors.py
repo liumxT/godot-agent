@@ -487,6 +487,62 @@ class BackupError(AppError):
     status_code = 500
 
 
+class AgentDefinitionInvalid(AppError):
+    """Agent Definition 内容不合法或引用不可用。"""
+
+    code = "AGENT_DEFINITION_INVALID"
+    status_code = 422
+
+
+class AgentVersionImmutable(AppError):
+    """已发布版本不可修改，或版本重复发布。"""
+
+    code = "AGENT_VERSION_IMMUTABLE"
+    status_code = 409
+
+
+class AgentCapabilityUnsupported(AppError):
+    """Agent 能力声明不受支持。"""
+
+    code = "AGENT_CAPABILITY_UNSUPPORTED"
+    status_code = 422
+
+
+class AgentStateInvalid(AppError):
+    """Agent Instance / Execution 当前状态不允许该操作。"""
+
+    code = "AGENT_STATE_INVALID"
+    status_code = 409
+
+
+class AgentBudgetExceeded(AppError):
+    """Agent 运行预算已耗尽。"""
+
+    code = "AGENT_BUDGET_EXCEEDED"
+    status_code = 409
+
+
+class AgentActionInvalid(AppError):
+    """模型返回的结构化动作不可解析或不被允许。"""
+
+    code = "AGENT_ACTION_INVALID"
+    status_code = 422
+
+
+class AgentPermissionDenied(AppError):
+    """Agent 权限上限或任务授权拒绝该操作。"""
+
+    code = "AGENT_PERMISSION_DENIED"
+    status_code = 403
+
+
+class AgentRecoveryRequired(AppError):
+    """存在未知状态，必须先完成恢复检查。"""
+
+    code = "AGENT_RECOVERY_REQUIRED"
+    status_code = 409
+
+
 def iter_error_types() -> list[type[AppError]]:
     """返回 AppError 及其全部子类，用于错误码登记检查。"""
 

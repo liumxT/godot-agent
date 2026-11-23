@@ -27,6 +27,7 @@ from infrastructure.secrets.store import KeyringSecretStore, MemorySecretStore
 from infrastructure.security.bootstrap import BootstrapTokenStore
 from infrastructure.security.rate_limit import ConcurrencyLimiter, SlidingWindowRateLimiter
 from modules.access.service import ProjectAccessService
+from modules.agent_runtime.service import DefinitionRegistryService
 from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
 from modules.audit.service import AuditService
@@ -326,6 +327,11 @@ def register_startup_steps(
             workflows=workflow_instance_service,
         )
         tool_registry_service = ToolRegistryService(database)
+        agent_definition_registry_service = DefinitionRegistryService(
+            database,
+            prompts=prompt_service,
+            tools=tool_registry_service,
+        )
         tool_approval_gate = ToolApprovalGate(approval_service)
         tool_permission_engine = ToolPermissionEngine(
             access=access_service,
@@ -437,6 +443,9 @@ def register_startup_steps(
         services.register("prompt_service", prompt_service)
         services.register("context_assembly_service", context_assembly_service)
         services.register("tool_registry_service", tool_registry_service)
+        services.register(
+            "agent_definition_registry_service", agent_definition_registry_service
+        )
         services.register("tool_approval_gate", tool_approval_gate)
         services.register("tool_permission_engine", tool_permission_engine)
         services.register("tool_adapter_registry", tool_adapter_registry)

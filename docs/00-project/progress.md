@@ -12,13 +12,13 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E5 AI & Tool Foundation（已完成），下一阶段 E6** |
-| 阶段进度 | 6 / 13 完成（E0–E5），E6 待启动 |
+| 当前阶段 | **E6 Agent Runtime（进行中，M1 已完成）** |
+| 阶段进度 | 6 / 13 完成（E0–E5），E6 进行中 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 481 passed（unit + integration 439 / contract 42），ruff 全通过 |
+| 后端测试 | 486 passed（unit + integration 444 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000015` |
+| 数据库迁移 | head 为 `000016` |
 
 ## 2. 阶段总览
 
@@ -30,7 +30,7 @@
 | E3 | Godot Integration | ✅ 已完成 | 2026-11-20 验收，18 任务，见 [E3 验收报告](e3-acceptance-report.md) |
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
-| E6 | Agent Runtime | ⬜ 未开始 | |
+| E6 | Agent Runtime | 🟡 进行中 | M1（T01/T02）已完成 |
 | E7 | Multi-Agent & Game Development | ⬜ 未开始 | |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
@@ -57,7 +57,7 @@
 
 | 项 | 状态 / 数值 |
 | --- | --- |
-| 后端测试 | 481 passed（pytest，asyncio auto） |
+| 后端测试 | 486 passed（pytest，asyncio auto） |
 | 契约校验 | 38 个 manifest 用例，Backend 与 Godot 双向验证（契约测试 42 passed） |
 | Godot 运行 | headless 编辑器模式加载插件、契约探针，E3 测试 68/68 passed，`exit 0` |
 | 打包（onedir） | 39.1 MB，冷启动到 `/health` 1248 ms，迁移与健康检查通过 |
@@ -302,7 +302,30 @@ ChangeSet 拒绝且无磁盘副作用、UNKNOWN 经 Adapter 观测恢复；补�
 安全核对、质量门禁与已知限制。后端 481 passed，Godot 68/68，契约探针 38/38，
 ruff 全通过。
 
-## 10. 已知问题与待办
+## 10. E6 实施进度
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E6-M1 | T01 Agent Domain & Contract、T02 Definition Registry | ✅ 已完成 |
+| E6-M2 | T03 Instance Manager、T04 Lifecycle、T06 Task/Attempt Binding、T05 Scheduler | ⬜ 未开始 |
+| E6-M3 | T07 Execution Loop、T08 Planning & Step、T09 Context Binding、T10 Model Binding、T11 Tool Binding | ⬜ 未开始 |
+| E6-M4 | T12 Budget Manager、T13 Checkpoint & Event、T14 Pause/Resume/Cancel/Stop、T15 Recovery | ⬜ 未开始 |
+| E6-M5 | T16 Observability、T17 API、T18 UI、T19 Generic Agent | ⬜ 未开始 |
+| E6-M6 | T20 Integration / E2E / Security / Recovery、E6 验收报告 | ⬜ 未开始 |
+
+交付（M1）：`modules/agent_runtime/{models,repository,service}.py`。领域模型覆盖
+Definition、Definition Version、Config Snapshot、Instance、Execution、Plan、Step、
+Checkpoint、Event；Instance / Execution 状态机内置迁移表，`UNKNOWN` 不允许直接回到
+`RUNNING`。Definition Registry 支持草稿创建/更新、引用校验与发布：能力声明白名单、
+Model Policy、Prompt 版本、Context Profile、Tool 白名单必须存在，且 Tool 风险等级
+不得超过 Permission Ceiling；发布生成不可变版本（`content_hash`），发布后原地修改被
+拒绝。迁移 `000016_e6_agent_runtime`（9 张表），错误码
+`AGENT_DEFINITION_INVALID` / `AGENT_VERSION_IMMUTABLE` / `AGENT_CAPABILITY_UNSUPPORTED` /
+`AGENT_STATE_INVALID` / `AGENT_BUDGET_EXCEEDED` / `AGENT_ACTION_INVALID` /
+`AGENT_PERMISSION_DENIED` / `AGENT_RECOVERY_REQUIRED`。新增 5 个集成测试，
+后端 486 passed，ruff 全通过。
+
+## 11. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
@@ -319,7 +342,7 @@ ruff 全通过。
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 11. 维护规则
+## 12. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。
