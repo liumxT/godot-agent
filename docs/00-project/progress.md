@@ -1,22 +1,22 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E6 M5 完成）。
+> 更新于 2026-11-23（E6 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
 > [E2 安全测试报告](e2-security-test-report.md)、[E2 验收报告](e2-acceptance-report.md)、
-> [E3 验收报告](e3-acceptance-report.md)、[E4 验收报告](e4-acceptance-report.md) 与
-> [E5 验收报告](e5-acceptance-report.md)。
+> [E3 验收报告](e3-acceptance-report.md)、[E4 验收报告](e4-acceptance-report.md)、
+> [E5 验收报告](e5-acceptance-report.md) 与 [E6 验收报告](e6-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E6 Agent Runtime（进行中，M5 已完成）** |
-| 阶段进度 | 6 / 13 完成（E0–E5），E6 进行中 |
+| 当前阶段 | **E6 Agent Runtime（已完成）** |
+| 阶段进度 | 7 / 13 完成（E0–E6），下一阶段 E7 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 511 passed（unit + integration 469 / contract 42），ruff 全通过 |
+| 后端测试 | 516 passed（unit + integration 474 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000018` |
 
@@ -30,7 +30,7 @@
 | E3 | Godot Integration | ✅ 已完成 | 2026-11-20 验收，18 任务，见 [E3 验收报告](e3-acceptance-report.md) |
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
-| E6 | Agent Runtime | 🟡 进行中 | M1–M5（T01–T19）已完成 |
+| E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
 | E7 | Multi-Agent & Game Development | ⬜ 未开始 | |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
@@ -311,7 +311,7 @@ ruff 全通过。
 | E6-M3 | T07 Execution Loop、T08 Planning & Step、T09 Context Binding、T10 Model Binding、T11 Tool Binding | ✅ 已完成 |
 | E6-M4 | T12 Budget Manager、T13 Checkpoint & Event、T14 Pause/Resume/Cancel/Stop、T15 Recovery | ✅ 已完成 |
 | E6-M5 | T16 Observability、T17 API、T18 UI、T19 Generic Agent | ✅ 已完成 |
-| E6-M6 | T20 Integration / E2E / Security / Recovery、E6 验收报告 | ⬜ 未开始 |
+| E6-M6 | T20 Integration / E2E / Security / Recovery、E6 验收报告 | ✅ 已完成 |
 
 交付（M1）：`modules/agent_runtime/{models,repository,service}.py`。领域模型覆盖
 Definition、Definition Version、Config Snapshot、Instance、Execution、Plan、Step、
@@ -369,6 +369,13 @@ start/pause/resume/stop、Execution/Plan/Step/Event 查询、metrics 与 trace�
 区块。内置 `generic_agent` 幂等创建（Prompt、Definition、发布），默认 11 个只读优先工具、
 权限上限 R2、预算超限 `PAUSE`，仅非 test 环境启动时自动确保存在。新增 7 个测试
 （3 API + 1 Generic Agent + 3 脱敏单元），后端 511 passed，ruff 全通过。
+
+交付（M6）：`tests/integration/test_e6_acceptance.py`、`tests/unit/test_e6_architecture.py`
+与 [E6 验收报告](e6-acceptance-report.md)。验收测试补齐四类关键证据：E2E 证明 Agent 完成后
+Task 仍为 `READY`、必须经 Task System 合法路径才能完成；白名单外工具被拒绝且无工具执行；
+隐藏推理/思维链不进入事件与 trace；模型 UNKNOWN 不自动重试。架构守卫检查 Agent Runtime
+不导入 Provider 适配器、HTTP 客户端、文件写入库或 Workflow 模块，确保只经 Gateway 与
+Tool System 工作。新增 5 个测试（4 验收集成 + 1 架构单元），后端 516 passed，ruff 全通过。
 
 ## 11. 已知问题与待办
 
