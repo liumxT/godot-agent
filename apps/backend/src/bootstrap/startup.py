@@ -62,6 +62,13 @@ from modules.model_gateway.gateway import ModelGatewayService
 from modules.model_gateway.providers.registry import default_adapter_registry
 from modules.model_gateway.registry import ModelRegistryService
 from modules.model_gateway.routing import ModelRoutingService
+from modules.multi_agent.service import (
+    AgentTeamService,
+    AssignmentService,
+    CapabilityRegistryService,
+    CollaborationService,
+    HandoffService,
+)
 from modules.project.service import ProjectService
 from modules.project_registry.service import (
     ProjectConfigurationService,
@@ -348,6 +355,11 @@ def register_startup_steps(
             prompts=prompt_service,
             tools=tool_registry_service,
         )
+        capability_registry_service = CapabilityRegistryService(database)
+        agent_team_service = AgentTeamService(database)
+        assignment_service = AssignmentService(database)
+        handoff_service = HandoffService(database)
+        collaboration_service = CollaborationService(database)
         agent_event_service = AgentEventService(database)
         agent_instance_service = AgentInstanceService(
             database,
@@ -396,6 +408,15 @@ def register_startup_steps(
                 logging.ERROR,
                 "tool_catalog_failed",
                 component="tool",
+            )
+        try:
+            await capability_registry_service.ensure_builtin_capabilities()
+        except Exception:  # noqa: BLE001 - 内置能力登记失败不阻断启动
+            log_event(
+                logger,
+                logging.ERROR,
+                "capability_catalog_failed",
+                component="multi_agent",
             )
         try:
             await auth_service.purge_expired()
@@ -479,6 +500,11 @@ def register_startup_steps(
         services.register(
             "agent_definition_registry_service", agent_definition_registry_service
         )
+        services.register("capability_registry_service", capability_registry_service)
+        services.register("agent_team_service", agent_team_service)
+        services.register("assignment_service", assignment_service)
+        services.register("handoff_service", handoff_service)
+        services.register("collaboration_service", collaboration_service)
         services.register("agent_event_service", agent_event_service)
         services.register("agent_instance_service", agent_instance_service)
         services.register("agent_lifecycle_service", agent_lifecycle_service)

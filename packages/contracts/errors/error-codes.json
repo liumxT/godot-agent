@@ -438,6 +438,36 @@
       "retryable": false,
       "http_status": 409,
       "description": "存在未知状态，必须先完成恢复检查。"
+    },
+    {
+      "code": "AGENT_TEAM_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Agent Team 绑定或状态不合法。"
+    },
+    {
+      "code": "AGENT_ASSIGNMENT_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Assignment 绑定、依赖或内容不合法。"
+    },
+    {
+      "code": "AGENT_ASSIGNMENT_UNAUTHORIZED",
+      "retryable": false,
+      "http_status": 403,
+      "description": "Assignment 不是由 Orchestrator 授权创建。"
+    },
+    {
+      "code": "AGENT_HANDOFF_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Handoff 类型、来源或 payload 不合法。"
+    },
+    {
+      "code": "AGENT_COLLABORATION_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Collaboration 参与者或目标不合法。"
     }
   ]
 }

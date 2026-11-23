@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E6 完成）。
+> 更新于 2026-11-23（E7 M1 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -12,13 +12,13 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E6 Agent Runtime（已完成）** |
-| 阶段进度 | 7 / 13 完成（E0–E6），下一阶段 E7 |
+| 当前阶段 | **E7 Multi-Agent & Game Development（进行中）** |
+| 阶段进度 | 7 / 13 完成（E0–E6），E7 进行中（M1 / 7） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 516 passed（unit + integration 474 / contract 42），ruff 全通过 |
+| 后端测试 | 532 passed（unit + integration 490 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000018` |
+| 数据库迁移 | head 为 `000019` |
 
 ## 2. 阶段总览
 
@@ -31,7 +31,7 @@
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
-| E7 | Multi-Agent & Game Development | ⬜ 未开始 | |
+| E7 | Multi-Agent & Game Development | 🚧 进行中 | M1 完成：Domain & Capability Registry |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
@@ -377,7 +377,32 @@ Task 仍为 `READY`、必须经 Task System 合法路径才能完成；白名单
 不导入 Provider 适配器、HTTP 客户端、文件写入库或 Workflow 模块，确保只经 Gateway 与
 Tool System 工作。新增 5 个测试（4 验收集成 + 1 架构单元），后端 516 passed，ruff 全通过。
 
-## 11. 已知问题与待办
+## 11. E7 实施进度
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E7-M1 | T01 Multi-Agent Domain & Contract、T02 Capability Registry | ✅ 已完成 |
+| E7-M2 | T03 Orchestrator、T04 Team Manager、T05 Task Decomposition、T06 Assignment | ⬜ 待开始 |
+| E7-M3 | T07 Handoff、T08 Lead Agent、T09 Context Coordination、T12 Agent Communication | ⬜ 待开始 |
+| E7-M4 | T10 Parallel Execution、T11 Resource/Conflict Coordination、T17 Conflict Resolution | ⬜ 待开始 |
+| E7-M5 | T13 Specialized Definitions、T14 Workflows、T15 Result Integration、T16 Review | ⬜ 待开始 |
+| E7-M6 | T18 Team Budget、T19 Observability、T20 API、T21 UI、T22 Platformer Demo | ⬜ 待开始 |
+| E7-M7 | 综合测试与验收、E7 验收报告 | ⬜ 待开始 |
+
+交付（M1）：`modules/multi_agent/{models,repository,service,capabilities}.py`。领域模型覆盖
+Capability、Team、Team Member、Assignment、Assignment Dependency、Handoff、Collaboration、
+Message、Conflict、Integration、Review、Team Budget、Shared Context；状态机常量与迁移表
+内置，Team 状态不替代 Task 状态。Capability Registry 幂等登记 32 个内置能力（设计、程序、
+Godot、美术、QA），支持自定义能力登记与查询；匹配分两阶段：启用状态、能力、权限上限、
+Tool、Model 能力、项目访问与预算为硬性过滤，能力覆盖度、成功率、负载与成本为软性排序，
+高负载只降权不排除。Assignment 只能由 `ORCHESTRATOR` 创建，必须绑定 Team/Task/Attempt，
+依赖必须属于同一 Team 且拒绝自依赖与循环；Handoff 只创建请求，Collaboration 参与者必须
+属于同一 Team。迁移 `000019_e7_multi_agent`（13 张表），错误码 `AGENT_CAPABILITY_UNSUPPORTED`
+复用并新增 `AGENT_TEAM_INVALID` / `AGENT_ASSIGNMENT_INVALID` /
+`AGENT_ASSIGNMENT_UNAUTHORIZED` / `AGENT_HANDOFF_INVALID` / `AGENT_COLLABORATION_INVALID`。
+新增 16 个测试（10 单元匹配 + 6 集成领域），后端 532 passed，ruff 全通过。
+
+## 12. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |

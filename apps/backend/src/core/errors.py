@@ -543,6 +543,41 @@ class AgentRecoveryRequired(AppError):
     status_code = 409
 
 
+class AgentTeamInvalid(AppError):
+    """Agent Team 绑定或状态不合法。"""
+
+    code = "AGENT_TEAM_INVALID"
+    status_code = 422
+
+
+class AgentAssignmentInvalid(AppError):
+    """Assignment 绑定、依赖或内容不合法。"""
+
+    code = "AGENT_ASSIGNMENT_INVALID"
+    status_code = 422
+
+
+class AgentAssignmentUnauthorized(AppError):
+    """Assignment 不是由 Orchestrator 授权创建。"""
+
+    code = "AGENT_ASSIGNMENT_UNAUTHORIZED"
+    status_code = 403
+
+
+class AgentHandoffInvalid(AppError):
+    """Handoff 类型、来源或 payload 不合法。"""
+
+    code = "AGENT_HANDOFF_INVALID"
+    status_code = 422
+
+
+class AgentCollaborationInvalid(AppError):
+    """Collaboration 参与者或目标不合法。"""
+
+    code = "AGENT_COLLABORATION_INVALID"
+    status_code = 422
+
+
 def iter_error_types() -> list[type[AppError]]:
     """返回 AppError 及其全部子类，用于错误码登记检查。"""
 
