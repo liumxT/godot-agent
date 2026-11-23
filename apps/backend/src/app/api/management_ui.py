@@ -110,6 +110,12 @@ _PAGE = """<!DOCTYPE html>
     <div id="agent-executions" class="empty">选择实例后查看</div>
     <h2>Agent 预算</h2>
     <div id="agent-budget" class="empty">未选择项目</div>
+    <h2>Multi-Agent Team</h2>
+    <div id="multi-agent-teams" class="empty">未选择项目</div>
+    <h2>Agent Team 详情</h2>
+    <div id="multi-agent-detail" class="empty">选择 Team 后查看</div>
+    <h2>Agent 能力</h2>
+    <div id="agent-capabilities" class="empty">未选择项目</div>
     <h2>恢复监控</h2>
     <div id="agent-recovery" class="empty">未选择项目</div>
   </section>
@@ -185,7 +191,7 @@ _PAGE = """<!DOCTYPE html>
     state.projectId = projectId;
     await Promise.all([
       loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels(),
-      loadAgents()
+      loadAgents(), loadMultiAgent()
     ]);
     await loadProjects();
   }
@@ -560,6 +566,98 @@ _PAGE = """<!DOCTYPE html>
     }
   }
 
+  async function loadMultiAgent() {
+    if (!state.projectId) return;
+    try {
+      const query = `?project_id=${encodeURIComponent(state.projectId)}`;
+      const teams = (await api(`/agent-teams${query}&limit=50`)).items || [];
+      const capabilities = (await api(`/agent-capabilities${query}&limit=200`)).items || [];
+      $("agent-capabilities").className = capabilities.length ? "" : "empty";
+      $("agent-capabilities").innerHTML = capabilities.length
+        ? `<table><thead><tr><th>能力</th><th>分类</th><th>说明</th></tr></thead><tbody>${capabilities.map((item) => `
+            <tr><td>${esc(item.name)}</td><td>${esc(item.category)}</td><td>${esc(item.description)}</td></tr>`).join("")}</tbody></table>`
+        : "暂无能力";
+      if (!teams.length) {
+        $("multi-agent-teams").className = "empty";
+        $("multi-agent-teams").textContent = "暂无 Agent Team";
+        $("multi-agent-detail").className = "empty";
+        $("multi-agent-detail").textContent = "选择 Team 后查看";
+        return;
+      }
+      $("multi-agent-teams").className = "";
+      $("multi-agent-teams").innerHTML = `
+        <table>
+          <thead><tr><th>Team</th><th>Task</th><th>状态</th><th>操作</th></tr></thead>
+          <tbody>${teams.map((team) => `
+            <tr>
+              <td>${esc(team.team_id)}<br /><small class="muted">${esc(team.project_id)}</small></td>
+              <td><small class="muted">${esc(team.task_id)}</small></td>
+              <td><span class="pill ${statusClass(team.status)}">${esc(team.status)}</span></td>
+              <td><div class="actions"><button data-team-view="${esc(team.team_id)}">查看</button></div></td>
+            </tr>`).join("")}</tbody>
+        </table>`;
+      $("multi-agent-teams").querySelectorAll("button[data-team-view]").forEach((button) => {
+        button.addEventListener("click", () => showMultiAgentTeam(button.dataset.teamView));
+      });
+    } catch (error) {
+      showError(`读取 Multi-Agent 失败：${error.message}`);
+    }
+  }
+
+  async function showMultiAgentTeam(teamId) {
+    showError("");
+    try {
+      const dashboard = await api(`/agent-teams/${encodeURIComponent(teamId)}`);
+      const counts = Object.entries(dashboard.assignment_counts || {})
+        .map(([key, value]) => `${esc(key)} ${esc(value)}`).join(" · ") || "无";
+      const budget = dashboard.budget
+        ? `状态 ${esc(dashboard.budget.status)} · 用量 ${esc(JSON.stringify(dashboard.budget.usage))}`
+        : "未分配";
+      const assignmentRows = (dashboard.assignments || []).map((item) => `
+        <tr>
+          <td>${esc(item.objective)}<br /><small class="muted">${esc(item.assignment_id)}</small></td>
+          <td><small class="muted">${esc(item.agent_definition_id)}</small></td>
+          <td><span class="pill ${statusClass(item.status)}">${esc(item.status)}</span></td>
+          <td>${esc((item.dependencies || []).join(", ") || "-")}</td>
+        </tr>`).join("");
+      const handoffRows = (dashboard.handoffs || []).map((item) => `
+        <tr><td>${esc(item.handoff_id)}</td><td>${esc(item.handoff_type)}</td>
+        <td><span class="pill ${statusClass(item.status)}">${esc(item.status)}</span></td></tr>`).join("");
+      const conflictRows = (dashboard.conflicts || []).map((item) => `
+        <tr><td>${esc(item.conflict_id)}</td><td>${esc(item.conflict_type)}</td>
+        <td>${esc(item.severity)}</td>
+        <td><span class="pill ${statusClass(item.resolution_status)}">${esc(item.resolution_status)}</span></td></tr>`).join("");
+      const integrationRows = (dashboard.integrations || []).map((item) => `
+        <tr><td>${esc(item.integration_id)}</td>
+        <td><span class="pill ${statusClass(item.status)}">${esc(item.status)}</span></td>
+        <td>${esc(item.verification_reference || "-")}</td></tr>`).join("");
+      const edges = (dashboard.graph && dashboard.graph.edges || [])
+        .map((edge) => `${esc(edge.from)} → ${esc(edge.to)}`).join("<br />") || "无依赖";
+      $("multi-agent-detail").className = "";
+      $("multi-agent-detail").innerHTML = `
+        <div class="muted">Team ${esc(dashboard.team.team_id)} · 状态
+          <span class="pill ${statusClass(dashboard.team.status)}">${esc(dashboard.team.status)}</span>
+          · Assignment ${counts}</div>
+        <div class="muted">成员：${(dashboard.members || []).map((member) => esc(member.role)).join(", ") || "-"}
+          · 预算：${budget}</div>
+        <h2>Assignment</h2>
+        <table><thead><tr><th>目标</th><th>Agent</th><th>状态</th><th>依赖</th></tr></thead>
+          <tbody>${assignmentRows || '<tr><td colspan="4" class="empty">暂无 Assignment</td></tr>'}</tbody></table>
+        <h2>依赖图</h2><div class="muted">${edges}</div>
+        <h2>Handoff</h2>
+        <table><thead><tr><th>Handoff</th><th>类型</th><th>状态</th></tr></thead>
+          <tbody>${handoffRows || '<tr><td colspan="3" class="empty">暂无 Handoff</td></tr>'}</tbody></table>
+        <h2>冲突</h2>
+        <table><thead><tr><th>冲突</th><th>类型</th><th>严重级别</th><th>状态</th></tr></thead>
+          <tbody>${conflictRows || '<tr><td colspan="4" class="empty">暂无冲突</td></tr>'}</tbody></table>
+        <h2>结果集成</h2>
+        <table><thead><tr><th>集成</th><th>状态</th><th>验证引用</th></tr></thead>
+          <tbody>${integrationRows || '<tr><td colspan="3" class="empty">暂无集成</td></tr>'}</tbody></table>`;
+    } catch (error) {
+      showError(`读取 Team 失败：${error.message}`);
+    }
+  }
+
   async function refreshAll() {
     showError("");
     try {
@@ -567,7 +665,7 @@ _PAGE = """<!DOCTYPE html>
       if (state.projectId) {
         await Promise.all([
           loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels(),
-          loadAgents()
+          loadAgents(), loadMultiAgent()
         ]);
       }
     } catch (error) {

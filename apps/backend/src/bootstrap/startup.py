@@ -62,10 +62,12 @@ from modules.model_gateway.gateway import ModelGatewayService
 from modules.model_gateway.providers.registry import default_adapter_registry
 from modules.model_gateway.registry import ModelRegistryService
 from modules.model_gateway.routing import ModelRoutingService
+from modules.multi_agent.budget import TeamBudgetService
 from modules.multi_agent.communication import MessageService
 from modules.multi_agent.conflicts import ConflictService
 from modules.multi_agent.context import SharedContextService
 from modules.multi_agent.lead import IntegrationService, LeadAgentService
+from modules.multi_agent.observability import TeamObservabilityService
 from modules.multi_agent.orchestrator import OrchestratorService
 from modules.multi_agent.resources import (
     ParallelExecutionManager,
@@ -399,6 +401,18 @@ def register_startup_steps(
             instances=workflow_instance_service,
         )
         review_service = ReviewService(database, assignments=assignment_service)
+        team_budget_service = TeamBudgetService(database)
+        team_observability_service = TeamObservabilityService(
+            database,
+            teams=agent_team_service,
+            assignments=assignment_service,
+            handoffs=handoff_service,
+            conflicts=conflict_service,
+            integrations=integration_service,
+            reviews=review_service,
+            budgets=team_budget_service,
+            lead=lead_agent_service,
+        )
         orchestrator_service = OrchestratorService(
             database,
             tasks=task_service,
@@ -566,6 +580,8 @@ def register_startup_steps(
         services.register("specialized_agent_catalog", specialized_agent_catalog)
         services.register("game_workflow_service", game_workflow_service)
         services.register("review_service", review_service)
+        services.register("team_budget_service", team_budget_service)
+        services.register("team_observability_service", team_observability_service)
         services.register("orchestrator_service", orchestrator_service)
         services.register("agent_event_service", agent_event_service)
         services.register("agent_instance_service", agent_instance_service)

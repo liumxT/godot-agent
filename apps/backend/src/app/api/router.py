@@ -24,6 +24,7 @@ from app.api.diagnostics import v1_router as diagnostics_router
 from app.api.health import router as health_router
 from app.api.management_ui import router as management_ui_router
 from app.api.models import router as models_router
+from app.api.multi_agent import router as multi_agent_router
 from app.api.projects import router as projects_router
 from app.api.projects_v1 import router as projects_v1_router
 from app.api.sessions import router as sessions_router
@@ -55,6 +56,7 @@ ROUTERS: tuple[tuple[str, APIRouter], ...] = (
     ("tools", tools_router),
     ("models", models_router),
     ("agents", agents_router),
+    ("multi-agent", multi_agent_router),
     ("manage", management_ui_router),
     ("bridge", bridge_router),
 )

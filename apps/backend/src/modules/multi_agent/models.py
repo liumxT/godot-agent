@@ -81,6 +81,10 @@ TEAM_TRANSITIONS: dict[str, frozenset[str]] = {
     TEAM_UNKNOWN: frozenset({TEAM_FAILED, TEAM_CANCELLED, TEAM_READY}),
 }
 
+TEAM_BUDGET_ACTIVE = "ACTIVE"
+TEAM_BUDGET_EXHAUSTED = "EXHAUSTED"
+TEAM_BUDGET_STATUSES = frozenset({TEAM_BUDGET_ACTIVE, TEAM_BUDGET_EXHAUSTED})
+
 ASSIGNMENT_CREATED = "CREATED"
 ASSIGNMENT_READY = "READY"
 ASSIGNMENT_ASSIGNED = "ASSIGNED"
@@ -618,6 +622,7 @@ class AgentHandoffModel(Base):
     approval_reference: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default=HANDOFF_REQUESTED)
     requested_by_assignment_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(String(512), nullable=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -772,7 +777,10 @@ class AgentTeamBudgetModel(Base):
     )
     budget_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     usage_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
-    status: Mapped[str] = mapped_column(String(16), nullable=False, default="ACTIVE")
+    allocation_log_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False, default=TEAM_BUDGET_ACTIVE
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -846,6 +854,9 @@ __all__ = [
     "REVIEW_TYPES",
     "RISK_PROFILES",
     "SHARED_CONTEXT_SCOPES",
+    "TEAM_BUDGET_ACTIVE",
+    "TEAM_BUDGET_EXHAUSTED",
+    "TEAM_BUDGET_STATUSES",
     "TEAM_MEMBER_ROLES",
     "TEAM_STATUSES",
     "TEAM_TERMINAL_STATUSES",

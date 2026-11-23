@@ -185,6 +185,7 @@ class HandoffView:
     approval_reference: str | None
     status: str
     requested_by_assignment_id: str | None
+    rejection_reason: str | None
     version: int
     created_at: datetime
     completed_at: datetime | None
@@ -296,6 +297,7 @@ def _handoff_view(entity: AgentHandoffModel) -> HandoffView:
         approval_reference=entity.approval_reference,
         status=entity.status,
         requested_by_assignment_id=entity.requested_by_assignment_id,
+        rejection_reason=entity.rejection_reason,
         version=entity.version,
         created_at=entity.created_at,
         completed_at=entity.completed_at,
@@ -1290,6 +1292,7 @@ class HandoffService:
         expected_version: int,
         target_assignment_id: str | None = None,
         approval_reference: str | None = None,
+        rejection_reason: str | None = None,
     ) -> HandoffView:
         if to_status not in HANDOFF_TRANSITIONS:
             raise AgentHandoffInvalid(
@@ -1322,6 +1325,8 @@ class HandoffService:
                 entity.target_assignment_id = target_assignment_id
             if approval_reference is not None:
                 entity.approval_reference = approval_reference
+            if rejection_reason is not None:
+                entity.rejection_reason = rejection_reason
             if to_status in HANDOFF_TERMINAL_STATUSES:
                 entity.completed_at = now
             await session.flush()
