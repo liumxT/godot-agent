@@ -96,6 +96,12 @@ _PAGE = """<!DOCTYPE html>
     <div id="tasks" class="empty">未选择项目</div>
     <h2>待处理审批</h2>
     <div id="approvals" class="empty">未选择项目</div>
+    <h2>工具</h2>
+    <div id="tools" class="empty">未选择项目</div>
+    <h2>工具执行</h2>
+    <div id="executions" class="empty">未选择项目</div>
+    <h2>模型</h2>
+    <div id="models" class="empty">未选择项目</div>
   </section>
 </main>
 <script>
@@ -167,7 +173,9 @@ _PAGE = """<!DOCTYPE html>
 
   async function selectProject(projectId) {
     state.projectId = projectId;
-    await Promise.all([loadDetail(), loadTasks(), loadApprovals()]);
+    await Promise.all([
+      loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels()
+    ]);
     await loadProjects();
   }
 
@@ -328,12 +336,92 @@ _PAGE = """<!DOCTYPE html>
     }
   }
 
+  async function loadTools() {
+    if (!state.projectId) return;
+    const query = `?project_id=${encodeURIComponent(state.projectId)}&limit=200`;
+    const data = await api(`/tools${query}`);
+    const items = data.items || [];
+    if (!items.length) {
+      $("tools").className = "empty";
+      $("tools").textContent = "暂无工具";
+      return;
+    }
+    $("tools").className = "";
+    $("tools").innerHTML = `
+      <table>
+        <thead><tr><th>工具</th><th>分类</th><th>风险</th><th>版本</th><th>状态</th></tr></thead>
+        <tbody>${items.map((tool) => `
+          <tr>
+            <td>${esc(tool.name)}<br /><small class="muted">${esc(tool.tool_id)}</small></td>
+            <td>${esc(tool.category)}</td>
+            <td><span class="pill ${tool.risk_level === "R0" ? "ok" : "warn"}">${esc(tool.risk_level)}</span></td>
+            <td>v${esc(tool.version)}</td>
+            <td>${tool.enabled ? '<span class="pill ok">启用</span>' : '<span class="pill err">停用</span>'}</td>
+          </tr>`).join("")}</tbody>
+      </table>`;
+  }
+
+  async function loadExecutions() {
+    if (!state.projectId) return;
+    const query = `?project_id=${encodeURIComponent(state.projectId)}&limit=50`;
+    const data = await api(`/tool-executions${query}`);
+    const items = data.items || [];
+    if (!items.length) {
+      $("executions").className = "empty";
+      $("executions").textContent = "暂无工具执行";
+      return;
+    }
+    $("executions").className = "";
+    $("executions").innerHTML = `
+      <table>
+        <thead><tr><th>执行</th><th>工具</th><th>状态</th><th>验证</th><th>时间</th></tr></thead>
+        <tbody>${items.map((item) => `
+          <tr>
+            <td>${esc(item.execution_id)}</td>
+            <td>${esc(item.tool_name)} v${esc(item.tool_version)}<br /><small class="muted">${esc(item.risk_level)}</small></td>
+            <td><span class="pill ${statusClass(item.status)}">${esc(item.status)}</span></td>
+            <td>${esc(item.verification_status)}</td>
+            <td><small class="muted">${esc(item.created_at)}</small></td>
+          </tr>`).join("")}</tbody>
+      </table>`;
+  }
+
+  async function loadModels() {
+    if (!state.projectId) return;
+    const query = `?project_id=${encodeURIComponent(state.projectId)}`;
+    try {
+      const data = await api(`/models${query}`);
+      const usage = await api(`/model-usage${query}`);
+      const cost = await api(`/model-cost${query}`);
+      const items = data.items || [];
+      const rows = items.map((model) => `
+        <tr>
+          <td>${esc(model.model_key)}<br /><small class="muted">${esc(model.model_id)}</small></td>
+          <td>${esc(model.context_window)}</td>
+          <td><span class="pill ${statusClass(model.status)}">${esc(model.status)}</span></td>
+        </tr>`).join("");
+      $("models").className = "";
+      $("models").innerHTML = `
+        <div class="muted">Token：${esc(usage.total_tokens)}（输入 ${esc(usage.input_tokens)} / 输出 ${esc(usage.output_tokens)}）
+          · 费用：${esc(cost.total_cost)} ${esc((cost.currencies || []).join(", "))}</div>
+        <table>
+          <thead><tr><th>模型</th><th>上下文</th><th>状态</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="3" class="empty">暂无模型</td></tr>'}</tbody>
+        </table>`;
+    } catch (error) {
+      $("models").className = "empty";
+      $("models").textContent = `模型信息不可用：${error.message}`;
+    }
+  }
+
   async function refreshAll() {
     showError("");
     try {
       await loadProjects();
       if (state.projectId) {
-        await Promise.all([loadDetail(), loadTasks(), loadApprovals()]);
+        await Promise.all([
+          loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels()
+        ]);
       }
     } catch (error) {
       showError(`加载失败：${error.message}`);

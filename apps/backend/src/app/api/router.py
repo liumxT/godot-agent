@@ -22,12 +22,14 @@ from app.api.clients import router as clients_router
 from app.api.diagnostics import v1_router as diagnostics_router
 from app.api.health import router as health_router
 from app.api.management_ui import router as management_ui_router
+from app.api.models import router as models_router
 from app.api.projects import router as projects_router
 from app.api.projects_v1 import router as projects_v1_router
 from app.api.sessions import router as sessions_router
 from app.api.system import router as system_router
 from app.api.system import status_router as system_status_router
 from app.api.tasks import router as tasks_router
+from app.api.tools import router as tools_router
 from app.api.version import API_PREFIX, API_VERSION
 from app.api.workflows import router as workflows_router
 from core.errors import StartupError
@@ -49,6 +51,8 @@ ROUTERS: tuple[tuple[str, APIRouter], ...] = (
     ("workflows", workflows_router),
     ("changesets", changesets_router),
     ("approvals", approvals_router),
+    ("tools", tools_router),
+    ("models", models_router),
     ("manage", management_ui_router),
     ("bridge", bridge_router),
 )

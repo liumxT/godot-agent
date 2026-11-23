@@ -62,7 +62,7 @@ class FakeAdapter:
         self.inspector = None
 
     def supports(self, tool) -> bool:
-        return tool.category == "FILE_SYSTEM"
+        return tool.category == "CODE"
 
     async def execute(self, context: ToolDispatchContext) -> AdapterResult:
         self.executions.append(context)
@@ -130,8 +130,8 @@ async def _grant(app, project_id: str, session_id: str, client_id: str, level: s
 async def _register_tool(
     app,
     *,
-    name: str = "file.write",
-    category: str = "FILE_SYSTEM",
+    name: str = "e5test.write",
+    category: str = "CODE",
     risk_level: str = "R1",
     permissions: tuple[str, ...] = ("project.write",),
     idempotency_policy: str = "NONE",
@@ -267,7 +267,7 @@ async def test_invalid_input_and_missing_adapter_fail_closed(tmp_path: Path) -> 
         assert adapter.executions == []
 
         script_tool = await _register_tool(
-            app, name="scene.run", category="GODOT_EDITOR", risk_level="R1"
+            app, name="e5test.run", category="EXTERNAL_SERVICE", risk_level="R1"
         )
         with pytest.raises(ToolAdapterMissing):
             await _executor(app).execute(
@@ -390,7 +390,7 @@ async def test_normal_write_risk_requires_changeset(tmp_path: Path) -> None:
     async with _running(tmp_path) as app:
         project = await _project(app, tmp_path)
         _adapter(app)
-        tool = await _register_tool(app, name="scene.delete", risk_level="R2")
+        tool = await _register_tool(app, name="e5test.delete", risk_level="R2")
         session_id, client_id = await _actor(app)
         await _grant(app, project.project_id, session_id, client_id, "editor")
 

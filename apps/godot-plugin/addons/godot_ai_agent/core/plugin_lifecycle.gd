@@ -22,6 +22,7 @@ const EventSyncService := preload("res://addons/godot_ai_agent/services/event_sy
 const EditorStateProvider := preload("res://addons/godot_ai_agent/state/editor_state_provider.gd")
 const SnapshotService := preload("res://addons/godot_ai_agent/services/snapshot_service.gd")
 const ReconnectionService := preload("res://addons/godot_ai_agent/services/reconnection_service.gd")
+const ToolCommandService := preload("res://addons/godot_ai_agent/services/tool_command_service.gd")
 
 const SESSION_SERVICE_NAME := "editor_session_service"
 const HEARTBEAT_SERVICE_NAME := "heartbeat_service"
@@ -29,6 +30,7 @@ const EVENT_SERVICE_NAME := "event_sync_service"
 const STATE_PROVIDER_SERVICE_NAME := "editor_state_provider"
 const SNAPSHOT_SERVICE_NAME := "snapshot_service"
 const RECONNECTION_SERVICE_NAME := "reconnection_service"
+const TOOL_COMMAND_SERVICE_NAME := "tool_command_service"
 
 const STATE_DISABLED := "DISABLED"
 const STATE_ENABLING := "ENABLING"
@@ -298,6 +300,11 @@ func _register_default_services() -> void:
 		RECONNECTION_SERVICE_NAME,
 		ReconnectionService,
 		[SESSION_SERVICE_NAME, EVENT_SERVICE_NAME, SNAPSHOT_SERVICE_NAME]
+	)
+	_register_default(
+		TOOL_COMMAND_SERVICE_NAME,
+		ToolCommandService,
+		[SESSION_SERVICE_NAME]
 	)
 
 

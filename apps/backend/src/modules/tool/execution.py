@@ -57,6 +57,7 @@ from modules.tool.models import (
     LOCK_TYPE_READ,
     LOCK_TYPE_WRITE,
     TOOL_EXECUTION_IN_FLIGHT,
+    TOOL_EXECUTION_TERMINAL,
     VERIFICATION_FAILED,
     VERIFICATION_PENDING,
     ToolExecutionModel,
@@ -75,10 +76,10 @@ from modules.tool.verification import ToolVerificationService
 WRITE_PERMISSIONS = frozenset({"project.write", "project.admin"})
 _EXECUTION_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
 EXECUTION_TRANSITIONS = {
-    EXECUTION_CREATED: frozenset({EXECUTION_VALIDATING, EXECUTION_FAILED}),
-    EXECUTION_VALIDATING: frozenset({EXECUTION_AUTHORIZED, EXECUTION_FAILED}),
-    EXECUTION_AUTHORIZED: frozenset({EXECUTION_READY, EXECUTION_FAILED}),
-    EXECUTION_READY: frozenset({EXECUTION_EXECUTING, EXECUTION_FAILED}),
+    EXECUTION_CREATED: frozenset({EXECUTION_VALIDATING, EXECUTION_FAILED, EXECUTION_CANCELLED}),
+    EXECUTION_VALIDATING: frozenset({EXECUTION_AUTHORIZED, EXECUTION_FAILED, EXECUTION_CANCELLED}),
+    EXECUTION_AUTHORIZED: frozenset({EXECUTION_READY, EXECUTION_FAILED, EXECUTION_CANCELLED}),
+    EXECUTION_READY: frozenset({EXECUTION_EXECUTING, EXECUTION_FAILED, EXECUTION_CANCELLED}),
     EXECUTION_EXECUTING: frozenset(
         {EXECUTION_SUCCEEDED, EXECUTION_FAILED, EXECUTION_CANCELLED, EXECUTION_TIMEOUT, EXECUTION_UNKNOWN}
     ),
@@ -263,6 +264,46 @@ class ToolExecutionService:
             "offset": page.offset,
         }
 
+    async def cancel(
+        self, execution_id: str, *, actor_id: str | None = None, reason: str | None = None
+    ) -> ToolExecutionView:
+        """取消尚未分发的执行；已分发到编辑器的执行只能等待或走恢复流程。"""
+
+        entity = await self._load(execution_id)
+        if entity.status in TOOL_EXECUTION_TERMINAL:
+            return _view(entity)
+        if entity.status == EXECUTION_EXECUTING:
+            raise ValidationFailed(
+                "执行中的工具不能直接取消，请等待结果或进入恢复",
+                details={"execution_id": execution_id, "status": entity.status},
+            )
+        view = await self._transition(
+            execution_id,
+            EXECUTION_CANCELLED,
+            error_code="TOOL_EXECUTION_CANCELLED",
+            error_message=(reason or "用户取消")[:512],
+            completed_at=self._clock(),
+        )
+        await self._audits.record(
+            execution_id=view.execution_id,
+            project_id=view.project_id,
+            actor_type=ACTOR_TYPE_USER,
+            actor_id=actor_id,
+            task_id=view.task_id,
+            attempt_id=view.attempt_id,
+            tool_id=view.tool_id,
+            tool_name=view.tool_name,
+            tool_version=view.tool_version,
+            risk_level=view.risk_level,
+            execution_status=view.status,
+            approval_id=view.approval_id,
+            input_payload=view.input,
+            output_payload=None,
+            failure_reason=view.error_code,
+        )
+        await self._publish(view)
+        return view
+
     async def _run_new(
         self,
         request: ToolExecutionRequest,
@@ -373,6 +414,7 @@ class ToolExecutionService:
                 attempt_id=request.attempt_id,
                 resource_scope=request.resource_scope,
                 fencing_token=held_locks[0].fencing_token if held_locks else None,
+                timeout_seconds=tool.timeout_seconds,
             )
             await self._transition(
                 entity.execution_id, EXECUTION_EXECUTING, started_at=self._clock()

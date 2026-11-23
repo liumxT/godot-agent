@@ -149,13 +149,13 @@ async def test_tool_registration_enforces_schema_and_versions(tmp_path: Path) ->
                 risk_level="R0",
             )
 
-        first = await _register(app, name="file.read", risk_level="R0")
+        first = await _register(app, name="e5test.read", risk_level="R0")
         assert first.version == 1
         with pytest.raises(ToolAlreadyRegistered):
-            await _register(app, name="file.read", risk_level="R0")
+            await _register(app, name="e5test.read", risk_level="R0")
 
         second = await tools.register_version(
-            "file.read",
+            "e5test.read",
             description="read a file",
             input_schema=INPUT_SCHEMA,
             output_schema=OUTPUT_SCHEMA,
@@ -164,7 +164,7 @@ async def test_tool_registration_enforces_schema_and_versions(tmp_path: Path) ->
         assert second.version == 2
         assert second.category == "FILE_SYSTEM"
 
-        latest = await tools.get_by_name("file.read")
+        latest = await tools.get_by_name("e5test.read")
         assert latest.tool_id == second.tool_id
         assert latest.version == 2
         assert latest.category == "FILE_SYSTEM"
@@ -182,8 +182,8 @@ async def test_tool_registration_enforces_schema_and_versions(tmp_path: Path) ->
 async def test_risk_policy_only_allows_raising_risk(tmp_path: Path) -> None:
     async with _running(tmp_path) as app:
         policy = ToolRiskPolicy()
-        normal = await _register(app, name="file.write", risk_level="R2")
-        high = await _register(app, name="scene.delete", risk_level="R3")
+        normal = await _register(app, name="e5test.write", risk_level="R2")
+        high = await _register(app, name="e5test.delete", risk_level="R3")
 
         assert policy.assess(normal).changeset_required is True
         assert policy.assess(normal).approval_required is False
@@ -206,7 +206,7 @@ async def test_permission_engine_enforces_project_access_and_tool_permissions(
         project = await _project(app, tmp_path)
         tool = await _register(
             app,
-            name="file.write",
+            name="e5test.write",
             risk_level="R2",
             permissions=("project.write",),
             capabilities=("PROJECT_WRITE",),
@@ -252,7 +252,7 @@ async def test_permission_engine_checks_task_and_agent_limits(tmp_path: Path) ->
         tasks = app.state.services.get("task_service", TaskService)
         task = await tasks.create(project_id=project.project_id, title="Read files")
         tool = await _register(
-            app, name="file.read", risk_level="R1", capabilities=("PROJECT_READ",)
+            app, name="e5test.read", risk_level="R1", capabilities=("PROJECT_READ",)
         )
         engine = _engine(app)
         session_id, client_id = await _actor(app)
@@ -296,7 +296,7 @@ async def test_high_risk_tool_requires_approval_bound_to_content(tmp_path: Path)
         project = await _project(app, tmp_path)
         tool = await _register(
             app,
-            name="scene.delete",
+            name="e5test.delete",
             risk_level="R3",
             permissions=("project.admin",),
         )

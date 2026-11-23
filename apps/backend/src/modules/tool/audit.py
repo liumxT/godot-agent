@@ -157,6 +157,20 @@ class ToolAuditService:
         """审计查询受项目访问控制：调用方必须持有该项目的有效访问。"""
 
         await access.get_current(project_id=project_id, session_id=session_id, client_id=client_id)
+        return await self.list_project_records(
+            project_id, tool_id=tool_id, limit=limit, offset=offset
+        )
+
+    async def list_project_records(
+        self,
+        project_id: str,
+        *,
+        tool_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict[str, Any]:
+        """查询项目审计记录；调用方必须先完成项目级授权。"""
+
         async with self._database.session() as session:
             page = await ToolAuditRepository(session).list_project_records(
                 project_id=project_id, tool_id=tool_id, limit=limit, offset=offset

@@ -2,8 +2,8 @@
 extends RefCounted
 ## Bridge Action Registry（E3-T04）。
 ##
-## 只登记 E3 实际落地的 action；未登记 action 一律拒绝，不得猜测执行。
-## `editor.command.execute` 为 E5 预留，E3 返回 NOT_IMPLEMENTED。
+## 只登记实际落地的 action；未登记 action 一律拒绝，不得猜测执行。
+## `editor.command.execute` 由 E5 工具系统使用，为 Backend → 插件命令通道。
 
 
 const DIRECTION_PLUGIN_TO_BACKEND := "plugin_to_backend"
@@ -69,8 +69,8 @@ const ACTIONS := {
 	},
 	ACTION_COMMAND_EXECUTE: {
 		"direction": DIRECTION_BACKEND_TO_PLUGIN,
-		"permission": PERMISSION_RESERVED,
-		"reserved": true,
+		"permission": PERMISSION_SESSION_LEASE,
+		"reserved": false,
 	},
 }
 

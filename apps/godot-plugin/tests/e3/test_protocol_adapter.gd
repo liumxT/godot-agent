@@ -78,8 +78,8 @@ func test_oversize_frame_rejected() -> void:
 	assert_eq(int(encoded["close_code"]), 4409)
 
 
-## T04-UT-004：未登记 action 拒绝，预留 action 返回 NOT_IMPLEMENTED。
-func test_unknown_and_reserved_action() -> void:
+## T04-UT-004：未登记 action 拒绝；E5 起 editor.command.execute 已落地为命令通道。
+func test_unknown_and_command_action() -> void:
 	var adapter := ProtocolAdapter.new()
 
 	var accepted := adapter.decode_text(JSON.stringify(_request_frame("session.heartbeat")))
@@ -91,10 +91,13 @@ func test_unknown_and_reserved_action() -> void:
 	assert_false(bool(unknown["ok"]))
 	assert_eq(str(unknown["error_code"]), "UNKNOWN_MESSAGE_TYPE")
 
-	var reserved := adapter.decode_text(JSON.stringify(_request_frame("editor.command.execute")))
-	assert_false(bool(reserved["ok"]))
-	assert_eq(str(reserved["error_code"]), "NOT_IMPLEMENTED")
+	var command := adapter.decode_text(JSON.stringify(_request_frame("editor.command.execute")))
+	assert_true(bool(command["ok"]))
+	assert_eq(str(command["kind"]), "request")
+	assert_eq(str(command["action"]), "editor.command.execute")
 
-	assert_true(ActionRegistry.is_reserved("editor.command.execute"))
+	assert_false(ActionRegistry.is_reserved("editor.command.execute"))
+	assert_eq(ActionRegistry.get_permission("editor.command.execute"), "session_lease")
+	assert_eq(ActionRegistry.get_direction("editor.command.execute"), "backend_to_plugin")
 	assert_eq(ActionRegistry.get_permission("editor.state.report"), "session_lease")
 	assert_eq(ActionRegistry.get_direction("bridge.runtime.report"), "runtime_to_backend")

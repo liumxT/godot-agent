@@ -49,6 +49,7 @@ class ToolDispatchContext:
     attempt_id: str | None = None
     resource_scope: tuple[str, ...] = ()
     fencing_token: int | None = None
+    timeout_seconds: float = 60.0
 
 
 @dataclass(frozen=True, slots=True)

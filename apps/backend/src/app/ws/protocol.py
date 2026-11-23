@@ -36,6 +36,7 @@ _RETRYABLE_CODES = frozenset(
         "RUNTIME_UNAVAILABLE",
         "RATE_LIMITED",
         "INFRASTRUCTURE_ERROR",
+        "EDITOR_NOT_CONNECTED",
     }
 )
 
@@ -133,6 +134,32 @@ def build_error_payload(
         "details": details or {},
         "retryable": is_retryable(code) if retryable is None else retryable,
         "correlation_id": normalize_correlation_id(correlation_id) or "unknown",
+    }
+
+
+def build_request(
+    action: str,
+    payload: dict,
+    *,
+    session_id: str,
+    project_id: str,
+    request_id: str | None = None,
+    correlation_id: str | None = None,
+) -> dict:
+    """构造后端 → 插件 request 帧；用于 E5 工具命令下发。"""
+
+    candidate = request_id if isinstance(request_id, str) else ""
+    if not _CORRELATION_PATTERN.match(candidate):
+        candidate = f"req_{uuid4().hex[:12]}"
+    return {
+        "protocol_version": PROTOCOL_VERSION,
+        "request_id": candidate,
+        "timestamp": utc_timestamp(),
+        "session_id": session_id,
+        "project_id": project_id,
+        "action": action,
+        "payload": payload,
+        **({"correlation_id": normalize_correlation_id(correlation_id)} if correlation_id else {}),
     }
 
 

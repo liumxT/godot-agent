@@ -12,6 +12,8 @@ signal error_raised(code: String, message: String)
 signal response_received(action: String, response: Dictionary)
 signal request_failed(action: String, code: String, message: String)
 signal event_received(event: Dictionary)
+## Backend 下发的命令请求（E5-T28）；由 tool_command_service 消费。
+signal command_requested(request: Dictionary)
 
 const EditorBridgeClient := preload("res://addons/godot_ai_agent/bridge/editor_bridge_client.gd")
 const ConnectionState := preload("res://addons/godot_ai_agent/bridge/connection_state.gd")
@@ -205,6 +207,39 @@ func drop_pending_requests(action: String) -> void:
 			_pending_requests.erase(request_id)
 
 
+## 回复 Backend 下发的命令；连接不可用或响应不合契约时返回 false。
+func send_response(
+	request_id: String, success: bool, data: Dictionary = {}, error: Variant = null
+) -> bool:
+	if request_id.is_empty() or _client == null or not _client.is_open():
+		return false
+	var frame := {
+		"protocol_version": "1.0",
+		"request_id": request_id,
+		"success": success,
+		"data": null if not success and data.is_empty() else data,
+		"error": error,
+	}
+	var errors: Array = Validator.validate_response(frame)
+	if not errors.is_empty():
+		_set_error(ERROR_CONTRACT_INVALID, str(errors[0]))
+		return false
+	return _client.send_frame(frame, "EPHEMERAL")
+
+
+## 构造符合共享契约的 error 对象。
+static func error_payload(
+	code: String, message: String, details: Dictionary = {}, retryable: bool = false
+) -> Dictionary:
+	return {
+		"code": code,
+		"message": message if not message.is_empty() else "命令执行失败",
+		"details": details,
+		"retryable": retryable,
+		"correlation_id": "unknown",
+	}
+
+
 ## 受保护操作前的本地只读检查；最终判定仍在 Backend。
 func can_use_lease() -> bool:
 	return is_session_connected() and LeaseModel.is_usable(_lease)
@@ -248,6 +283,9 @@ func _send_hello() -> void:
 
 
 func _on_frame_received(kind: String, frame: Dictionary) -> void:
+	if kind == "request":
+		_handle_command_request(frame)
+		return
 	if kind == "response":
 		_handle_response(frame)
 		return
@@ -269,6 +307,19 @@ func _on_frame_received(kind: String, frame: Dictionary) -> void:
 			_handle_error_control(frame)
 		_:
 			pass
+
+
+func _handle_command_request(frame: Dictionary) -> void:
+	var errors: Array = Validator.validate_request(frame)
+	if not errors.is_empty():
+		send_response(
+			str(frame.get("request_id", "")),
+			false,
+			{},
+			error_payload("INVALID_REQUEST", str(errors[0]))
+		)
+		return
+	command_requested.emit(frame)
 
 
 func _handle_response(frame: Dictionary) -> void:

@@ -12,11 +12,13 @@ from datetime import UTC, datetime
 from core.security.principal import (
     ACTION_E4_APPROVAL_DECIDE,
     ACTION_E4_CHANGESET_APPROVE,
+    ACTION_E5_MODEL_MANAGE,
     ACTION_PROJECT_ACCESS_GRANT,
     ACTION_PROJECT_ACCESS_READ,
     ACTION_PROJECT_ACCESS_REVOKE,
     ACTIONS,
     E4_PROJECT_ACTIONS,
+    E5_PROJECT_ACTIONS,
     ROLE_ADMIN,
     ROLE_EDITOR,
     ROLE_OWNER,
@@ -41,11 +43,14 @@ _PROJECT_ACTIONS = frozenset(
         ACTION_PROJECT_ACCESS_REVOKE,
     }
     | E4_PROJECT_ACTIONS
+    | E5_PROJECT_ACTIONS
 )
 _PROJECT_READ_ROLES = frozenset({ROLE_OWNER, ROLE_EDITOR, ROLE_VIEWER})
 _PROJECT_MANAGE_ROLES = frozenset({ROLE_OWNER})
 _PROJECT_EDIT_ROLES = frozenset({ROLE_OWNER, ROLE_EDITOR})
-_E4_READ_ACTIONS = frozenset(action for action in E4_PROJECT_ACTIONS if action.endswith(".read"))
+_E4_READ_ACTIONS = frozenset(
+    action for action in (E4_PROJECT_ACTIONS | E5_PROJECT_ACTIONS) if action.endswith(".read")
+)
 
 
 @dataclass(frozen=True)
@@ -108,6 +113,10 @@ def evaluate(
         if principal.role in _PROJECT_MANAGE_ROLES:
             return _allow("abac.approval.decide")
         return _deny(REASON_ROLE_DENIED, "rbac.approval.decide")
+    if action == ACTION_E5_MODEL_MANAGE:
+        if principal.role in _PROJECT_MANAGE_ROLES:
+            return _allow("abac.model.manage")
+        return _deny(REASON_ROLE_DENIED, "rbac.model.manage")
     if action in _E4_READ_ACTIONS:
         if principal.role in _PROJECT_READ_ROLES:
             return _allow("abac.e4.read")

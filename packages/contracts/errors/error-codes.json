@@ -378,6 +378,18 @@
       "retryable": false,
       "http_status": 409,
       "description": "资源锁已过期或已释放，必须重新获取。"
+    },
+    {
+      "code": "EDITOR_NOT_CONNECTED",
+      "retryable": true,
+      "http_status": 409,
+      "description": "目标 Editor Session 没有活动的桥接连接。"
+    },
+    {
+      "code": "EDITOR_COMMAND_TIMEOUT",
+      "retryable": false,
+      "http_status": 504,
+      "description": "编辑器命令已发送但未在期限内返回结果，副作用未知。"
     }
   ]
 }

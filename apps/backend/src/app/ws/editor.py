@@ -51,6 +51,7 @@ from modules.audit.service import AuditService
 from modules.bridge_event.service import BridgeEventService
 from modules.bridge_metrics import BridgeMetrics
 from modules.client.service import AuthService
+from modules.editor_command.hub import EditorCommandHub
 from modules.editor_session.models import BINDING_CONNECTED
 from modules.editor_session.service import EditorSessionService, normalize_editor_instance_id
 from modules.lease.service import LeaseService, format_lease
@@ -252,15 +253,31 @@ async def editor_socket(websocket: WebSocket) -> None:
             component="bridge",
         )
 
-        await _serve(
-            websocket,
-            settings,
-            services,
-            session_id=session_id,
-            project_id=project.project_id,
-            session_token=session_token,
-            lease_id=lease.lease_id,
-        )
+        command_hub = services.try_get("editor_command_hub")
+        connection = None
+        if isinstance(command_hub, EditorCommandHub):
+
+            async def _command_sender(frame: dict) -> None:
+                await _send(websocket, frame, settings)
+
+            connection = command_hub.open(
+                session_id=session_id,
+                project_id=project.project_id,
+                sender=_command_sender,
+            )
+        try:
+            await _serve(
+                websocket,
+                settings,
+                services,
+                session_id=session_id,
+                project_id=project.project_id,
+                session_token=session_token,
+                lease_id=lease.lease_id,
+            )
+        finally:
+            if isinstance(command_hub, EditorCommandHub) and connection is not None:
+                command_hub.close(connection)
     except ProtocolViolation as exc:
         await _send_error_or_ignore(websocket, exc, correlation_id, settings)
         await _safe_close(websocket, exc.close_code, exc.code)
@@ -353,6 +370,13 @@ async def _serve(
             if message_type == "ERROR":
                 continue
             raise ProtocolViolation("INVALID_REQUEST", "control frame not allowed after handshake")
+        if "success" in frame and not isinstance(frame.get("action"), str):
+            hub = services.try_get("editor_command_hub")
+            if not isinstance(hub, EditorCommandHub):
+                raise ProtocolViolation("UNKNOWN_MESSAGE_TYPE", "unexpected response frame")
+            if not hub.resolve(session_id, frame):
+                raise ProtocolViolation("INVALID_REQUEST", "response has unknown request_id")
+            continue
         action = frame.get("action")
         if not isinstance(action, str):
             raise ProtocolViolation("UNKNOWN_MESSAGE_TYPE", "unrecognized frame")
@@ -437,7 +461,9 @@ async def _dispatch_action(
     if action == "editor.state.report":
         return _handle_state_report(payload)
     if action == "editor.command.execute":
-        raise ProtocolViolation("NOT_IMPLEMENTED", "action is reserved for E5")
+        raise ProtocolViolation(
+            "NOT_IMPLEMENTED", "editor.command.execute is backend-to-plugin only"
+        )
     raise ProtocolViolation("UNKNOWN_MESSAGE_TYPE", f"action is not registered: {action}")
 
 

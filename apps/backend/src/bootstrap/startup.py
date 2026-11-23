@@ -36,6 +36,7 @@ from modules.changeset.repository import ChangeSetRepository
 from modules.changeset.service import ChangeSetService
 from modules.client.service import AuthCleanupTask, AuthService, ClientService
 from modules.context.service import ContextAssemblyService
+from modules.editor_command.hub import EditorCommandHub
 from modules.editor_session.models import EditorSessionModel
 from modules.editor_session.service import EditorSessionService
 from modules.lease.service import LeaseService
@@ -65,7 +66,10 @@ from modules.task.service import (
 from modules.tool.adapters import ToolAdapterRegistry
 from modules.tool.approval import ToolApprovalGate
 from modules.tool.audit import ToolAuditService
+from modules.tool.catalog import ensure_builtin_tools
 from modules.tool.execution import ToolExecutionService
+from modules.tool.file_adapter import FileToolAdapter
+from modules.tool.godot_adapter import GodotToolAdapter
 from modules.tool.locks import ResourceLockService
 from modules.tool.permissions import ToolPermissionEngine
 from modules.tool.recovery import ToolRecoveryService
@@ -340,6 +344,20 @@ def register_startup_steps(
             verifications=tool_verification_service,
             audits=tool_audit_service,
         )
+        editor_command_hub = EditorCommandHub()
+        tool_adapter_registry.register(GodotToolAdapter(editor_command_hub))
+        tool_adapter_registry.register(
+            FileToolAdapter(project_registry_service, hub=editor_command_hub)
+        )
+        try:
+            await ensure_builtin_tools(tool_registry_service)
+        except Exception:  # noqa: BLE001 - 内置工具登记失败不阻断启动
+            log_event(
+                logger,
+                logging.ERROR,
+                "tool_catalog_failed",
+                component="tool",
+            )
         try:
             await auth_service.purge_expired()
             await session_service.expire_stale()
@@ -426,6 +444,7 @@ def register_startup_steps(
         services.register("tool_audit_service", tool_audit_service)
         services.register("tool_verification_service", tool_verification_service)
         services.register("tool_recovery_service", tool_recovery_service)
+        services.register("editor_command_hub", editor_command_hub)
         services.register("project_access_service", access_service)
         services.register("bridge_metrics", BridgeMetrics())
         services.register("rate_limiter", rate_limiter)

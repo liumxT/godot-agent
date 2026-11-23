@@ -36,6 +36,10 @@ ACTION_E4_CHANGESET_MANAGE = "changeset.manage"
 ACTION_E4_CHANGESET_APPROVE = "changeset.approve"
 ACTION_E4_APPROVAL_READ = "approval.read"
 ACTION_E4_APPROVAL_DECIDE = "approval.decide"
+ACTION_E5_TOOL_READ = "tool.read"
+ACTION_E5_TOOL_MANAGE = "tool.manage"
+ACTION_E5_MODEL_READ = "model.read"
+ACTION_E5_MODEL_MANAGE = "model.manage"
 
 E4_PROJECT_ACTIONS = frozenset(
     {
@@ -50,6 +54,15 @@ E4_PROJECT_ACTIONS = frozenset(
         ACTION_E4_CHANGESET_APPROVE,
         ACTION_E4_APPROVAL_READ,
         ACTION_E4_APPROVAL_DECIDE,
+    }
+)
+
+E5_PROJECT_ACTIONS = frozenset(
+    {
+        ACTION_E5_TOOL_READ,
+        ACTION_E5_TOOL_MANAGE,
+        ACTION_E5_MODEL_READ,
+        ACTION_E5_MODEL_MANAGE,
     }
 )
 
@@ -69,6 +82,7 @@ ACTIONS = frozenset(
         ACTION_BRIDGE_WRITE,
     }
     | E4_PROJECT_ACTIONS
+    | E5_PROJECT_ACTIONS
 )
 
 

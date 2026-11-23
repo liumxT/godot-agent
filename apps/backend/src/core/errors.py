@@ -384,6 +384,21 @@ class ResourceLockExpired(AppError):
     status_code = 409
 
 
+class EditorNotConnected(AppError):
+    """E5：目标 Editor Session 没有活动的桥接连接。"""
+
+    code = "EDITOR_NOT_CONNECTED"
+    status_code = 409
+    retryable = True
+
+
+class EditorCommandTimeout(AppError):
+    """E5：编辑器命令已发送但未在期限内返回结果。"""
+
+    code = "EDITOR_COMMAND_TIMEOUT"
+    status_code = 504
+
+
 class RequestTooLarge(AppError):
     """请求体超过大小限制。"""
 
