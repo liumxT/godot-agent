@@ -13,6 +13,7 @@ import httpx
 
 from bootstrap.application import create_app
 from config.settings import load_settings
+from core.errors import EditorCommandTimeout
 from infrastructure.database.transaction import transaction
 from infrastructure.security.bootstrap import BootstrapTokenStore
 from modules.editor_command.hub import EditorCommandResponse
@@ -251,6 +252,14 @@ async def test_godot_adapter_requires_connection_and_parses_response(tmp_path: P
         failed_result = await failed
         assert failed_result.status == "FAILED"
         assert failed_result.error_code == "TOOL_UNSUPPORTED"
+
+        timeout_adapter = GodotToolAdapter(FakeHub(FakeConnection(EditorCommandTimeout("超时"))))
+        timeout_result = await timeout_adapter.execute(
+            _context(project.project_id, "godot.node.list", {})
+        )
+        assert timeout_result.status == "UNKNOWN"
+        assert timeout_result.error_code == "EDITOR_COMMAND_TIMEOUT"
+        assert await timeout_adapter.inspect(_context(project.project_id, "godot.node.list", {})) is None
 
 
 def _bearer(token: str) -> dict[str, str]:
