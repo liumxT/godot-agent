@@ -62,6 +62,9 @@ from modules.model_gateway.gateway import ModelGatewayService
 from modules.model_gateway.providers.registry import default_adapter_registry
 from modules.model_gateway.registry import ModelRegistryService
 from modules.model_gateway.routing import ModelRoutingService
+from modules.multi_agent.communication import MessageService
+from modules.multi_agent.context import SharedContextService
+from modules.multi_agent.lead import IntegrationService, LeadAgentService
 from modules.multi_agent.orchestrator import OrchestratorService
 from modules.multi_agent.service import (
     AgentTeamService,
@@ -361,6 +364,14 @@ def register_startup_steps(
         assignment_service = AssignmentService(database)
         handoff_service = HandoffService(database)
         collaboration_service = CollaborationService(database)
+        shared_context_service = SharedContextService(database)
+        message_service = MessageService(database)
+        integration_service = IntegrationService(database)
+        lead_agent_service = LeadAgentService(
+            database,
+            teams=agent_team_service,
+            integrations=integration_service,
+        )
         orchestrator_service = OrchestratorService(
             database,
             tasks=task_service,
@@ -369,6 +380,8 @@ def register_startup_steps(
             capabilities=capability_registry_service,
             teams=agent_team_service,
             assignments=assignment_service,
+            handoffs=handoff_service,
+            contexts=shared_context_service,
             tools=tool_registry_service,
         )
         agent_event_service = AgentEventService(database)
@@ -516,6 +529,10 @@ def register_startup_steps(
         services.register("assignment_service", assignment_service)
         services.register("handoff_service", handoff_service)
         services.register("collaboration_service", collaboration_service)
+        services.register("shared_context_service", shared_context_service)
+        services.register("message_service", message_service)
+        services.register("integration_service", integration_service)
+        services.register("lead_agent_service", lead_agent_service)
         services.register("orchestrator_service", orchestrator_service)
         services.register("agent_event_service", agent_event_service)
         services.register("agent_instance_service", agent_instance_service)

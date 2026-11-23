@@ -470,6 +470,24 @@
       "description": "Collaboration 参与者或目标不合法。"
     },
     {
+      "code": "AGENT_CONTEXT_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "共享 Context 的范围、版本或内容不合法。"
+    },
+    {
+      "code": "AGENT_CONTEXT_STALE",
+      "retryable": false,
+      "http_status": 409,
+      "description": "Agent 使用了过期 Context，且策略要求暂停或重新分析。"
+    },
+    {
+      "code": "AGENT_MESSAGE_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Agent 消息的发送者、接收者、类型或内容不合法。"
+    },
+    {
       "code": "AGENT_DECOMPOSITION_INVALID",
       "retryable": false,
       "http_status": 422,

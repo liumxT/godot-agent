@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
@@ -42,6 +43,7 @@ from modules.multi_agent.capabilities import (
 from modules.multi_agent.models import (
     ASSIGNMENT_ASSIGNED,
     ASSIGNMENT_BLOCKED,
+    ASSIGNMENT_COMPLETED,
     ASSIGNMENT_CREATED,
     ASSIGNMENT_FAILED,
     ASSIGNMENT_HANDOFF_PENDING,
@@ -55,7 +57,10 @@ from modules.multi_agent.models import (
     CAPABILITY_CATEGORIES,
     COLLABORATION_ACTIVE,
     DEFAULT_RISK_PROFILE,
+    HANDOFF_FAILURE,
     HANDOFF_REQUESTED,
+    HANDOFF_TERMINAL_STATUSES,
+    HANDOFF_TRANSITIONS,
     HANDOFF_TYPES,
     RISK_PROFILES,
     TEAM_COMPLETED,
@@ -647,7 +652,10 @@ class AgentTeamService:
                 existing.role = TEAM_MEMBER_LEAD if existing.member_id == member.member_id else (
                     TEAM_MEMBER_WORKER
                 )
-            team.lead_agent_instance_id = member.agent_instance_id
+            assignment = await AgentAssignmentRepository(session).get(assignment_id)
+            team.lead_agent_instance_id = (
+                assignment.agent_instance_id if assignment is not None else member.agent_instance_id
+            )
             team.version += 1
             team.updated_at = now
             await session.flush()
@@ -990,6 +998,40 @@ class AssignmentService:
             await session.refresh(entity)
             return _assignment_view(entity)
 
+    async def complete(
+        self, assignment_id: str, *, output_reference: str, expected_version: int
+    ) -> AssignmentView:
+        """登记执行输出并置为 COMPLETED；结果引用必须显式提供。"""
+
+        if not (output_reference or "").strip():
+            raise AgentAssignmentInvalid(
+                "完成 Assignment 必须引用输出", details={"reasons": ["OUTPUT_REQUIRED"]}
+            )
+        now = self._clock()
+        async with self._database.session() as session, transaction(session):
+            repository = AgentAssignmentRepository(session)
+            entity = await repository.get(assignment_id)
+            if entity is None:
+                raise NotFoundError("Assignment 不存在", details={"assignment_id": assignment_id})
+            if entity.version != expected_version:
+                raise VersionConflict(
+                    "Assignment 版本已变化",
+                    details={"expected": expected_version, "actual": entity.version},
+                )
+            if ASSIGNMENT_COMPLETED not in ASSIGNMENT_TRANSITIONS.get(
+                entity.status, frozenset()
+            ):
+                raise AgentAssignmentInvalid(
+                    "Assignment 当前状态不可完成",
+                    details={"reasons": ["INVALID_TRANSITION"], "status": entity.status},
+                )
+            entity.output_reference = output_reference
+            entity.status = ASSIGNMENT_COMPLETED
+            entity.completed_at = now
+            entity.version += 1
+            await session.flush()
+            return _assignment_view(entity)
+
     async def replace(
         self,
         assignment_id: str,
@@ -1053,6 +1095,114 @@ class AssignmentService:
         return replacement
 
 
+@dataclass(frozen=True, slots=True)
+class HandoffPayload:
+    """Handoff 的结构化交接内容；只允许显式字段，禁止夹带隐藏推理。"""
+
+    original_objective: str
+    current_scope: str
+    completed_work: tuple[str, ...] = ()
+    remaining_work: tuple[str, ...] = ()
+    key_findings: tuple[str, ...] = ()
+    file_references: tuple[str, ...] = ()
+    changeset_references: tuple[str, ...] = ()
+    design_decisions: tuple[str, ...] = ()
+    known_risks: tuple[str, ...] = ()
+    next_steps: tuple[str, ...] = ()
+    acceptance_criteria: tuple[str, ...] = ()
+    context_snapshot_id: str | None = None
+    failure_reason: str | None = None
+
+    def validate(self, *, handoff_type: str) -> None:
+        if handoff_type not in HANDOFF_TYPES:
+            raise AgentHandoffInvalid(
+                "Handoff 类型非法",
+                details={"reasons": ["INVALID_HANDOFF_TYPE"], "handoff_type": handoff_type},
+            )
+        missing: list[str] = []
+        if not (self.original_objective or "").strip():
+            missing.append("original_objective")
+        if not (self.current_scope or "").strip():
+            missing.append("current_scope")
+        if not self.next_steps:
+            missing.append("next_steps")
+        if not self.acceptance_criteria:
+            missing.append("acceptance_criteria")
+        if missing:
+            raise AgentHandoffInvalid(
+                "Handoff payload 缺少必填字段",
+                details={"reasons": ["MISSING_FIELDS"], "fields": missing},
+            )
+        if handoff_type == HANDOFF_FAILURE and not (self.failure_reason or "").strip():
+            raise AgentHandoffInvalid(
+                "失败交接必须说明失败原因",
+                details={"reasons": ["FAILURE_REASON_REQUIRED"]},
+            )
+
+    @classmethod
+    def from_mapping(cls, payload: Mapping[str, Any]) -> HandoffPayload:
+        allowed = set(cls.__dataclass_fields__)
+        unknown = sorted(set(payload) - allowed)
+        if unknown:
+            raise AgentHandoffInvalid(
+                "Handoff payload 包含未登记字段",
+                details={"reasons": ["UNKNOWN_FIELD"], "fields": unknown},
+            )
+        for name in allowed:
+            value = payload.get(name)
+            if name in {
+                "original_objective",
+                "current_scope",
+                "context_snapshot_id",
+                "failure_reason",
+            }:
+                continue
+            if value is not None and not all(isinstance(item, str) for item in value):
+                raise AgentHandoffInvalid(
+                    "Handoff payload 列表字段必须为字符串数组",
+                    details={"reasons": ["INVALID_FIELD_TYPE"], "field": name},
+                )
+        return cls(
+            original_objective=str(payload.get("original_objective", "")),
+            current_scope=str(payload.get("current_scope", "")),
+            completed_work=tuple(payload.get("completed_work") or ()),
+            remaining_work=tuple(payload.get("remaining_work") or ()),
+            key_findings=tuple(payload.get("key_findings") or ()),
+            file_references=tuple(payload.get("file_references") or ()),
+            changeset_references=tuple(payload.get("changeset_references") or ()),
+            design_decisions=tuple(payload.get("design_decisions") or ()),
+            known_risks=tuple(payload.get("known_risks") or ()),
+            next_steps=tuple(payload.get("next_steps") or ()),
+            acceptance_criteria=tuple(payload.get("acceptance_criteria") or ()),
+            context_snapshot_id=payload.get("context_snapshot_id"),
+            failure_reason=payload.get("failure_reason"),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "original_objective": self.original_objective,
+            "current_scope": self.current_scope,
+            "completed_work": list(self.completed_work),
+            "remaining_work": list(self.remaining_work),
+            "key_findings": list(self.key_findings),
+            "file_references": list(self.file_references),
+            "changeset_references": list(self.changeset_references),
+            "design_decisions": list(self.design_decisions),
+            "known_risks": list(self.known_risks),
+            "next_steps": list(self.next_steps),
+            "acceptance_criteria": list(self.acceptance_criteria),
+            "context_snapshot_id": self.context_snapshot_id,
+            "failure_reason": self.failure_reason,
+        }
+
+    def reference(self) -> str:
+        canonical = json.dumps(
+            self.to_dict(), ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
+        digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        return f"handoff://{digest[:24]}"
+
+
 class HandoffService:
     """Handoff 请求；执行与目标 Assignment 创建由 Orchestrator 负责。"""
 
@@ -1068,7 +1218,8 @@ class HandoffService:
         source_assignment_id: str,
         target_agent_definition_id: str,
         handoff_type: str,
-        handoff_payload_reference: str,
+        handoff_payload_reference: str = "",
+        payload: HandoffPayload | None = None,
         context_snapshot_id: str | None = None,
         approval_reference: str | None = None,
         requested_by_assignment_id: str | None = None,
@@ -1078,6 +1229,12 @@ class HandoffService:
                 "Handoff 类型非法",
                 details={"reasons": ["INVALID_HANDOFF_TYPE"], "handoff_type": handoff_type},
             )
+        if payload is not None:
+            payload.validate(handoff_type=handoff_type)
+            if not handoff_payload_reference.strip():
+                handoff_payload_reference = payload.reference()
+            if context_snapshot_id is None:
+                context_snapshot_id = payload.context_snapshot_id
         if not handoff_payload_reference.strip():
             raise AgentHandoffInvalid(
                 "Handoff 必须引用 payload", details={"reasons": ["PAYLOAD_REQUIRED"]}
@@ -1124,6 +1281,51 @@ class HandoffService:
         async with self._database.session() as session:
             rows = await AgentHandoffRepository(session).list_for_source(assignment_id)
         return [_handoff_view(row) for row in rows]
+
+    async def transition(
+        self,
+        handoff_id: str,
+        to_status: str,
+        *,
+        expected_version: int,
+        target_assignment_id: str | None = None,
+        approval_reference: str | None = None,
+    ) -> HandoffView:
+        if to_status not in HANDOFF_TRANSITIONS:
+            raise AgentHandoffInvalid(
+                "Handoff 状态非法",
+                details={"reasons": ["UNKNOWN_STATUS"], "status": to_status},
+            )
+        now = self._clock()
+        async with self._database.session() as session, transaction(session):
+            repository = AgentHandoffRepository(session)
+            entity = await repository.get(handoff_id)
+            if entity is None:
+                raise NotFoundError("Handoff 不存在", details={"handoff_id": handoff_id})
+            if entity.version != expected_version:
+                raise VersionConflict(
+                    "Handoff 版本已变化",
+                    details={"expected": expected_version, "actual": entity.version},
+                )
+            if to_status not in HANDOFF_TRANSITIONS.get(entity.status, frozenset()):
+                raise AgentHandoffInvalid(
+                    "Handoff 状态迁移非法",
+                    details={
+                        "reasons": ["INVALID_TRANSITION"],
+                        "from": entity.status,
+                        "to": to_status,
+                    },
+                )
+            entity.status = to_status
+            entity.version += 1
+            if target_assignment_id is not None:
+                entity.target_assignment_id = target_assignment_id
+            if approval_reference is not None:
+                entity.approval_reference = approval_reference
+            if to_status in HANDOFF_TERMINAL_STATUSES:
+                entity.completed_at = now
+            await session.flush()
+            return _handoff_view(entity)
 
 
 class CollaborationService:
@@ -1197,6 +1399,7 @@ __all__ = [
     "CapabilityView",
     "CollaborationService",
     "CollaborationView",
+    "HandoffPayload",
     "HandoffService",
     "HandoffView",
     "TeamView",

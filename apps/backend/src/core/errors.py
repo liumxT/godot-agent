@@ -578,6 +578,27 @@ class AgentCollaborationInvalid(AppError):
     status_code = 422
 
 
+class AgentContextInvalid(AppError):
+    """共享 Context 的范围、版本或内容不合法。"""
+
+    code = "AGENT_CONTEXT_INVALID"
+    status_code = 422
+
+
+class AgentContextStale(AppError):
+    """Agent 使用了过期 Context，且策略要求暂停或重新分析。"""
+
+    code = "AGENT_CONTEXT_STALE"
+    status_code = 409
+
+
+class AgentMessageInvalid(AppError):
+    """Agent 消息的发送者、接收者、类型或内容不合法。"""
+
+    code = "AGENT_MESSAGE_INVALID"
+    status_code = 422
+
+
 class AgentDecompositionInvalid(AppError):
     """任务分解未覆盖原始验收标准或依赖不合法。"""
 

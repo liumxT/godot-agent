@@ -283,6 +283,19 @@ class AgentMessageRepository(BaseRepository[AgentMessageModel]):
         )
         return list(rows)
 
+    async def list_for_target(
+        self, target_assignment_id: str, *, unread_only: bool = False, limit: int = 200
+    ) -> list[AgentMessageModel]:
+        statement = select(AgentMessageModel).where(
+            AgentMessageModel.target_assignment_id == target_assignment_id
+        )
+        if unread_only:
+            statement = statement.where(AgentMessageModel.consumed_at.is_(None))
+        rows = await self.session.scalars(
+            statement.order_by(AgentMessageModel.sequence_number).limit(limit)
+        )
+        return list(rows)
+
 
 class AgentConflictRepository(BaseRepository[AgentConflictModel]):
     model = AgentConflictModel
@@ -290,6 +303,14 @@ class AgentConflictRepository(BaseRepository[AgentConflictModel]):
 
 class AgentIntegrationRepository(BaseRepository[AgentIntegrationModel]):
     model = AgentIntegrationModel
+
+    async def list_for_team(self, team_id: str) -> list[AgentIntegrationModel]:
+        rows = await self.session.scalars(
+            select(AgentIntegrationModel)
+            .where(AgentIntegrationModel.team_id == team_id)
+            .order_by(AgentIntegrationModel.created_at)
+        )
+        return list(rows)
 
 
 class AgentReviewRepository(BaseRepository[AgentReviewModel]):
@@ -315,6 +336,14 @@ class AgentSharedContextRepository(BaseRepository[AgentSharedContextModel]):
             .order_by(AgentSharedContextModel.context_version.desc())
             .limit(1)
         )
+
+    async def list_for_team(self, team_id: str) -> list[AgentSharedContextModel]:
+        rows = await self.session.scalars(
+            select(AgentSharedContextModel)
+            .where(AgentSharedContextModel.team_id == team_id)
+            .order_by(AgentSharedContextModel.context_version)
+        )
+        return list(rows)
 
 
 __all__ = [
