@@ -1,4 +1,4 @@
-"""E1 Core 全链路集成测试（E1-T14）。
+﻿"""E1 Core 全链路集成测试（E1-T14）。
 
 覆盖：启动/关闭、配置、数据库、迁移、Repository、事务提交/回滚、事件发布、
 Outbox 派发与中断恢复、备份、恢复、健康检查。
@@ -91,7 +91,7 @@ async def test_core_end_to_end(tmp_path: Path) -> None:
         backup = services.get("backup", BackupService)
 
         assert await database.ping() is True
-        assert await migration.current_revision() == "000016"
+        assert await migration.current_revision() == "000017"
 
         async with database.engine.begin() as connection:
             await connection.run_sync(_Base.metadata.create_all)
@@ -145,8 +145,8 @@ async def test_core_end_to_end(tmp_path: Path) -> None:
 
         info = await backup.create(reason="e1-integration")
         assert info.integrity.lower() == "ok"
-        restored = await backup.restore(info.path, expected_revision="000016")
-        assert restored.revision == "000016"
+        restored = await backup.restore(info.path, expected_revision="000017")
+        assert restored.revision == "000017"
         assert database.is_initialized is True
         assert dispatcher.running is True
 

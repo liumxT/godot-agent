@@ -74,6 +74,7 @@ class InstanceView:
     attempt_id: str | None
     project_id: str
     session_id: str | None
+    client_id: str | None
     status: str
     config_snapshot_id: str
     version: int
@@ -90,6 +91,8 @@ class ConfigSnapshotView:
     agent_definition_id: str
     agent_version: str
     project_id: str
+    session_id: str | None
+    client_id: str | None
     model_policy_id: str
     model_id: str | None
     prompt_profile_id: str
@@ -113,6 +116,7 @@ def instance_view(entity: AgentInstanceModel) -> InstanceView:
         attempt_id=entity.attempt_id,
         project_id=entity.project_id,
         session_id=entity.session_id,
+        client_id=entity.client_id,
         status=entity.status,
         config_snapshot_id=entity.config_snapshot_id,
         version=entity.version,
@@ -130,6 +134,8 @@ def _snapshotinstance_view(entity: AgentConfigSnapshotModel) -> ConfigSnapshotVi
         agent_definition_id=entity.agent_definition_id,
         agent_version=entity.agent_version,
         project_id=entity.project_id,
+        session_id=entity.session_id,
+        client_id=entity.client_id,
         model_policy_id=entity.model_policy_id,
         model_id=entity.model_id,
         prompt_profile_id=entity.prompt_profile_id,
@@ -150,6 +156,7 @@ def _snapshot_payload(
     version: DefinitionVersionView,
     project_id: str,
     session_id: str | None,
+    client_id: str | None,
     model_id: str | None,
 ) -> dict[str, Any]:
     frozen = version.definition
@@ -159,6 +166,7 @@ def _snapshot_payload(
         "content_hash": version.content_hash,
         "project_id": project_id,
         "session_id": session_id,
+        "client_id": client_id,
         "model_policy_id": frozen["model_policy"]["policy_id"],
         "model_id": model_id,
         "prompt": frozen["prompt"],
@@ -242,6 +250,7 @@ class AgentInstanceService:
         task_id: str,
         attempt_id: str,
         session_id: str | None = None,
+        client_id: str | None = None,
         model_id: str | None = None,
     ) -> InstanceView:
         definition = await self._definitions.get(definition_id)
@@ -279,7 +288,11 @@ class AgentInstanceService:
 
             now = self._clock()
             payload = _snapshot_payload(
-                version=version, project_id=task.project_id, session_id=session_id, model_id=model_id
+                version=version,
+                project_id=task.project_id,
+                session_id=session_id,
+                client_id=client_id,
+                model_id=model_id,
             )
             snapshot = AgentConfigSnapshotModel(
                 snapshot_id="agcfg_" + uuid4().hex[:12],
@@ -287,6 +300,7 @@ class AgentInstanceService:
                 agent_version=version.version,
                 project_id=task.project_id,
                 session_id=session_id,
+                client_id=client_id,
                 model_policy_id=payload["model_policy_id"],
                 model_id=model_id,
                 prompt_profile_id=payload["prompt"]["profile_id"],
@@ -310,6 +324,7 @@ class AgentInstanceService:
                 attempt_id=attempt_id,
                 project_id=task.project_id,
                 session_id=session_id,
+                client_id=client_id,
                 status=INSTANCE_CREATED,
                 config_snapshot_id=snapshot.snapshot_id,
                 version=1,
@@ -399,6 +414,7 @@ def format_instance(view: InstanceView) -> dict[str, Any]:
         "attempt_id": view.attempt_id,
         "project_id": view.project_id,
         "session_id": view.session_id,
+        "client_id": view.client_id,
         "status": view.status,
         "config_snapshot_id": view.config_snapshot_id,
         "version": view.version,

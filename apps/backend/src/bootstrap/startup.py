@@ -27,11 +27,17 @@ from infrastructure.secrets.store import KeyringSecretStore, MemorySecretStore
 from infrastructure.security.bootstrap import BootstrapTokenStore
 from infrastructure.security.rate_limit import ConcurrencyLimiter, SlidingWindowRateLimiter
 from modules.access.service import ProjectAccessService
+from modules.agent_runtime.context_binding import AgentContextBindingService
 from modules.agent_runtime.events import AgentEventService
+from modules.agent_runtime.execution import AgentExecutionService
 from modules.agent_runtime.instance import AgentInstanceService
 from modules.agent_runtime.lifecycle import AgentLifecycleService
+from modules.agent_runtime.loop import AgentExecutionLoop
+from modules.agent_runtime.model_binding import AgentModelBindingService
+from modules.agent_runtime.planning import PlanningService
 from modules.agent_runtime.scheduler import AgentScheduler
 from modules.agent_runtime.service import DefinitionRegistryService
+from modules.agent_runtime.tool_binding import AgentToolBindingService
 from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
 from modules.audit.service import AuditService
@@ -471,6 +477,29 @@ def register_startup_steps(
         services.register("agent_instance_service", agent_instance_service)
         services.register("agent_lifecycle_service", agent_lifecycle_service)
         services.register("agent_scheduler", agent_scheduler)
+        services.register(
+            "agent_execution_service",
+            AgentExecutionService(database, events=agent_event_service),
+        )
+        services.register(
+            "agent_planning_service",
+            PlanningService(database, events=agent_event_service),
+        )
+        services.register(
+            "agent_context_binding_service",
+            AgentContextBindingService(
+                prompts=services.get("prompt_service", PromptService),
+                contexts=services.get("context_assembly_service", ContextAssemblyService),
+            ),
+        )
+        services.register(
+            "agent_model_binding_service",
+            AgentModelBindingService(
+                definitions=agent_definition_registry_service,
+                routing=services.get("model_routing_service", ModelRoutingService),
+                gateway=services.get("model_gateway_service", ModelGatewayService),
+            ),
+        )
         services.register("tool_approval_gate", tool_approval_gate)
         services.register("tool_permission_engine", tool_permission_engine)
         services.register("tool_adapter_registry", tool_adapter_registry)
@@ -517,6 +546,34 @@ def register_startup_steps(
             events=bus,
         )
         services.register("tool_execution_service", execution_service)
+        services.register(
+            "agent_tool_binding_service",
+            AgentToolBindingService(
+                tools=services.get("tool_registry_service", ToolRegistryService),
+                execution=execution_service,
+            ),
+        )
+        services.register(
+            "agent_execution_loop",
+            AgentExecutionLoop(
+                instances=services.get("agent_instance_service", AgentInstanceService),
+                lifecycle=services.get("agent_lifecycle_service", AgentLifecycleService),
+                executions=services.get(
+                    "agent_execution_service", AgentExecutionService
+                ),
+                events=services.get("agent_event_service", AgentEventService),
+                planning=services.get("agent_planning_service", PlanningService),
+                context=services.get(
+                    "agent_context_binding_service", AgentContextBindingService
+                ),
+                models=services.get(
+                    "agent_model_binding_service", AgentModelBindingService
+                ),
+                tools=services.get(
+                    "agent_tool_binding_service", AgentToolBindingService
+                ),
+            ),
+        )
         await dispatcher.start()
 
     async def _stop_events() -> None:

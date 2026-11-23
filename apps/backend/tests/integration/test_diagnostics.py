@@ -1,4 +1,4 @@
-"""诊断接口集成测试（E1-T13-IT-001…002）。"""
+﻿"""诊断接口集成测试（E1-T13-IT-001…002）。"""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def test_summary_includes_runtime_and_migration(client) -> None:
 
     assert body["application"]["state"] == "RUNNING"
     assert body["application"]["uptime_seconds"] is not None
-    assert body["database"] == {"status": "ready", "revision": "000016"}
+    assert body["database"] == {"status": "ready", "revision": "000017"}
     assert body["migration"]["at_head"] is True
     assert body["logging"]["log_file"].endswith("backend.log")
     assert body["backup"]["available"] is True

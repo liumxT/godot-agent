@@ -11,6 +11,7 @@ from sqlalchemy import func, select, update
 from infrastructure.database.repository import BaseRepository, Page
 from modules.agent_runtime.models import (
     INSTANCE_TERMINAL_STATUSES,
+    PLAN_ACTIVE,
     AgentCheckpointModel,
     AgentConfigSnapshotModel,
     AgentDefinitionModel,
@@ -185,6 +186,40 @@ class AgentExecutionRepository(BaseRepository[AgentExecutionModel]):
             .limit(1)
         )
 
+    async def compare_and_set_status(
+        self,
+        execution_id: str,
+        *,
+        expected_version: int,
+        from_status: str,
+        to_status: str,
+        now,
+        started_at=None,
+        ended_at=None,
+        termination_reason: str | None = None,
+    ) -> int:
+        values: dict[str, object] = {
+            "status": to_status,
+            "version": expected_version + 1,
+        }
+        if started_at is not None:
+            values["started_at"] = started_at
+        if ended_at is not None:
+            values["ended_at"] = ended_at
+        if termination_reason is not None:
+            values["termination_reason"] = termination_reason
+        result = await self.session.execute(
+            update(AgentExecutionModel)
+            .where(
+                AgentExecutionModel.execution_id == execution_id,
+                AgentExecutionModel.version == expected_version,
+                AgentExecutionModel.status == from_status,
+            )
+            .values(**values)
+            .execution_options(synchronize_session=False)
+        )
+        return int(result.rowcount or 0)
+
 
 class AgentPlanRepository(BaseRepository[AgentPlanModel]):
     model = AgentPlanModel
@@ -201,6 +236,17 @@ class AgentPlanRepository(BaseRepository[AgentPlanModel]):
         return await self.session.scalar(
             select(AgentPlanModel)
             .where(AgentPlanModel.execution_id == execution_id)
+            .order_by(AgentPlanModel.plan_version.desc())
+            .limit(1)
+        )
+
+    async def get_active_for_execution(self, execution_id: str) -> AgentPlanModel | None:
+        return await self.session.scalar(
+            select(AgentPlanModel)
+            .where(
+                AgentPlanModel.execution_id == execution_id,
+                AgentPlanModel.status == PLAN_ACTIVE,
+            )
             .order_by(AgentPlanModel.plan_version.desc())
             .limit(1)
         )
@@ -232,6 +278,44 @@ class AgentStepRepository(BaseRepository[AgentStepModel]):
             .order_by(AgentStepModel.step_number)
         )
         return list(rows)
+
+    async def compare_and_set_status(
+        self,
+        step_id: str,
+        *,
+        expected_version: int,
+        from_status: str,
+        to_status: str,
+        now,
+        set_tool_execution: bool = False,
+        tool_execution_id: str | None = None,
+        set_output_reference: bool = False,
+        output_reference: str | None = None,
+        set_started: bool = False,
+    ) -> int:
+        values: dict[str, object] = {
+            "status": to_status,
+            "version": expected_version + 1,
+        }
+        if set_started:
+            values["started_at"] = now
+        if set_tool_execution:
+            values["tool_execution_id"] = tool_execution_id
+        if set_output_reference:
+            values["output_reference"] = output_reference
+        if to_status in {"COMPLETED", "FAILED", "SKIPPED"}:
+            values["completed_at"] = now
+        result = await self.session.execute(
+            update(AgentStepModel)
+            .where(
+                AgentStepModel.step_id == step_id,
+                AgentStepModel.version == expected_version,
+                AgentStepModel.status == from_status,
+            )
+            .values(**values)
+            .execution_options(synchronize_session=False)
+        )
+        return int(result.rowcount or 0)
 
 
 class AgentCheckpointRepository(BaseRepository[AgentCheckpointModel]):

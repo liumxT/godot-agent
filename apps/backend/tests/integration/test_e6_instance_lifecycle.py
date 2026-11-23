@@ -103,7 +103,7 @@ async def test_create_instance_freezes_config_and_is_idempotent(
         assert snapshot.model_id == "model-x"
         assert snapshot.prompt_profile_id == "generic_agent_prompt"
         assert snapshot.prompt_version == 1
-        assert snapshot.context_profile_id == "project_context_default"
+        assert snapshot.context_profile_id == "DEFAULT"
         assert len(snapshot.tool_whitelist) == 1
         assert snapshot.permission_ceiling == "R2"
         assert snapshot.budget["max_iterations"] == 30

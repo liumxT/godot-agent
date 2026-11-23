@@ -28,6 +28,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from infrastructure.database.base import Base
+from modules.context.models import CONTEXT_PROFILE_DEFAULT, CONTEXT_PROFILES
 from modules.tool.models import (
     RISK_HIGH,
     RISK_LOW_WRITE,
@@ -60,8 +61,6 @@ AGENT_CAPABILITIES = frozenset(
 )
 
 MODEL_POLICY_DEFAULT = "default_agent_policy"
-CONTEXT_PROFILE_DEFAULT = "project_context_default"
-CONTEXT_PROFILES = frozenset({CONTEXT_PROFILE_DEFAULT, "project_context_minimal"})
 PERMISSION_CEILINGS = frozenset(TOOL_RISK_LEVELS)
 
 BUDGET_KEYS = frozenset(
@@ -252,6 +251,24 @@ STEP_STATUSES = frozenset(
     }
 )
 STEP_TERMINAL_STATUSES = frozenset({STEP_COMPLETED, STEP_FAILED, STEP_SKIPPED})
+STEP_TRANSITIONS: dict[str, frozenset[str]] = {
+    STEP_PENDING: frozenset({STEP_READY, STEP_SKIPPED, STEP_BLOCKED}),
+    STEP_READY: frozenset(
+        {STEP_RUNNING, STEP_WAITING_APPROVAL, STEP_SKIPPED, STEP_BLOCKED, STEP_FAILED}
+    ),
+    STEP_RUNNING: frozenset({STEP_WAITING_TOOL, STEP_COMPLETED, STEP_FAILED, STEP_UNKNOWN}),
+    STEP_WAITING_TOOL: frozenset(
+        {STEP_RUNNING, STEP_COMPLETED, STEP_FAILED, STEP_UNKNOWN, STEP_WAITING_APPROVAL}
+    ),
+    STEP_WAITING_APPROVAL: frozenset(
+        {STEP_RUNNING, STEP_COMPLETED, STEP_FAILED, STEP_SKIPPED}
+    ),
+    STEP_COMPLETED: frozenset(),
+    STEP_FAILED: frozenset(),
+    STEP_SKIPPED: frozenset(),
+    STEP_BLOCKED: frozenset({STEP_READY, STEP_FAILED}),
+    STEP_UNKNOWN: frozenset({STEP_FAILED, STEP_COMPLETED}),
+}
 
 STEP_TYPE_ANALYSIS = "ANALYSIS"
 STEP_TYPE_PLANNING = "PLANNING"
@@ -439,6 +456,7 @@ class AgentConfigSnapshotModel(Base):
         String(64), ForeignKey("projects.project_id", ondelete="CASCADE"), nullable=False
     )
     session_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    client_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     model_policy_id: Mapped[str] = mapped_column(String(64), nullable=False)
     model_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     prompt_profile_id: Mapped[str] = mapped_column(String(128), nullable=False)
@@ -473,6 +491,7 @@ class AgentInstanceModel(Base):
         String(64), ForeignKey("projects.project_id", ondelete="CASCADE"), nullable=False
     )
     session_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    client_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str] = mapped_column(String(24), nullable=False, default=INSTANCE_CREATED)
     config_snapshot_id: Mapped[str] = mapped_column(
         String(64),
