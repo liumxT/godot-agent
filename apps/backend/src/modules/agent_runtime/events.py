@@ -136,3 +136,17 @@ class AgentEventService:
                 instance_id, after_sequence=after_sequence, limit=limit
             )
         return [_view(row) for row in rows]
+
+    async def list_for_execution(
+        self, execution_id: str, *, after_sequence: int = 0, limit: int = 200
+    ) -> list[AgentEventView]:
+        async with self._database.session() as session:
+            rows = await AgentEventRepository(session).list_by_execution(
+                execution_id, after_sequence=after_sequence, limit=limit
+            )
+        return [_view(row) for row in rows]
+
+    async def list_all(self, *, limit: int = 5000) -> list[AgentEventView]:
+        async with self._database.session() as session:
+            rows = await AgentEventRepository(session).list_all(limit=limit)
+        return [_view(row) for row in rows]

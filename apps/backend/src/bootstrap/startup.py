@@ -33,10 +33,12 @@ from modules.agent_runtime.context_binding import AgentContextBindingService
 from modules.agent_runtime.control import AgentControlService
 from modules.agent_runtime.events import AgentEventService
 from modules.agent_runtime.execution import AgentExecutionService
+from modules.agent_runtime.generic import GenericAgentService
 from modules.agent_runtime.instance import AgentInstanceService
 from modules.agent_runtime.lifecycle import AgentLifecycleService
 from modules.agent_runtime.loop import AgentExecutionLoop
 from modules.agent_runtime.model_binding import AgentModelBindingService
+from modules.agent_runtime.observability import AgentObservabilityService
 from modules.agent_runtime.planning import PlanningService
 from modules.agent_runtime.recovery import RecoveryCoordinator
 from modules.agent_runtime.scheduler import AgentScheduler
@@ -482,6 +484,13 @@ def register_startup_steps(
         services.register("agent_lifecycle_service", agent_lifecycle_service)
         services.register("agent_scheduler", agent_scheduler)
         services.register(
+            "generic_agent_service",
+            GenericAgentService(
+                definitions=agent_definition_registry_service,
+                prompts=services.get("prompt_service", PromptService),
+            ),
+        )
+        services.register(
             "agent_execution_service",
             AgentExecutionService(database, events=agent_event_service),
         )
@@ -629,6 +638,25 @@ def register_startup_steps(
                 ),
             ),
         )
+        services.register(
+            "agent_observability_service",
+            AgentObservabilityService(
+                database,
+                instances=services.get("agent_instance_service", AgentInstanceService),
+                executions=services.get(
+                    "agent_execution_service", AgentExecutionService
+                ),
+                events=services.get("agent_event_service", AgentEventService),
+                planning=services.get("agent_planning_service", PlanningService),
+                checkpoints=services.get(
+                    "agent_checkpoint_service", AgentCheckpointService
+                ),
+                tasks=services.get("task_service", TaskService),
+                attempts=services.get("task_attempt_service", AttemptService),
+            ),
+        )
+        if settings.environment != "test":
+            await services.get("generic_agent_service", GenericAgentService).ensure()
         await dispatcher.start()
 
     async def _stop_events() -> None:

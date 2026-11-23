@@ -376,3 +376,9 @@ class AgentEventRepository(BaseRepository[AgentEventModel]):
             .limit(limit)
         )
         return list(rows)
+
+    async def list_all(self, *, limit: int = 5000) -> list[AgentEventModel]:
+        rows = await self.session.scalars(
+            select(AgentEventModel).order_by(AgentEventModel.created_at).limit(limit)
+        )
+        return list(rows)

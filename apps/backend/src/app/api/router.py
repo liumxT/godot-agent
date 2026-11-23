@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
 
+from app.api.agents import router as agents_router
 from app.api.approvals import router as approvals_router
 from app.api.auth import protected_router as auth_protected_router
 from app.api.auth import router as auth_router
@@ -53,6 +54,7 @@ ROUTERS: tuple[tuple[str, APIRouter], ...] = (
     ("approvals", approvals_router),
     ("tools", tools_router),
     ("models", models_router),
+    ("agents", agents_router),
     ("manage", management_ui_router),
     ("bridge", bridge_router),
 )

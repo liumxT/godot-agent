@@ -40,6 +40,8 @@ ACTION_E5_TOOL_READ = "tool.read"
 ACTION_E5_TOOL_MANAGE = "tool.manage"
 ACTION_E5_MODEL_READ = "model.read"
 ACTION_E5_MODEL_MANAGE = "model.manage"
+ACTION_E6_AGENT_READ = "agent.read"
+ACTION_E6_AGENT_MANAGE = "agent.manage"
 
 E4_PROJECT_ACTIONS = frozenset(
     {
@@ -66,6 +68,13 @@ E5_PROJECT_ACTIONS = frozenset(
     }
 )
 
+E6_PROJECT_ACTIONS = frozenset(
+    {
+        ACTION_E6_AGENT_READ,
+        ACTION_E6_AGENT_MANAGE,
+    }
+)
+
 ACTIONS = frozenset(
     {
         ACTION_SYSTEM_READ,
@@ -83,6 +92,7 @@ ACTIONS = frozenset(
     }
     | E4_PROJECT_ACTIONS
     | E5_PROJECT_ACTIONS
+    | E6_PROJECT_ACTIONS
 )
 
 

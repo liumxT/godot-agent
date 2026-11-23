@@ -53,7 +53,7 @@ def _registry(request: Request) -> ProjectRegistryService:
     "/projects",
     status_code=status.HTTP_201_CREATED,
     summary="注册项目",
-    description="验证项目路径与指纹并注册业务项目；非 admin 调用者自动获得 owner 访问。",
+    description="验证项目路径与指纹并注册业务项目；携带 Session 的调用者自动获得 owner 访问。",
     responses=_ERRORS,
 )
 async def create_project(payload: ProjectCreateRequest, request: Request) -> dict:
@@ -68,7 +68,7 @@ async def create_project(payload: ProjectCreateRequest, request: Request) -> dic
         created_by=principal.client_id,
     )
     session = getattr(request.state, "session", None)
-    if session is not None and principal.role != "admin":
+    if session is not None:
         access_service = request.app.state.services.get(
             "project_access_service", ProjectAccessService
         )

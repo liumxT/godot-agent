@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E5 完成）。
+> 更新于 2026-11-23（E6 M5 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -12,11 +12,11 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E6 Agent Runtime（进行中，M4 已完成）** |
+| 当前阶段 | **E6 Agent Runtime（进行中，M5 已完成）** |
 | 阶段进度 | 6 / 13 完成（E0–E5），E6 进行中 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 504 passed（unit + integration 462 / contract 42），ruff 全通过 |
+| 后端测试 | 511 passed（unit + integration 469 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000018` |
 
@@ -30,7 +30,7 @@
 | E3 | Godot Integration | ✅ 已完成 | 2026-11-20 验收，18 任务，见 [E3 验收报告](e3-acceptance-report.md) |
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
-| E6 | Agent Runtime | 🟡 进行中 | M1–M4（T01–T15）已完成 |
+| E6 | Agent Runtime | 🟡 进行中 | M1–M5（T01–T19）已完成 |
 | E7 | Multi-Agent & Game Development | ⬜ 未开始 | |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
@@ -310,7 +310,7 @@ ruff 全通过。
 | E6-M2 | T03 Instance Manager、T04 Lifecycle、T06 Task/Attempt Binding、T05 Scheduler | ✅ 已完成 |
 | E6-M3 | T07 Execution Loop、T08 Planning & Step、T09 Context Binding、T10 Model Binding、T11 Tool Binding | ✅ 已完成 |
 | E6-M4 | T12 Budget Manager、T13 Checkpoint & Event、T14 Pause/Resume/Cancel/Stop、T15 Recovery | ✅ 已完成 |
-| E6-M5 | T16 Observability、T17 API、T18 UI、T19 Generic Agent | ⬜ 未开始 |
+| E6-M5 | T16 Observability、T17 API、T18 UI、T19 Generic Agent | ✅ 已完成 |
 | E6-M6 | T20 Integration / E2E / Security / Recovery、E6 验收报告 | ⬜ 未开始 |
 
 交付（M1）：`modules/agent_runtime/{models,repository,service}.py`。领域模型覆盖
@@ -357,6 +357,18 @@ UNKNOWN），不回写 Task System。Recovery Coordinator 在启动时扫描非�
 缺失、事件序号越界、Execution 不一致或 Task 失效则标记 UNKNOWN；有效 Checkpoint 则暂停为
 PAUSED 等待显式 Resume，`READY` 交给 Scheduler，禁止自动重放副作用动作。新增 9 个集成测试，
 后端 504 passed，ruff 全通过。
+
+交付（M5）：`modules/agent_runtime/{observability,generic}.py`、`app/api/agents.py`、
+`app/schemas/agent_runtime.py`。可观测性提供聚合指标（实例/执行、队列与执行耗时、迭代、
+模型/工具调用、Token、成本、失败率、UNKNOWN、恢复成功率、审批等待）与一次 Execution 的
+完整追踪（Task → Attempt → Instance → Execution → Plan/Step → Model/Tool/Approval → Event），
+所有输出统一脱敏并截断超长字段。API 覆盖 Definition 创建/发布/版本、Instance 创建与
+start/pause/resume/stop、Execution/Plan/Step/Event 查询、metrics 与 trace；定义接口为全局
+资源（非 admin 需 `project_id` 授权），实例与执行按项目授权并校验 `client_id` 归属。
+权限新增 `agent.read` / `agent.manage`。管理页扩展 Agent 概览、实例、执行监控、预算与恢复
+区块。内置 `generic_agent` 幂等创建（Prompt、Definition、发布），默认 11 个只读优先工具、
+权限上限 R2、预算超限 `PAUSE`，仅非 test 环境启动时自动确保存在。新增 7 个测试
+（3 API + 1 Generic Agent + 3 脱敏单元），后端 511 passed，ruff 全通过。
 
 ## 11. 已知问题与待办
 

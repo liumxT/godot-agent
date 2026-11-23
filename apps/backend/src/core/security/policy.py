@@ -19,6 +19,7 @@ from core.security.principal import (
     ACTIONS,
     E4_PROJECT_ACTIONS,
     E5_PROJECT_ACTIONS,
+    E6_PROJECT_ACTIONS,
     ROLE_ADMIN,
     ROLE_EDITOR,
     ROLE_OWNER,
@@ -44,12 +45,15 @@ _PROJECT_ACTIONS = frozenset(
     }
     | E4_PROJECT_ACTIONS
     | E5_PROJECT_ACTIONS
+    | E6_PROJECT_ACTIONS
 )
 _PROJECT_READ_ROLES = frozenset({ROLE_OWNER, ROLE_EDITOR, ROLE_VIEWER})
 _PROJECT_MANAGE_ROLES = frozenset({ROLE_OWNER})
 _PROJECT_EDIT_ROLES = frozenset({ROLE_OWNER, ROLE_EDITOR})
-_E4_READ_ACTIONS = frozenset(
-    action for action in (E4_PROJECT_ACTIONS | E5_PROJECT_ACTIONS) if action.endswith(".read")
+_PROJECT_READ_ACTIONS = frozenset(
+    action
+    for action in (E4_PROJECT_ACTIONS | E5_PROJECT_ACTIONS | E6_PROJECT_ACTIONS)
+    if action.endswith(".read")
 )
 
 
@@ -117,7 +121,7 @@ def evaluate(
         if principal.role in _PROJECT_MANAGE_ROLES:
             return _allow("abac.model.manage")
         return _deny(REASON_ROLE_DENIED, "rbac.model.manage")
-    if action in _E4_READ_ACTIONS:
+    if action in _PROJECT_READ_ACTIONS:
         if principal.role in _PROJECT_READ_ROLES:
             return _allow("abac.e4.read")
         return _deny(REASON_ROLE_DENIED, "rbac.e4.read")

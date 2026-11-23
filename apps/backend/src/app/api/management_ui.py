@@ -1,6 +1,6 @@
-"""管理界面（E4-T23）。
+"""管理界面（E4-T23 / E6-T18）。
 
-以单页 HTML 形式提供项目、任务、Workflow 与审批的管理入口。
+以单页 HTML 形式提供项目、任务、Workflow、审批、工具、模型与 Agent 运行监控入口。
 页面本身不含任何凭证；用户在页面内输入 Access Token 或 Session Token，
 之后所有数据访问都通过 ``/api/v1`` 受保护接口完成。
 """
@@ -102,6 +102,16 @@ _PAGE = """<!DOCTYPE html>
     <div id="executions" class="empty">未选择项目</div>
     <h2>模型</h2>
     <div id="models" class="empty">未选择项目</div>
+    <h2>Agent 概览</h2>
+    <div id="agent-metrics" class="empty">未选择项目</div>
+    <h2>Agent 实例</h2>
+    <div id="agent-instances" class="empty">未选择项目</div>
+    <h2>Agent 执行监控</h2>
+    <div id="agent-executions" class="empty">选择实例后查看</div>
+    <h2>Agent 预算</h2>
+    <div id="agent-budget" class="empty">未选择项目</div>
+    <h2>恢复监控</h2>
+    <div id="agent-recovery" class="empty">未选择项目</div>
   </section>
 </main>
 <script>
@@ -174,7 +184,8 @@ _PAGE = """<!DOCTYPE html>
   async function selectProject(projectId) {
     state.projectId = projectId;
     await Promise.all([
-      loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels()
+      loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels(),
+      loadAgents()
     ]);
     await loadProjects();
   }
@@ -414,13 +425,149 @@ _PAGE = """<!DOCTYPE html>
     }
   }
 
+  function pct(value) {
+    return `${(Number(value || 0) * 100).toFixed(1)}%`;
+  }
+
+  async function loadAgents() {
+    if (!state.projectId) return;
+    try {
+      const query = `?project_id=${encodeURIComponent(state.projectId)}`;
+      const metrics = await api(`/agents/metrics${query}`);
+      $("agent-metrics").className = "";
+      $("agent-metrics").innerHTML = `<div class="muted">实例 ${esc(metrics.agent_instance_count)} · 运行中执行 ${esc(metrics.running_execution_count)} · 平均迭代 ${esc(Number(metrics.average_iterations).toFixed(1))} · 失败率 ${esc(pct(metrics.failure_rate))} · 恢复成功率 ${esc(pct(metrics.recovery_success_rate))} · UNKNOWN ${esc(metrics.unknown_count)}</div>`;
+      $("agent-budget").className = "";
+      $("agent-budget").innerHTML = `<div class="muted">Token ${esc(metrics.total_tokens)}（输入 ${esc(metrics.input_tokens)} / 输出 ${esc(metrics.output_tokens)}）· 成本 ${esc(metrics.cost_total)} · 模型调用 ${esc(metrics.model_call_count)} · 工具调用 ${esc(metrics.tool_call_count)} · 重试 ${esc(metrics.retry_count)} · 等待审批 ${esc(metrics.approval_waiting_count)}</div>`;
+
+      const data = await api(`/agents/instances${query}&limit=100`);
+      const items = data.items || [];
+      if (!items.length) {
+        $("agent-instances").className = "empty";
+        $("agent-instances").textContent = "暂无 Agent 实例";
+        $("agent-recovery").className = "empty";
+        $("agent-recovery").textContent = "暂无需要关注的实例";
+        return;
+      }
+      $("agent-instances").className = "";
+      $("agent-instances").innerHTML = `
+        <table>
+          <thead><tr><th>实例</th><th>状态</th><th>Task</th><th>操作</th></tr></thead>
+          <tbody>${items.map((item) => `
+            <tr>
+              <td>${esc(item.instance_id)}<br /><small class="muted">${esc(item.agent_definition_id)} v${esc(item.agent_version)}</small></td>
+              <td><span class="pill ${statusClass(item.status)}">${esc(item.status)}</span></td>
+              <td><small class="muted">${esc(item.task_id || "-")}</small></td>
+              <td><div class="actions">
+                <button data-agent-view="${esc(item.instance_id)}">执行</button>
+                ${agentButtons(item)}
+              </div></td>
+            </tr>`).join("")}</tbody>
+        </table>`;
+      $("agent-instances").querySelectorAll("button[data-agent-view]").forEach((button) => {
+        button.addEventListener("click", () => showAgentExecution(button.dataset.agentView));
+      });
+      $("agent-instances").querySelectorAll("button[data-agent-action]").forEach((button) => {
+        button.addEventListener("click", () => runAgentAction(button.dataset.agentAction, button.dataset.id));
+      });
+
+      const attention = items.filter((item) => ["UNKNOWN", "PAUSED", "FAILED", "WAITING_APPROVAL"].includes(item.status));
+      if (!attention.length) {
+        $("agent-recovery").className = "empty";
+        $("agent-recovery").textContent = "暂无需要关注的实例";
+      } else {
+        $("agent-recovery").className = "";
+        $("agent-recovery").innerHTML = `
+          <table>
+            <thead><tr><th>实例</th><th>状态</th><th>原因</th></tr></thead>
+            <tbody>${attention.map((item) => `
+              <tr><td>${esc(item.instance_id)}</td>
+              <td><span class="pill ${statusClass(item.status)}">${esc(item.status)}</span></td>
+              <td>${esc(item.termination_reason || (item.status === "PAUSED" ? "等待恢复" : "需要人工确认"))}</td></tr>`).join("")}</tbody>
+          </table>`;
+      }
+    } catch (error) {
+      showError(`读取 Agent 失败：${error.message}`);
+    }
+  }
+
+  function agentButtons(item) {
+    const buttons = [];
+    if (["CREATED", "READY"].includes(item.status)) {
+      buttons.push(`<button class="primary" data-agent-action="start" data-id="${esc(item.instance_id)}">启动</button>`);
+    }
+    if (["RUNNING", "WAITING_TOOL", "WAITING_APPROVAL", "WAITING_INPUT"].includes(item.status)) {
+      buttons.push(`<button data-agent-action="pause" data-id="${esc(item.instance_id)}">暂停</button>`);
+    }
+    if (item.status === "PAUSED") {
+      buttons.push(`<button class="primary" data-agent-action="resume" data-id="${esc(item.instance_id)}">恢复</button>`);
+    }
+    if (!["STOPPED", "COMPLETED", "FAILED"].includes(item.status)) {
+      buttons.push(`<button data-agent-action="stop" data-id="${esc(item.instance_id)}">停止</button>`);
+    }
+    return buttons.join("");
+  }
+
+  async function runAgentAction(action, instanceId) {
+    showError("");
+    try {
+      await api(`/agents/instances/${encodeURIComponent(instanceId)}/${action}`, {
+        method: "POST",
+        body: "{}",
+      });
+      await loadAgents();
+    } catch (error) {
+      showError(`Agent 操作失败：${error.message}`);
+    }
+  }
+
+  async function showAgentExecution(instanceId) {
+    showError("");
+    try {
+      const executions = (await api(`/agents/instances/${encodeURIComponent(instanceId)}/executions`)).items || [];
+      const container = $("agent-executions");
+      if (!executions.length) {
+        container.className = "empty";
+        container.textContent = "该实例暂无执行记录";
+        return;
+      }
+      const latest = executions[executions.length - 1];
+      const plan = await api(`/agents/executions/${encodeURIComponent(latest.execution_id)}/plan`).catch(() => null);
+      const trace = await api(`/agents/executions/${encodeURIComponent(latest.execution_id)}/trace`).catch(() => null);
+      const executionRows = executions.map((execution) => `
+        <tr>
+          <td>${esc(execution.execution_id)}<br /><small class="muted">#${esc(execution.execution_number)}</small></td>
+          <td><span class="pill ${statusClass(execution.status)}">${esc(execution.status)}</span></td>
+          <td>${esc((execution.budget_usage || {}).iterations || 0)} / ${esc((execution.budget_usage || {}).model_calls || 0)} / ${esc((execution.budget_usage || {}).tool_calls || 0)}</td>
+          <td>${esc(execution.termination_reason || "-")}</td>
+        </tr>`).join("");
+      const stepRows = plan ? (plan.steps || []).map((step) => `
+        <tr><td>#${esc(step.step_number)}</td><td>${esc(step.step_type)}</td><td>${esc(step.description)}</td>
+        <td><span class="pill ${statusClass(step.status)}">${esc(step.status)}</span></td></tr>`).join("") : "";
+      container.className = "";
+      container.innerHTML = `
+        <table>
+          <thead><tr><th>执行</th><th>状态</th><th>迭代 / 模型 / 工具</th><th>结束原因</th></tr></thead>
+          <tbody>${executionRows}</tbody>
+        </table>
+        <h2>计划步骤</h2>
+        <table>
+          <thead><tr><th>#</th><th>类型</th><th>描述</th><th>状态</th></tr></thead>
+          <tbody>${stepRows || '<tr><td colspan="4" class="empty">暂无计划</td></tr>'}</tbody>
+        </table>
+        <details><summary>追踪（脱敏）</summary><pre>${esc(JSON.stringify(trace, null, 2))}</pre></details>`;
+    } catch (error) {
+      showError(`读取执行监控失败：${error.message}`);
+    }
+  }
+
   async function refreshAll() {
     showError("");
     try {
       await loadProjects();
       if (state.projectId) {
         await Promise.all([
-          loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels()
+          loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels(),
+          loadAgents()
         ]);
       }
     } catch (error) {
