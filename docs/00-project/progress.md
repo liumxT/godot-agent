@@ -1,22 +1,23 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E7 M6 完成）。
+> 更新于 2026-11-23（E7 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
 > [E2 安全测试报告](e2-security-test-report.md)、[E2 验收报告](e2-acceptance-report.md)、
 > [E3 验收报告](e3-acceptance-report.md)、[E4 验收报告](e4-acceptance-report.md)、
-> [E5 验收报告](e5-acceptance-report.md) 与 [E6 验收报告](e6-acceptance-report.md)。
+> [E5 验收报告](e5-acceptance-report.md)、[E6 验收报告](e6-acceptance-report.md) 与
+> [E7 验收报告](e7-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E7 Multi-Agent & Game Development（进行中）** |
-| 阶段进度 | 7 / 13 完成（E0–E6），E7 进行中（M6 / 7） |
+| 当前阶段 | **E8 Asset Pipeline（待开始）** |
+| 阶段进度 | 8 / 13 完成（E0–E7） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 587 passed（unit + integration 545 / contract 42），ruff 全通过 |
+| 后端测试 | 591 passed（unit + integration 549 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000021` |
 
@@ -31,7 +32,7 @@
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
-| E7 | Multi-Agent & Game Development | 🚧 进行中 | M6 完成：团队预算、可观测性、API、管理界面与 Platformer Demo |
+| E7 | Multi-Agent & Game Development | ✅ 已完成 | 2026-11-23 验收，7 批次 / 22 任务，见 [E7 验收报告](e7-acceptance-report.md) |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
@@ -387,7 +388,7 @@ Tool System 工作。新增 5 个测试（4 验收集成 + 1 架构单元），�
 | E7-M4 | T10 Parallel Execution、T11 Resource/Conflict Coordination、T17 Conflict Resolution | ✅ 已完成 |
 | E7-M5 | T13 Specialized Definitions、T14 Workflows、T15 Result Integration、T16 Review | ✅ 已完成 |
 | E7-M6 | T18 Team Budget、T19 Observability、T20 API、T21 UI、T22 Platformer Demo | ✅ 已完成 |
-| E7-M7 | 综合测试与验收、E7 验收报告 | ⬜ 待开始 |
+| E7-M7 | 综合测试与验收、E7 验收报告 | ✅ 已完成 |
 
 交付（M1）：`modules/multi_agent/{models,repository,service,capabilities}.py`。领域模型覆盖
 Capability、Team、Team Member、Assignment、Assignment Dependency、Handoff、Collaboration、
@@ -476,6 +477,19 @@ Assignment 的结果返回 409。管理界面新增 Multi-Agent Team 列表、Te
 `agent_handoffs.rejection_reason`。新增 7 个测试（2 单元 Demo 计划 + 2 集成预算 + 3 集成
 可观测性/API/Demo 编排），后端 587 passed，ruff 全通过。
 
+交付（M7）：新增 `tests/integration/test_e7_e2e.py`（4 个端到端测试）并输出
+[E7 验收报告](e7-acceptance-report.md)。E2E 覆盖 E7.md §29.5 全部 12 步：创建 Task →
+Orchestrator 分解 → 创建 Team → 能力匹配专业 Agent → 创建 Assignment（无依赖 READY、
+有依赖 BLOCKED）→ 并行执行独立子任务 → 资源写冲突拒绝与冲突解决 → Shared Context
+版本化 → Handoff 由 Orchestrator 执行并创建目标 Assignment → Lead 集成（APPLYING →
+VERIFYING → COMPLETED）→ 提交 Verification → Task System 按合法路径
+`READY → QUEUED → RUNNING → REVIEW_PENDING` 接收，Task 最终状态未被 Agent 直接改写。
+恢复与幂等：同一 Attempt 重复编排被拒绝（`TEAM_ALREADY_EXISTS`）、重复 claim 被拒绝、
+RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断场景：源 Assignment
+取消后 Handoff 执行失败并落 `FAILED`，不产生目标 Assignment。安全：无项目访问的客户端
+访问 `/api/v1/agent-teams` 返回 403。后端 591 passed（unit + integration 549 / contract
+42），ruff 全通过，迁移 head `000021`。
+
 ## 12. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
@@ -490,6 +504,8 @@ Assignment 的结果返回 409。管理界面新增 Multi-Agent Team 列表、Te
 | 启动恢复将未完成 Attempt 置 `UNKNOWN`、Task 置 `BLOCKED` | E5 | 自动重试策略由 Agent 执行层实现 |
 | 归档阻塞统计最多扫描 200 条 Workflow/ChangeSet | E5 | 需要时改聚合计数查询 |
 | Runtime 凭证（`client_type=tool`）API 已支持，管理界面未提供签发入口 | E5 | 客户端管理界面补齐 |
+| 多 Agent 并发以单进程 asyncio 模拟，未做多进程/多后端压测 | E7 | 单后端 SQLite，写入由资源锁与事务串行化 |
+| Attempt 失效时运行中多 Agent 的联动回收未做专项测试 | E7 | 编排入口拒绝不可运行 Attempt；运行中隔离依赖 Agent Runtime |
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
