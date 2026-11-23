@@ -48,6 +48,8 @@ from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
 from modules.asset_pipeline.briefs import AssetBriefService
 from modules.asset_pipeline.generation import GenerationOrchestrator
+from modules.asset_pipeline.processing import ProcessingPipelineService
+from modules.asset_pipeline.quality import QualityControlService
 from modules.asset_pipeline.service import AssetService
 from modules.asset_pipeline.storage import AssetStorage
 from modules.asset_pipeline.versioning import AssetVersionService
@@ -784,6 +786,25 @@ def register_startup_steps(
                     "asset_version_service", AssetVersionService
                 ),
                 briefs=services.get("asset_brief_service", AssetBriefService),
+                events=bus,
+            ),
+        )
+        services.register(
+            "asset_processing_pipeline",
+            ProcessingPipelineService(
+                database,
+                storage=services.get("asset_storage", AssetStorage),
+                versions=services.get(
+                    "asset_version_service", AssetVersionService
+                ),
+                events=bus,
+            ),
+        )
+        services.register(
+            "asset_quality_control",
+            QualityControlService(
+                database,
+                storage=services.get("asset_storage", AssetStorage),
                 events=bus,
             ),
         )

@@ -23,6 +23,7 @@ from modules.asset_pipeline.models import (
     AssetProcessingStepModel,
     AssetProvenanceModel,
     AssetProviderJobModel,
+    AssetQualityFindingModel,
     AssetQualityReviewModel,
     AssetStorageObjectModel,
     AssetVariantModel,
@@ -423,6 +424,18 @@ class AssetQualityReviewRepository(BaseRepository[AssetQualityReviewModel]):
             select(AssetQualityReviewModel)
             .where(AssetQualityReviewModel.asset_version_id == asset_version_id)
             .order_by(AssetQualityReviewModel.created_at)
+        )
+        return list(rows)
+
+
+class AssetQualityFindingRepository(BaseRepository[AssetQualityFindingModel]):
+    model = AssetQualityFindingModel
+
+    async def list_for_review(self, review_id: str) -> list[AssetQualityFindingModel]:
+        rows = await self.session.scalars(
+            select(AssetQualityFindingModel)
+            .where(AssetQualityFindingModel.review_id == review_id)
+            .order_by(AssetQualityFindingModel.created_at, AssetQualityFindingModel.rule_id)
         )
         return list(rows)
 

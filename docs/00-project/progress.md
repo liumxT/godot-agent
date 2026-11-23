@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E8 进行中，M3 完成）。
+> 更新于 2026-11-23（E8 进行中，M4 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -13,11 +13,11 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E8 Asset Pipeline（进行中，M3 / 8）** |
-| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 3 / 8 |
+| 当前阶段 | **E8 Asset Pipeline（进行中，M4 / 8）** |
+| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 4 / 8 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 674 passed（unit + integration 632 / contract 42），ruff 全通过 |
+| 后端测试 | 692 passed（unit + integration 650 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000022` |
 
@@ -33,7 +33,7 @@
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
 | E7 | Multi-Agent & Game Development | ✅ 已完成 | 2026-11-23 验收，7 批次 / 22 任务，见 [E7 验收报告](e7-acceptance-report.md) |
-| E8 | Asset Pipeline | ⏳ 进行中 | M3 完成（T05 生成编排、T06–T08 适配器） |
+| E8 | Asset Pipeline | ⏳ 进行中 | M4 完成（T09 处理流水线、T10 质量检查与人工审核） |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
 | E11 | Platformer Demo | ⬜ 未开始 | 系统级集成验收 |
@@ -499,7 +499,7 @@ RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断�
 | E8-M1 | T01 资产领域与契约、T02 资产注册中心 | ✅ 已完成 |
 | E8-M2 | T03 版本管理、T04 Asset Brief 与规格 | ✅ 已完成 |
 | E8-M3 | T05 生成编排、T06/T07/T08 图像/音频/3D 适配器 | ✅ 已完成 |
-| E8-M4 | T09 处理流水线、T10 质量门控与人工审核 | ⬜ 未开始 |
+| E8-M4 | T09 处理流水线、T10 质量门控与人工审核 | ✅ 已完成 |
 | E8-M5 | T11 Godot 导入、T12 来源追踪、T13 License | ⬜ 未开始 |
 | E8-M6 | T14 依赖图、T15 交付与 ChangeSet、T16 恢复 | ⬜ 未开始 |
 | E8-M7 | T17 资产界面、T18 Agent 集成、T19 API 与事件 | ⬜ 未开始 |
@@ -535,6 +535,23 @@ Adapter 契约、能力声明、`UNKNOWN` 不可用规则、Adapter 注册表）
 `UNKNOWN` 不重提交、失败状态持久化）；启动注册 `asset_generation_orchestrator`；
 新增 21 个单元/集成测试。后端 674 passed（unit + integration 632 / contract 42），
 ruff 全通过。
+
+M4 交付：新增 `modules/asset_pipeline/processing_types.py`（处理产物/载荷、资源限制、
+Processor 契约与注册表、DAG 拓扑排序与环检测、单输出校验、步骤执行记录）与
+`processors/{image,audio,model3d}.py`（Pillow 图像解码/缩放/裁剪/留白/去背景/Alpha
+校验/格式与颜色转换/Sprite Sheet 切分/图集打包/像素放大/压缩/元数据；PCM WAV
+重采样/声道转换/格式与位宽转换/响度归一化/峰值限制/静音裁剪/淡入淡出/循环点检测/
+位深压缩；GLB/glTF/OBJ 几何与材质检查，未实现能力不注册）；新增
+`modules/asset_pipeline/processing.py`（图与处理器校验、幂等键与请求 Hash、
+`QUEUED→RUNNING→SUCCEEDED/FAILED`、逐节点步骤记录、输出写入 `processed` 区域、
+创建 `PROJECT_DERIVED` 不可变版本并登记存储对象、结构化失败持久化）与
+`quality.py`（图像解码/格式/尺寸/文件大小/颜色模式/Alpha/透明边缘/帧数/Sprite 网格/
+感知 Hash，音频解码/采样率/声道/时长/峰值/削波/静音/循环接缝，3D 解析/空几何/面数/
+UV/材质/贴图/骨骼，重复内容检测；机器检查与人工审核独立记录、绑定版本、
+`HUMAN_REVIEW_REQUIRED→APPROVED/REJECTED` 且禁止覆盖）；新增
+`AssetQualityFindingRepository`；启动注册 `asset_processing_pipeline` 与
+`asset_quality_control`；新增 18 个单元/集成测试。后端 692 passed
+（unit + integration 650 / contract 42），ruff 全通过。
 
 ## 13. 已知问题与待办
 
