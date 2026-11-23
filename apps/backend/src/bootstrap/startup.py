@@ -46,8 +46,10 @@ from modules.agent_runtime.service import DefinitionRegistryService
 from modules.agent_runtime.tool_binding import AgentToolBindingService
 from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
+from modules.asset_pipeline.briefs import AssetBriefService
 from modules.asset_pipeline.service import AssetService
 from modules.asset_pipeline.storage import AssetStorage
+from modules.asset_pipeline.versioning import AssetVersionService
 from modules.audit.service import AuditService
 from modules.bridge_event.service import BridgeEventService
 from modules.bridge_metrics import BridgeMetrics
@@ -767,6 +769,10 @@ def register_startup_steps(
             "asset_storage", AssetStorage(Path(settings.data_dir) / "assets")
         )
         services.register("asset_service", AssetService(database, events=bus))
+        services.register(
+            "asset_version_service", AssetVersionService(database, events=bus)
+        )
+        services.register("asset_brief_service", AssetBriefService(database))
         await dispatcher.start()
 
     async def _stop_events() -> None:
