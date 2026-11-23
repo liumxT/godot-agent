@@ -22,6 +22,8 @@ from typing import Any
 from uuid import uuid4
 
 from core.errors import (
+    AssetGenerationInvalid,
+    AssetGenerationUnknown,
     ModelCallFailed,
     ModelRequestUnknown,
     ModelUnavailable,
@@ -33,6 +35,19 @@ from core.security.tokens import utcnow
 from infrastructure.database.service import DatabaseService
 from infrastructure.database.transaction import transaction
 from infrastructure.secrets.store import SecretStore
+from modules.model_gateway.asset_adapters import default_asset_adapter_registry
+from modules.model_gateway.asset_generation import (
+    ASSET_JOB_UNKNOWN,
+    REQUIRED_CAPABILITIES,
+    AssetAdapterRegistry,
+    AssetGenerationRequest,
+    AssetGenerationResult,
+    ResolvedAssetProvider,
+    assert_unverified_capability,
+    is_unresolved_failure,
+    unknown_from_failure,
+    validate_asset_kind,
+)
 from modules.model_gateway.cost import CostBreakdown, calculate_cost
 from modules.model_gateway.models import (
     MODEL_ACTIVE,
@@ -209,6 +224,7 @@ class ModelGatewayService:
         registry: ModelRegistryService,
         *,
         adapters: AdapterRegistry | None = None,
+        asset_adapters: AssetAdapterRegistry | None = None,
         max_request_bytes: int = 2 * 1024 * 1024,
         max_retries: int = 2,
         retry_backoff_seconds: float = 0.5,
@@ -220,6 +236,7 @@ class ModelGatewayService:
         self._secret_store = secret_store
         self._registry = registry
         self._adapters = adapters or default_adapter_registry()
+        self._asset_adapters = asset_adapters or default_asset_adapter_registry()
         self._max_request_bytes = max_request_bytes
         self._max_retries = max_retries
         self._retry_backoff_seconds = retry_backoff_seconds
@@ -379,6 +396,221 @@ class ModelGatewayService:
                 await self._persist_cancel(
                     prepared, request_id, accumulator, started=started
                 )
+
+    async def resolve_asset_provider(
+        self,
+        *,
+        kind: str,
+        provider_id: str | None = None,
+        model_id: str | None = None,
+    ) -> ResolvedAssetProvider:
+        """解析资产生成 Provider；不允许静默切换到其他模型。"""
+
+        validate_asset_kind(kind)
+        required_capability = REQUIRED_CAPABILITIES[kind]
+        model = await self._select_asset_model(
+            kind, provider_id=provider_id, model_id=model_id
+        )
+        try:
+            provider = await self._registry.get_provider(model.provider_id)
+        except NotFoundError as exc:
+            raise ModelUnavailable(
+                "资产生成 Provider 未登记", details={"provider_id": model.provider_id}
+            ) from exc
+        if provider.status != PROVIDER_ENABLED:
+            raise ModelUnavailable(
+                "资产生成 Provider 已禁用", details={"provider_id": provider.provider_id}
+            )
+        if not self._asset_adapters.supports(kind, provider.provider_type):
+            raise AssetGenerationInvalid(
+                "Provider 未注册该类资产生成适配器",
+                details={
+                    "kind": kind,
+                    "provider_type": provider.provider_type,
+                    "registered": list(self._asset_adapters.types(kind)),
+                },
+            )
+        async with self._database.session() as session:
+            config = await ProviderConfigurationRepository(session).get_latest(
+                provider.provider_id
+            )
+        if config is None or not config.enabled:
+            raise ProviderNotConfigured(
+                "资产生成 Provider 尚未启用配置",
+                details={"provider_id": provider.provider_id},
+            )
+        api_key = (
+            self._secret_store.get(config.credential_ref)
+            if config.credential_ref
+            else None
+        )
+        adapter = self._asset_adapters.create(
+            kind,
+            provider.provider_type,
+            endpoint=config.endpoint,
+            api_version=config.api_version,
+            api_key=api_key,
+            timeout_seconds=config.timeout_seconds,
+            transport=self._transport,
+        )
+        adapter.validate_configuration()
+        assert_unverified_capability(
+            model.capability_status(required_capability), kind=kind
+        )
+        assert_unverified_capability(
+            adapter.get_capabilities().capability_status, kind=kind
+        )
+        timeout_seconds = float(
+            config.timeout_seconds or self._default_timeout_seconds
+        )
+        return ResolvedAssetProvider(
+            adapter=adapter,
+            kind=kind,
+            provider_id=provider.provider_id,
+            model_id=model.model_id,
+            model_key=model.model_key,
+            required_capability=required_capability,
+            timeout_seconds=timeout_seconds,
+        )
+
+    async def submit_asset_generation(
+        self,
+        resolved: ResolvedAssetProvider,
+        request: AssetGenerationRequest,
+    ) -> AssetGenerationResult:
+        timeout_seconds = float(
+            request.timeout_seconds or resolved.timeout_seconds
+        )
+        try:
+            async with asyncio.timeout(timeout_seconds):
+                result = await resolved.adapter.submit_generation(request)
+        except TimeoutError as exc:
+            raise self._unknown_asset_failure(resolved, _timeout_failure()) from exc
+        except ProviderCallFailure as failure:
+            raise self._asset_call_failure(resolved, failure) from failure
+        if result.status == ASSET_JOB_UNKNOWN:
+            raise AssetGenerationUnknown(
+                "资产生成结果未知，禁止直接重试",
+                details={
+                    "kind": resolved.kind,
+                    "provider_id": resolved.provider_id,
+                    "model_id": resolved.model_id,
+                    "error_code": result.error_code,
+                },
+            )
+        return result
+
+    async def query_asset_generation(
+        self,
+        resolved: ResolvedAssetProvider,
+        request: AssetGenerationRequest,
+        provider_job_id: str,
+    ) -> AssetGenerationResult:
+        if not provider_job_id.strip():
+            raise AssetGenerationInvalid("缺少 Provider Job ID")
+        capabilities = resolved.adapter.get_capabilities()
+        if not capabilities.supports_async:
+            raise AssetGenerationInvalid(
+                "该资产生成适配器不支持异步状态查询",
+                details={"kind": resolved.kind},
+            )
+        try:
+            return await resolved.adapter.query_generation(request, provider_job_id)
+        except ProviderCallFailure as failure:
+            raise self._asset_call_failure(resolved, failure) from failure
+
+    async def cancel_asset_generation(
+        self,
+        resolved: ResolvedAssetProvider,
+        request: AssetGenerationRequest,
+        provider_job_id: str,
+    ) -> AssetGenerationResult:
+        capabilities = resolved.adapter.get_capabilities()
+        if not capabilities.supports_cancel:
+            raise AssetGenerationInvalid(
+                "该资产生成适配器不支持取消", details={"kind": resolved.kind}
+            )
+        try:
+            return await resolved.adapter.cancel_generation(request, provider_job_id)
+        except ProviderCallFailure as failure:
+            raise self._asset_call_failure(resolved, failure) from failure
+
+    async def _select_asset_model(
+        self,
+        kind: str,
+        *,
+        provider_id: str | None,
+        model_id: str | None,
+    ) -> ModelView:
+        required = REQUIRED_CAPABILITIES[kind]
+        if model_id:
+            try:
+                model = await self._registry.get_model(model_id)
+            except NotFoundError as exc:
+                raise ModelUnavailable(
+                    "指定的资产生成模型未登记", details={"model_id": model_id}
+                ) from exc
+            if provider_id and model.provider_id != provider_id:
+                raise AssetGenerationInvalid(
+                    "模型不属于指定 Provider",
+                    details={
+                        "model_id": model_id,
+                        "provider_id": provider_id,
+                        "model_provider_id": model.provider_id,
+                    },
+                )
+            if model.status != MODEL_ACTIVE:
+                raise ModelUnavailable(
+                    "指定的资产生成模型已禁用", details={"model_id": model_id}
+                )
+            return model
+        candidates = [
+            item
+            for item in await self._registry.list_models(provider_id=provider_id)
+            if item.status == MODEL_ACTIVE
+            and item.capability_status(required) == "SUPPORTED"
+        ]
+        if len(candidates) == 1:
+            return candidates[0]
+        if not candidates:
+            raise ModelUnavailable(
+                "没有满足资产生成能力的可用模型",
+                details={
+                    "kind": kind,
+                    "capability": required,
+                    "provider_id": provider_id,
+                },
+            )
+        raise AssetGenerationInvalid(
+            "存在多个候选资产生成模型，必须显式指定 Provider / 模型",
+            details={
+                "kind": kind,
+                "provider_id": provider_id,
+                "candidates": [item.model_id for item in candidates],
+            },
+        )
+
+    def _asset_call_failure(
+        self, resolved: ResolvedAssetProvider, failure: ProviderCallFailure
+    ) -> Exception:
+        if is_unresolved_failure(failure):
+            return unknown_from_failure(failure, kind=resolved.kind)
+        return ModelCallFailed(
+            "资产生成 Provider 调用失败",
+            details={
+                "kind": resolved.kind,
+                "provider_id": resolved.provider_id,
+                "model_id": resolved.model_id,
+                "category": failure.info.category.value,
+                "message": failure.info.message,
+                "retryable": failure.info.retryable,
+            },
+        )
+
+    def _unknown_asset_failure(
+        self, resolved: ResolvedAssetProvider, failure: ProviderCallFailure
+    ) -> AssetGenerationUnknown:
+        return unknown_from_failure(failure, kind=resolved.kind)
 
     async def list_requests(self, project_id: str, *, limit: int = 50, offset: int = 0):
         async with self._database.session() as session:

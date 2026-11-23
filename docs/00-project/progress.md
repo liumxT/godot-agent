@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E8 进行中，M2 完成）。
+> 更新于 2026-11-23（E8 进行中，M3 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -13,11 +13,11 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E8 Asset Pipeline（进行中，M2 / 8）** |
-| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 2 / 8 |
+| 当前阶段 | **E8 Asset Pipeline（进行中，M3 / 8）** |
+| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 3 / 8 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 653 passed（unit + integration 611 / contract 42），ruff 全通过 |
+| 后端测试 | 674 passed（unit + integration 632 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000022` |
 
@@ -33,7 +33,7 @@
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
 | E7 | Multi-Agent & Game Development | ✅ 已完成 | 2026-11-23 验收，7 批次 / 22 任务，见 [E7 验收报告](e7-acceptance-report.md) |
-| E8 | Asset Pipeline | ⏳ 进行中 | M2 完成（T03 版本与变体、T04 Brief 与规格） |
+| E8 | Asset Pipeline | ⏳ 进行中 | M3 完成（T05 生成编排、T06–T08 适配器） |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
 | E11 | Platformer Demo | ⬜ 未开始 | 系统级集成验收 |
@@ -498,7 +498,7 @@ RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断�
 | --- | --- | --- |
 | E8-M1 | T01 资产领域与契约、T02 资产注册中心 | ✅ 已完成 |
 | E8-M2 | T03 版本管理、T04 Asset Brief 与规格 | ✅ 已完成 |
-| E8-M3 | T05 生成编排、T06/T07/T08 图像/音频/3D 适配器 | ⬜ 未开始 |
+| E8-M3 | T05 生成编排、T06/T07/T08 图像/音频/3D 适配器 | ✅ 已完成 |
 | E8-M4 | T09 处理流水线、T10 质量门控与人工审核 | ⬜ 未开始 |
 | E8-M5 | T11 Godot 导入、T12 来源追踪、T13 License | ⬜ 未开始 |
 | E8-M6 | T14 依赖图、T15 交付与 ChangeSet、T16 恢复 | ⬜ 未开始 |
@@ -522,6 +522,19 @@ M2 交付：新增 `modules/asset_pipeline/versioning.py`（不可变版本创�
 校验、Godot 资源类型白名单、Brief 状态机与版本递增、生成规格导出）；
 启动注册 `asset_version_service` 与 `asset_brief_service`；新增 27 个单元/集成
 测试。后端 653 passed（unit + integration 611 / contract 42），ruff 全通过。
+
+M3 交付：新增 `modules/model_gateway/asset_generation.py`（图像/音频/3D 统一
+Adapter 契约、能力声明、`UNKNOWN` 不可用规则、Adapter 注册表）与
+`asset_adapters/{image,audio,model3d}.py`（OpenAI Images、OpenAI Speech、
+本地 3D 服务；图像尺寸/格式/透明度校验，WAV/OGG 技术指标检查，GLB/glTF/OBJ
+几何与材质检查）；Model Gateway 增加 `resolve_asset_provider` /
+`submit_asset_generation` / `query_asset_generation` / `cancel_asset_generation`，
+显式 Provider/模型选择，禁止静默切换；新增 `IMAGE_OUTPUT` 与 `MODEL_3D_OUTPUT`
+能力；新增 `modules/asset_pipeline/generation.py`（Brief 与规格校验、幂等键与
+请求 Hash、预算预留、Provider Job、结果暂存、不可变版本与 Provenance 写入、
+`UNKNOWN` 不重提交、失败状态持久化）；启动注册 `asset_generation_orchestrator`；
+新增 21 个单元/集成测试。后端 674 passed（unit + integration 632 / contract 42），
+ruff 全通过。
 
 ## 13. 已知问题与待办
 

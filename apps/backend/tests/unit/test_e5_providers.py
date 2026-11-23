@@ -70,6 +70,8 @@ def test_capabilities_default_to_unknown() -> None:
         "IMAGE_INPUT",
         "AUDIO_INPUT",
         "AUDIO_OUTPUT",
+        "IMAGE_OUTPUT",
+        "MODEL_3D_OUTPUT",
         "VIDEO_INPUT",
         "TOOL_CALLING",
         "STRUCTURED_OUTPUT",

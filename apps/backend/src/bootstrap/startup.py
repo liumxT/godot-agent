@@ -47,6 +47,7 @@ from modules.agent_runtime.tool_binding import AgentToolBindingService
 from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
 from modules.asset_pipeline.briefs import AssetBriefService
+from modules.asset_pipeline.generation import GenerationOrchestrator
 from modules.asset_pipeline.service import AssetService
 from modules.asset_pipeline.storage import AssetStorage
 from modules.asset_pipeline.versioning import AssetVersionService
@@ -773,6 +774,19 @@ def register_startup_steps(
             "asset_version_service", AssetVersionService(database, events=bus)
         )
         services.register("asset_brief_service", AssetBriefService(database))
+        services.register(
+            "asset_generation_orchestrator",
+            GenerationOrchestrator(
+                database,
+                gateway=services.get("model_gateway_service", ModelGatewayService),
+                storage=services.get("asset_storage", AssetStorage),
+                versions=services.get(
+                    "asset_version_service", AssetVersionService
+                ),
+                briefs=services.get("asset_brief_service", AssetBriefService),
+                events=bus,
+            ),
+        )
         await dispatcher.start()
 
     async def _stop_events() -> None:
