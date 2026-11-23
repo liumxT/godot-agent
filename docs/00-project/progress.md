@@ -12,13 +12,13 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E6 Agent Runtime（进行中，M3 已完成）** |
+| 当前阶段 | **E6 Agent Runtime（进行中，M4 已完成）** |
 | 阶段进度 | 6 / 13 完成（E0–E5），E6 进行中 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 495 passed（unit + integration 453 / contract 42），ruff 全通过 |
+| 后端测试 | 504 passed（unit + integration 462 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000017` |
+| 数据库迁移 | head 为 `000018` |
 
 ## 2. 阶段总览
 
@@ -30,7 +30,7 @@
 | E3 | Godot Integration | ✅ 已完成 | 2026-11-20 验收，18 任务，见 [E3 验收报告](e3-acceptance-report.md) |
 | E4 | Project & Workflow Systems | ✅ 已完成 | 2026-11-20 验收，24 任务，见 [E4 验收报告](e4-acceptance-report.md) |
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
-| E6 | Agent Runtime | 🟡 进行中 | M1–M3（T01–T11）已完成 |
+| E6 | Agent Runtime | 🟡 进行中 | M1–M4（T01–T15）已完成 |
 | E7 | Multi-Agent & Game Development | ⬜ 未开始 | |
 | E8 | Asset Pipeline | ⬜ 未开始 | |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
@@ -309,7 +309,7 @@ ruff 全通过。
 | E6-M1 | T01 Agent Domain & Contract、T02 Definition Registry | ✅ 已完成 |
 | E6-M2 | T03 Instance Manager、T04 Lifecycle、T06 Task/Attempt Binding、T05 Scheduler | ✅ 已完成 |
 | E6-M3 | T07 Execution Loop、T08 Planning & Step、T09 Context Binding、T10 Model Binding、T11 Tool Binding | ✅ 已完成 |
-| E6-M4 | T12 Budget Manager、T13 Checkpoint & Event、T14 Pause/Resume/Cancel/Stop、T15 Recovery | ⬜ 未开始 |
+| E6-M4 | T12 Budget Manager、T13 Checkpoint & Event、T14 Pause/Resume/Cancel/Stop、T15 Recovery | ✅ 已完成 |
 | E6-M5 | T16 Observability、T17 API、T18 UI、T19 Generic Agent | ⬜ 未开始 |
 | E6-M6 | T20 Integration / E2E / Security / Recovery、E6 验收报告 | ⬜ 未开始 |
 
@@ -343,6 +343,20 @@ Prompt 版本与 Context Profile，预算超出失败关闭。模型选择经 Mo
 模型 / 工具 / 审批 / 预算事件，模型或工具 `UNKNOWN` 进入 `UNKNOWN` 且不自动重试。
 迁移 `000017_e6_agent_client_binding` 为快照与实例补充 `client_id`。新增 4 个集成测试，
 后端 495 passed，ruff 全通过。
+
+交付（M4）：`modules/agent_runtime/{budget,checkpoint,control,recovery}.py`。
+预算用量持久化在 Execution（迁移 `000018_e6_agent_budget_usage`），调用前 reserve、
+完成后 settle，重启不重置；超限按 Budget Profile 的 `FAIL` / `PAUSE` / `WAITING_INPUT` /
+`STOP` 处理，禁止自动放宽。Checkpoint 与事件同事务原子写入，记录 Instance/Execution
+状态、Plan/Step 进度、预算快照、pending action 与最后确认事件序号，并回填
+`last_checkpoint_id`；执行循环在每轮结束、审批等待、暂停、预算超限与终止时写 Checkpoint。
+Pause 先写 Checkpoint 再进入 PAUSED 并保留待审批动作；Resume 校验 Task/Attempt、Session、
+Project Access、Model、Tool、Context、Budget 与 Approval，任一失败保持 PAUSED 并抛
+`AGENT_RECOVERY_REQUIRED`。Cancel/Stop 放弃 Plan（未执行 Step 置 SKIPPED、可能已执行置
+UNKNOWN），不回写 Task System。Recovery Coordinator 在启动时扫描非终止实例：Checkpoint
+缺失、事件序号越界、Execution 不一致或 Task 失效则标记 UNKNOWN；有效 Checkpoint 则暂停为
+PAUSED 等待显式 Resume，`READY` 交给 Scheduler，禁止自动重放副作用动作。新增 9 个集成测试，
+后端 504 passed，ruff 全通过。
 
 ## 11. 已知问题与待办
 

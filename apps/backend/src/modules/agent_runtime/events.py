@@ -122,6 +122,12 @@ class AgentEventService:
             await session.flush()
             return view
 
+    async def last_sequence(self, instance_id: str) -> int:
+        """返回该 Instance 已持久化的最大事件序号（无事件时为 0）。"""
+
+        async with self._database.session() as session:
+            return await AgentEventRepository(session).next_sequence(instance_id) - 1
+
     async def list_after(
         self, instance_id: str, *, after_sequence: int = 0, limit: int = 200
     ) -> list[AgentEventView]:

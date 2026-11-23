@@ -27,7 +27,10 @@ from infrastructure.secrets.store import KeyringSecretStore, MemorySecretStore
 from infrastructure.security.bootstrap import BootstrapTokenStore
 from infrastructure.security.rate_limit import ConcurrencyLimiter, SlidingWindowRateLimiter
 from modules.access.service import ProjectAccessService
+from modules.agent_runtime.budget import BudgetManager
+from modules.agent_runtime.checkpoint import CheckpointService as AgentCheckpointService
 from modules.agent_runtime.context_binding import AgentContextBindingService
+from modules.agent_runtime.control import AgentControlService
 from modules.agent_runtime.events import AgentEventService
 from modules.agent_runtime.execution import AgentExecutionService
 from modules.agent_runtime.instance import AgentInstanceService
@@ -35,6 +38,7 @@ from modules.agent_runtime.lifecycle import AgentLifecycleService
 from modules.agent_runtime.loop import AgentExecutionLoop
 from modules.agent_runtime.model_binding import AgentModelBindingService
 from modules.agent_runtime.planning import PlanningService
+from modules.agent_runtime.recovery import RecoveryCoordinator
 from modules.agent_runtime.scheduler import AgentScheduler
 from modules.agent_runtime.service import DefinitionRegistryService
 from modules.agent_runtime.tool_binding import AgentToolBindingService
@@ -485,6 +489,11 @@ def register_startup_steps(
             "agent_planning_service",
             PlanningService(database, events=agent_event_service),
         )
+        services.register("agent_budget_manager", BudgetManager(database))
+        services.register(
+            "agent_checkpoint_service",
+            AgentCheckpointService(database, events=agent_event_service),
+        )
         services.register(
             "agent_context_binding_service",
             AgentContextBindingService(
@@ -571,6 +580,52 @@ def register_startup_steps(
                 ),
                 tools=services.get(
                     "agent_tool_binding_service", AgentToolBindingService
+                ),
+                budget=services.get("agent_budget_manager", BudgetManager),
+                checkpoints=services.get(
+                    "agent_checkpoint_service", AgentCheckpointService
+                ),
+            ),
+        )
+        services.register(
+            "agent_control_service",
+            AgentControlService(
+                instances=services.get("agent_instance_service", AgentInstanceService),
+                lifecycle=services.get("agent_lifecycle_service", AgentLifecycleService),
+                executions=services.get(
+                    "agent_execution_service", AgentExecutionService
+                ),
+                events=services.get("agent_event_service", AgentEventService),
+                checkpoints=services.get(
+                    "agent_checkpoint_service", AgentCheckpointService
+                ),
+                planning=services.get("agent_planning_service", PlanningService),
+                models=services.get(
+                    "agent_model_binding_service", AgentModelBindingService
+                ),
+                tools=services.get(
+                    "agent_tool_binding_service", AgentToolBindingService
+                ),
+                contexts=services.get(
+                    "agent_context_binding_service", AgentContextBindingService
+                ),
+                budget=services.get("agent_budget_manager", BudgetManager),
+                access=services.get("project_access_service", ProjectAccessService),
+                approvals=services.try_get("tool_approval_gate"),
+            ),
+        )
+        services.register(
+            "agent_recovery_coordinator",
+            RecoveryCoordinator(
+                database,
+                instances=services.get("agent_instance_service", AgentInstanceService),
+                lifecycle=services.get("agent_lifecycle_service", AgentLifecycleService),
+                executions=services.get(
+                    "agent_execution_service", AgentExecutionService
+                ),
+                events=services.get("agent_event_service", AgentEventService),
+                checkpoints=services.get(
+                    "agent_checkpoint_service", AgentCheckpointService
                 ),
             ),
         )

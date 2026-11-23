@@ -10,6 +10,8 @@ from typing import Any
 from bootstrap.application import create_app
 from config.settings import load_settings
 from modules.access.service import ProjectAccessService
+from modules.agent_runtime.budget import BudgetManager
+from modules.agent_runtime.checkpoint import CheckpointService
 from modules.agent_runtime.context_binding import AgentContextBindingService
 from modules.agent_runtime.events import AgentEventService
 from modules.agent_runtime.execution import AgentExecutionService
@@ -190,6 +192,8 @@ def _loop(app, gateway) -> AgentExecutionLoop:
         tools=services.get(
             "agent_tool_binding_service", AgentToolBindingService
         ),
+        budget=services.get("agent_budget_manager", BudgetManager),
+        checkpoints=services.get("agent_checkpoint_service", CheckpointService),
     )
 
 

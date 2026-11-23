@@ -8,17 +8,26 @@
 - 只通过 Model Gateway 与 Tool System 工作，不直接操作项目文件或厂商 SDK；
 - 模型返回 UNKNOWN 时进入 UNKNOWN，不自动重试；
 - 需要审批（R3+）或用户输入时停在 WAITING_*，不继续执行；
-- 预算由定义快照限制，超出预算失败关闭（完整 Budget Manager 在 M4）。
+- 预算由定义快照限制：调用前预留、完成后结算，超限按 Budget Profile 处理；
+- 每轮结束写 Checkpoint，暂停/审批等待/终止时也写 Checkpoint，便于恢复。
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 
-from core.errors import AgentStateInvalid, AppError, ModelCallFailed, ModelRequestUnknown
+from core.errors import (
+    AgentBudgetExceeded,
+    AgentStateInvalid,
+    AppError,
+    ModelCallFailed,
+    ModelRequestUnknown,
+)
 from core.security.tokens import utcnow
+from modules.agent_runtime.budget import BudgetManager, BudgetTracker
+from modules.agent_runtime.checkpoint import CheckpointService
 from modules.agent_runtime.context_binding import AgentContextBindingService
 from modules.agent_runtime.events import AgentEventService
 from modules.agent_runtime.execution import AgentExecutionService, ExecutionView
@@ -35,15 +44,23 @@ from modules.agent_runtime.models import (
     ACTION_REQUEST_APPROVAL,
     ACTION_REQUEST_USER_INPUT,
     ACTION_UPDATE_PLAN,
+    BUDGET_EXCEED_PAUSE,
+    BUDGET_EXCEED_STOP,
+    BUDGET_EXCEED_WAITING_INPUT,
     EVENT_APPROVAL_REQUESTED,
     EVENT_BUDGET_EXCEEDED,
     EVENT_MODEL_REQUEST_COMPLETED,
     EVENT_MODEL_REQUEST_STARTED,
     EVENT_TOOL_REQUEST_COMPLETED,
     EVENT_TOOL_REQUEST_STARTED,
+    EXECUTION_PAUSED,
+    EXECUTION_STOPPED,
     INSTANCE_CREATED,
+    INSTANCE_PAUSED,
+    INSTANCE_PAUSING,
     INSTANCE_READY,
     INSTANCE_RUNNING,
+    INSTANCE_STOPPING,
     INSTANCE_TERMINAL_STATUSES,
     INSTANCE_WAITING_APPROVAL,
     INSTANCE_WAITING_INPUT,
@@ -62,9 +79,18 @@ __all__ = ["AgentExecutionLoop", "LoopResult"]
 
 _LOOP_COMPLETED = "COMPLETED"
 _LOOP_FAILED = "FAILED"
+_LOOP_PAUSED = "PAUSED"
+_LOOP_STOPPED = "STOPPED"
 _LOOP_WAITING_APPROVAL = "WAITING_APPROVAL"
 _LOOP_WAITING_INPUT = "WAITING_INPUT"
 _LOOP_UNKNOWN = "UNKNOWN"
+
+_DEFAULT_LIMITS = {
+    "max_iterations": 30,
+    "max_model_calls": 40,
+    "max_tool_calls": 60,
+}
+_INTERRUPTED_STATUSES = frozenset({INSTANCE_PAUSING, INSTANCE_PAUSED, INSTANCE_STOPPING})
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,16 +100,6 @@ class LoopResult:
     status: str
     iterations: int
     reason: str | None = None
-
-
-def _limit(budget: dict, key: str, default: int) -> int:
-    value = budget.get(key)
-    if value is None:
-        return default
-    try:
-        return max(0, int(value))
-    except (TypeError, ValueError):
-        return default
 
 
 class AgentExecutionLoop:
@@ -98,6 +114,8 @@ class AgentExecutionLoop:
         context: AgentContextBindingService,
         models: AgentModelBindingService,
         tools: AgentToolBindingService,
+        budget: BudgetManager,
+        checkpoints: CheckpointService,
         parser: AgentResponseParser | None = None,
         clock: Callable[[], datetime] = utcnow,
     ) -> None:
@@ -109,11 +127,17 @@ class AgentExecutionLoop:
         self._context = context
         self._models = models
         self._tools = tools
+        self._budget = budget
+        self._checkpoints = checkpoints
         self._parser = parser or AgentResponseParser()
         self._clock = clock
 
     async def run(
-        self, instance_id: str, *, max_iterations: int | None = None
+        self,
+        instance_id: str,
+        *,
+        max_iterations: int | None = None,
+        approval_id: str | None = None,
     ) -> LoopResult:
         instance = await self._instances.get(instance_id)
         if instance.status in INSTANCE_TERMINAL_STATUSES:
@@ -146,29 +170,41 @@ class AgentExecutionLoop:
         except AppError as exc:
             return await self._fail(instance, execution, exc.code, 0)
 
-        budget = snapshot.budget
-        iteration_limit = (
-            max_iterations
-            if max_iterations is not None
-            else _limit(budget, "max_iterations", 30)
-        )
-        model_call_limit = _limit(budget, "max_model_calls", 40)
-        tool_call_limit = _limit(budget, "max_tool_calls", 60)
+        limits = {**_DEFAULT_LIMITS, **dict(snapshot.budget)}
+        if max_iterations is not None:
+            limits["max_iterations"] = max_iterations
+        tracker = await self._budget.load(execution.execution_id, limits)
+        started_at = execution.started_at or self._clock()
 
         iterations = 0
-        model_calls = 0
-        tool_calls = 0
+        pending_approval = approval_id
         while True:
+            current = await self._instances.get(instance_id)
+            if current.status in _INTERRUPTED_STATUSES:
+                return LoopResult(
+                    instance_id,
+                    execution.execution_id,
+                    current.status,
+                    iterations,
+                    "INSTANCE_INTERRUPTED",
+                )
+            try:
+                iteration_slot = tracker.reserve("iterations")
+                model_slot = tracker.reserve("model_calls")
+            except AgentBudgetExceeded as exc:
+                return await self._budget_exceeded(
+                    instance, execution, tracker, exc.details, iterations
+                )
+            tracker.settle(iteration_slot)
+            tracker.settle(model_slot)
             iterations += 1
-            if iterations > iteration_limit:
-                return await self._budget_failed(
-                    instance, execution, "MAX_ITERATIONS", iterations
+            try:
+                tracker.check_elapsed((self._clock() - started_at).total_seconds())
+            except AgentBudgetExceeded as exc:
+                return await self._budget_exceeded(
+                    instance, execution, tracker, exc.details, iterations
                 )
-            if model_calls >= model_call_limit:
-                return await self._budget_failed(
-                    instance, execution, "MAX_MODEL_CALLS", iterations
-                )
-            model_calls += 1
+            await self._budget.persist(execution.execution_id, tracker)
 
             await self._events.append(
                 instance_id,
@@ -222,6 +258,17 @@ class AgentExecutionLoop:
                 },
                 execution_id=execution.execution_id,
             )
+            if response.usage is not None:
+                if response.usage.input_tokens:
+                    tracker.record("input_tokens", response.usage.input_tokens)
+                if response.usage.output_tokens:
+                    tracker.record("output_tokens", response.usage.output_tokens)
+                await self._budget.persist(execution.execution_id, tracker)
+                exceeded = tracker.exceeded()
+                if exceeded is not None:
+                    return await self._budget_exceeded(
+                        instance, execution, tracker, exceeded, iterations
+                    )
             if response.status == REQUEST_UNKNOWN:
                 return await self._unknown(
                     instance, execution, "MODEL_REQUEST_UNKNOWN", iterations
@@ -236,18 +283,21 @@ class AgentExecutionLoop:
             except AppError as exc:
                 return await self._fail(instance, execution, exc.code, iterations)
 
-            outcome, used = await self._dispatch(
+            pending_approval, outcome = await self._dispatch(
                 instance,
                 snapshot,
                 execution,
                 action,
                 iterations,
-                tool_calls,
-                tool_call_limit,
+                tracker,
+                pending_approval,
             )
-            tool_calls += used
+            await self._budget.persist(execution.execution_id, tracker)
             if outcome is not None:
                 return outcome
+            await self._checkpoint(
+                instance.instance_id, execution.execution_id, "ITERATION_COMPLETED"
+            )
 
     # ---- Action 分派 ----
 
@@ -258,20 +308,21 @@ class AgentExecutionLoop:
         execution: ExecutionView,
         action: AgentAction,
         iterations: int,
-        tool_calls: int,
-        tool_call_limit: int,
-    ) -> tuple[LoopResult | None, int]:
+        tracker: BudgetTracker,
+        pending_approval: str | None,
+    ) -> tuple[str | None, LoopResult | None]:
         kind = action.action_type
         if kind == ACTION_EXECUTE_TOOL:
-            return await self._execute_tool(
+            outcome = await self._execute_tool(
                 instance,
                 snapshot,
                 execution,
                 action,
                 iterations,
-                tool_calls,
-                tool_call_limit,
+                tracker,
+                pending_approval,
             )
+            return None, outcome
         if kind in {ACTION_CREATE_PLAN, ACTION_UPDATE_PLAN}:
             try:
                 supersedes = None
@@ -286,16 +337,17 @@ class AgentExecutionLoop:
                     supersedes_plan_id=supersedes,
                 )
             except AppError as exc:
-                return await self._fail(instance, execution, exc.code, iterations), 0
-            return None, 0
+                return pending_approval, await self._fail(
+                    instance, execution, exc.code, iterations
+                )
+            return pending_approval, None
         if kind == ACTION_COMPLETE_EXECUTION:
-            return await self._complete(instance, execution, action, iterations), 0
+            return pending_approval, await self._complete(
+                instance, execution, action, iterations
+            )
         if kind == ACTION_FAIL_EXECUTION:
-            return (
-                await self._fail(
-                    instance, execution, str(action.payload["reason"]), iterations
-                ),
-                0,
+            return pending_approval, await self._fail(
+                instance, execution, str(action.payload["reason"]), iterations
             )
         if kind == ACTION_REQUEST_APPROVAL:
             await self._events.append(
@@ -304,32 +356,28 @@ class AgentExecutionLoop:
                 payload={"reason": action.payload.get("reason"), "source": "AGENT"},
                 execution_id=execution.execution_id,
             )
-            await self._wait_for_approval(instance, execution)
-            return (
-                LoopResult(
-                    instance.instance_id,
-                    execution.execution_id,
-                    _LOOP_WAITING_APPROVAL,
-                    iterations,
-                    "AGENT_REQUESTED_APPROVAL",
-                ),
-                0,
+            await self._wait_for_approval(instance, execution, pending_action=None)
+            return pending_approval, LoopResult(
+                instance.instance_id,
+                execution.execution_id,
+                _LOOP_WAITING_APPROVAL,
+                iterations,
+                "AGENT_REQUESTED_APPROVAL",
             )
         if kind == ACTION_REQUEST_USER_INPUT:
             await self._wait_for_input(instance, execution)
-            return (
-                LoopResult(
-                    instance.instance_id,
-                    execution.execution_id,
-                    _LOOP_WAITING_INPUT,
-                    iterations,
-                    "AGENT_REQUESTED_USER_INPUT",
-                ),
-                0,
+            return pending_approval, LoopResult(
+                instance.instance_id,
+                execution.execution_id,
+                _LOOP_WAITING_INPUT,
+                iterations,
+                "AGENT_REQUESTED_USER_INPUT",
             )
         if kind in {ACTION_ANALYZE, ACTION_REPORT_PROGRESS}:
-            return None, 0
-        return await self._fail(instance, execution, "UNSUPPORTED_ACTION", iterations), 0
+            return pending_approval, None
+        return pending_approval, await self._fail(
+            instance, execution, "UNSUPPORTED_ACTION", iterations
+        )
 
     async def _execute_tool(
         self,
@@ -338,16 +386,19 @@ class AgentExecutionLoop:
         execution: ExecutionView,
         action: AgentAction,
         iterations: int,
-        tool_calls: int,
-        tool_call_limit: int,
-    ) -> tuple[LoopResult | None, int]:
+        tracker: BudgetTracker,
+        pending_approval: str | None,
+    ) -> LoopResult | None:
         try:
             tool = await self._tools.resolve(snapshot, str(action.payload["tool"]))
         except AppError as exc:
-            return await self._fail(instance, execution, exc.code, iterations), 0
+            return await self._fail(instance, execution, exc.code, iterations)
+
+        tool_input = dict(action.payload.get("input", {}))
+        resource_scope = tuple(action.payload.get("resource_scope", ()))
 
         assessment = self._tools.assess(tool)
-        if assessment.approval_required:
+        if assessment.approval_required and not pending_approval:
             await self._events.append(
                 instance.instance_id,
                 EVENT_APPROVAL_REQUESTED,
@@ -358,25 +409,33 @@ class AgentExecutionLoop:
                 },
                 execution_id=execution.execution_id,
             )
-            await self._wait_for_approval(instance, execution)
-            return (
-                LoopResult(
-                    instance.instance_id,
-                    execution.execution_id,
-                    _LOOP_WAITING_APPROVAL,
-                    iterations,
-                    "APPROVAL_REQUIRED",
-                ),
-                0,
+            await self._wait_for_approval(
+                instance,
+                execution,
+                pending_action={
+                    "tool_id": tool.tool_id,
+                    "tool_name": tool.name,
+                    "tool_version": getattr(tool, "version", None),
+                    "input": tool_input,
+                    "resource_scope": list(resource_scope),
+                },
+            )
+            return LoopResult(
+                instance.instance_id,
+                execution.execution_id,
+                _LOOP_WAITING_APPROVAL,
+                iterations,
+                "APPROVAL_REQUIRED",
             )
 
-        if tool_calls >= tool_call_limit:
-            return (
-                await self._budget_failed(
-                    instance, execution, "MAX_TOOL_CALLS", iterations
-                ),
-                0,
+        try:
+            tool_slot = tracker.reserve("tool_calls")
+        except AgentBudgetExceeded as exc:
+            return await self._budget_exceeded(
+                instance, execution, tracker, exc.details, iterations
             )
+        tracker.settle(tool_slot)
+        await self._budget.persist(execution.execution_id, tracker)
 
         step = None
         plan = await self._planning.active_plan(execution.execution_id)
@@ -391,14 +450,15 @@ class AgentExecutionLoop:
             payload={"tool_id": tool.tool_id, "tool_name": tool.name},
             execution_id=execution.execution_id,
         )
+        approval_id = pending_approval or action.payload.get("approval_id")
         try:
             result = await self._tools.execute(
                 instance=instance,
                 snapshot=snapshot,
                 tool=tool,
-                tool_input=dict(action.payload.get("input", {})),
-                resource_scope=tuple(action.payload.get("resource_scope", ())),
-                approval_id=action.payload.get("approval_id"),
+                tool_input=tool_input,
+                resource_scope=resource_scope,
+                approval_id=approval_id,
                 idempotency_key=f"{execution.execution_id}:{iterations}",
             )
         except AppError as exc:
@@ -410,7 +470,7 @@ class AgentExecutionLoop:
             )
             if step is not None:
                 await self._planning.fail_step(step.step_id, reason=exc.code)
-            return await self._fail(instance, execution, exc.code, iterations), 1
+            return await self._fail(instance, execution, exc.code, iterations)
 
         await self._events.append(
             instance.instance_id,
@@ -427,28 +487,22 @@ class AgentExecutionLoop:
         if result.status == EXECUTION_UNKNOWN:
             if step is not None:
                 await self._planning.fail_step(step.step_id, reason="TOOL_EXECUTION_UNKNOWN")
-            return (
-                await self._unknown(
-                    instance, execution, "TOOL_EXECUTION_UNKNOWN", iterations
-                ),
-                1,
+            return await self._unknown(
+                instance, execution, "TOOL_EXECUTION_UNKNOWN", iterations
             )
         if result.status != EXECUTION_SUCCEEDED:
             if step is not None:
                 await self._planning.fail_step(
                     step.step_id, reason=f"TOOL_{result.status}"
                 )
-            return (
-                await self._fail(instance, execution, f"TOOL_{result.status}", iterations),
-                1,
-            )
+            return await self._fail(instance, execution, f"TOOL_{result.status}", iterations)
         if step is not None:
             await self._planning.complete_step(
                 step.step_id,
                 output_reference=result.execution_id,
                 tool_execution_id=result.execution_id,
             )
-        return None, 1
+        return None
 
     async def _complete(
         self,
@@ -469,6 +523,7 @@ class AgentExecutionLoop:
         reason = action.payload.get("summary") or "AGENT_COMPLETED"
         await self._executions.complete(execution.execution_id, reason=reason)
         completed = await self._lifecycle.complete(instance.instance_id, reason=reason)
+        await self._checkpoint(instance.instance_id, execution.execution_id, "COMPLETED")
         return LoopResult(
             completed.instance_id,
             execution.execution_id,
@@ -480,11 +535,21 @@ class AgentExecutionLoop:
     # ---- 状态收尾 ----
 
     async def _wait_for_approval(
-        self, instance: InstanceView, execution: ExecutionView
+        self,
+        instance: InstanceView,
+        execution: ExecutionView,
+        *,
+        pending_action: dict | None,
     ) -> None:
         await self._executions.wait_for_approval(execution.execution_id)
         await self._lifecycle.transition(
             instance.instance_id, INSTANCE_WAITING_APPROVAL
+        )
+        await self._checkpoint(
+            instance.instance_id,
+            execution.execution_id,
+            "WAITING_APPROVAL",
+            pending_action=pending_action,
         )
 
     async def _wait_for_input(
@@ -492,6 +557,7 @@ class AgentExecutionLoop:
     ) -> None:
         await self._executions.wait_for_input(execution.execution_id)
         await self._lifecycle.transition(instance.instance_id, INSTANCE_WAITING_INPUT)
+        await self._checkpoint(instance.instance_id, execution.execution_id, "WAITING_INPUT")
 
     async def _fail(
         self,
@@ -500,14 +566,9 @@ class AgentExecutionLoop:
         reason: str,
         iterations: int,
     ) -> LoopResult:
-        async def _safe(action) -> None:
-            try:
-                await action
-            except AgentStateInvalid:
-                pass
-
-        await _safe(self._executions.fail(execution.execution_id, reason=reason))
-        await _safe(self._lifecycle.fail(instance.instance_id, reason=reason))
+        await self._safe(self._executions.fail(execution.execution_id, reason=reason))
+        await self._safe(self._lifecycle.fail(instance.instance_id, reason=reason))
+        await self._checkpoint(instance.instance_id, execution.execution_id, "FAILED")
         return LoopResult(
             instance.instance_id, execution.execution_id, _LOOP_FAILED, iterations, reason
         )
@@ -519,14 +580,9 @@ class AgentExecutionLoop:
         reason: str,
         iterations: int,
     ) -> LoopResult:
-        async def _safe(action) -> None:
-            try:
-                await action
-            except AgentStateInvalid:
-                pass
-
-        await _safe(self._executions.mark_unknown(execution.execution_id, reason=reason))
-        await _safe(self._lifecycle.mark_unknown(instance.instance_id, reason=reason))
+        await self._safe(self._executions.mark_unknown(execution.execution_id, reason=reason))
+        await self._safe(self._lifecycle.mark_unknown(instance.instance_id, reason=reason))
+        await self._checkpoint(instance.instance_id, execution.execution_id, "UNKNOWN")
         return LoopResult(
             instance.instance_id,
             execution.execution_id,
@@ -535,17 +591,102 @@ class AgentExecutionLoop:
             reason,
         )
 
-    async def _budget_failed(
+    async def _budget_exceeded(
         self,
         instance: InstanceView,
         execution: ExecutionView,
-        detail: str,
+        tracker: BudgetTracker,
+        detail: dict | None,
         iterations: int,
     ) -> LoopResult:
+        await self._budget.persist(execution.execution_id, tracker)
         await self._events.append(
             instance.instance_id,
             EVENT_BUDGET_EXCEEDED,
-            payload={"detail": detail, "iteration": iterations},
+            payload={
+                "detail": detail,
+                "policy": tracker.on_exceed,
+                "iteration": iterations,
+            },
             execution_id=execution.execution_id,
         )
+        if tracker.on_exceed == BUDGET_EXCEED_PAUSE:
+            await self._checkpoint(
+                instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED"
+            )
+            await self._safe(
+                self._executions.transition(
+                    execution.execution_id, EXECUTION_PAUSED, reason="BUDGET_EXCEEDED"
+                )
+            )
+            await self._safe(self._lifecycle.pause(instance.instance_id))
+            return LoopResult(
+                instance.instance_id,
+                execution.execution_id,
+                _LOOP_PAUSED,
+                iterations,
+                "BUDGET_EXCEEDED",
+            )
+        if tracker.on_exceed == BUDGET_EXCEED_WAITING_INPUT:
+            await self._checkpoint(
+                instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED"
+            )
+            await self._safe(self._executions.wait_for_input(execution.execution_id))
+            await self._safe(
+                self._lifecycle.transition(instance.instance_id, INSTANCE_WAITING_INPUT)
+            )
+            return LoopResult(
+                instance.instance_id,
+                execution.execution_id,
+                _LOOP_WAITING_INPUT,
+                iterations,
+                "BUDGET_EXCEEDED",
+            )
+        if tracker.on_exceed == BUDGET_EXCEED_STOP:
+            await self._safe(
+                self._planning.abandon_plan(
+                    execution.execution_id, reason="BUDGET_EXCEEDED"
+                )
+            )
+            await self._checkpoint(
+                instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED"
+            )
+            await self._safe(
+                self._executions.transition(
+                    execution.execution_id, EXECUTION_STOPPED, reason="BUDGET_EXCEEDED"
+                )
+            )
+            await self._safe(self._lifecycle.stop(instance.instance_id, reason="BUDGET_EXCEEDED"))
+            return LoopResult(
+                instance.instance_id,
+                execution.execution_id,
+                _LOOP_STOPPED,
+                iterations,
+                "BUDGET_EXCEEDED",
+            )
         return await self._fail(instance, execution, "BUDGET_EXCEEDED", iterations)
+
+    async def _checkpoint(
+        self,
+        instance_id: str,
+        execution_id: str,
+        trigger: str,
+        *,
+        pending_action: dict | None = None,
+    ) -> None:
+        try:
+            await self._checkpoints.create(
+                instance_id=instance_id,
+                execution_id=execution_id,
+                trigger=trigger,
+                pending_action=pending_action,
+            )
+        except AppError:
+            # Checkpoint 失败不能掩盖主流程结果；恢复阶段会按 UNKNOWN 处理。
+            pass
+
+    async def _safe(self, action: Awaitable[object]) -> None:
+        try:
+            await action
+        except AppError:
+            pass

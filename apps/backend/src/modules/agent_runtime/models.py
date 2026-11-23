@@ -82,7 +82,22 @@ BUDGET_DEFAULT = {
     "max_tool_calls": 60,
     "max_execution_seconds": 1800,
     "max_retries": 3,
+    "on_exceed": "FAIL",
 }
+
+# 预算耗尽时的处理策略：失败、暂停、等待用户输入或停止。
+BUDGET_EXCEED_FAIL = "FAIL"
+BUDGET_EXCEED_PAUSE = "PAUSE"
+BUDGET_EXCEED_WAITING_INPUT = "WAITING_INPUT"
+BUDGET_EXCEED_STOP = "STOP"
+BUDGET_EXCEED_POLICIES = frozenset(
+    {
+        BUDGET_EXCEED_FAIL,
+        BUDGET_EXCEED_PAUSE,
+        BUDGET_EXCEED_WAITING_INPUT,
+        BUDGET_EXCEED_STOP,
+    }
+)
 
 # ---- Agent Instance ----
 
@@ -526,6 +541,7 @@ class AgentExecutionModel(Base):
     status: Mapped[str] = mapped_column(String(24), nullable=False, default=EXECUTION_CREATED)
     last_checkpoint_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     termination_reason: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    budget_usage_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -6,9 +6,11 @@ Execution 状态由本模块拥有；Task / Attempt 状态仍由 Task System 拥
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 from uuid import uuid4
 
 from core.errors import AgentStateInvalid, NotFoundError, VersionConflict
@@ -45,6 +47,7 @@ class ExecutionView:
     status: str
     last_checkpoint_id: str | None
     termination_reason: str | None
+    budget_usage: dict[str, Any]
     version: int
     started_at: datetime | None
     ended_at: datetime | None
@@ -61,6 +64,7 @@ def _view(entity: AgentExecutionModel) -> ExecutionView:
         status=entity.status,
         last_checkpoint_id=entity.last_checkpoint_id,
         termination_reason=entity.termination_reason,
+        budget_usage=json.loads(entity.budget_usage_json or "{}"),
         version=entity.version,
         started_at=entity.started_at,
         ended_at=entity.ended_at,
@@ -111,6 +115,7 @@ class AgentExecutionService:
                 status=EXECUTION_RUNNING,
                 last_checkpoint_id=None,
                 termination_reason=None,
+                budget_usage_json="{}",
                 version=1,
                 started_at=now,
                 ended_at=None,

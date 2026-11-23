@@ -34,6 +34,7 @@ from infrastructure.database.transaction import transaction
 from modules.agent_runtime.models import (
     AGENT_CAPABILITIES,
     BUDGET_DEFAULT,
+    BUDGET_EXCEED_POLICIES,
     BUDGET_KEYS,
     CONTEXT_PROFILE_DEFAULT,
     CONTEXT_PROFILES,
@@ -648,13 +649,21 @@ def _validate_budget(budget: Mapping[str, Any] | None) -> dict[str, Any]:
     payload: dict[str, Any] = dict(BUDGET_DEFAULT)
     if budget is None:
         return payload
-    unknown = sorted(set(budget) - BUDGET_KEYS)
+    unknown = sorted(set(budget) - BUDGET_KEYS - {"on_exceed"})
     if unknown:
         raise AgentDefinitionInvalid(
             "预算包含未知字段",
             details={"reasons": ["UNKNOWN_BUDGET_FIELD"], "fields": unknown},
         )
     for key, value in budget.items():
+        if key == "on_exceed":
+            if value not in BUDGET_EXCEED_POLICIES:
+                raise AgentDefinitionInvalid(
+                    "预算超限策略非法",
+                    details={"reasons": ["INVALID_BUDGET_POLICY"], "policy": value},
+                )
+            payload[key] = value
+            continue
         if value is None:
             payload.pop(key, None)
             continue

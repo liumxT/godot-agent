@@ -31,6 +31,7 @@ from modules.agent_runtime.models import (
     EVENT_STEP_CREATED,
     EVENT_STEP_FAILED,
     EVENT_STEP_STARTED,
+    PLAN_ABANDONED,
     PLAN_ACTIVE,
     PLAN_COMPLETED,
     PLAN_SUPERSEDED,
@@ -40,9 +41,11 @@ from modules.agent_runtime.models import (
     STEP_PENDING,
     STEP_READY,
     STEP_RUNNING,
+    STEP_SKIPPED,
     STEP_TERMINAL_STATUSES,
     STEP_TRANSITIONS,
     STEP_TYPES,
+    STEP_UNKNOWN,
     STEP_WAITING_APPROVAL,
     STEP_WAITING_TOOL,
     AgentPlanModel,
@@ -412,6 +415,53 @@ class PlanningService:
                 execution_id=plan.execution_id,
                 event_type=EVENT_PLAN_UPDATED,
                 payload={"plan_id": plan_id, "status": PLAN_COMPLETED},
+                now=now,
+            )
+            await session.flush()
+            return _plan_view(plan, steps)
+
+    async def abandon_plan(
+        self, execution_id: str, *, reason: str | None = None
+    ) -> PlanView | None:
+        """终止 Plan：未开始的 Step 跳过，执行中的 Step 保守标记为 UNKNOWN。"""
+
+        now = self._clock()
+        async with self._database.session() as session, transaction(session):
+            plan = await AgentPlanRepository(session).get_active_for_execution(execution_id)
+            if plan is None:
+                return None
+            steps = await AgentStepRepository(session).list_by_plan(plan.plan_id)
+            for entity in steps:
+                if entity.status in STEP_TERMINAL_STATUSES:
+                    continue
+                if entity.status in {STEP_RUNNING, STEP_WAITING_TOOL}:
+                    entity.status = STEP_UNKNOWN
+                else:
+                    entity.status = STEP_SKIPPED
+                entity.version += 1
+                entity.completed_at = now
+            plan.status = PLAN_ABANDONED
+            plan.version += 1
+            await self._events.append_in_session(
+                session,
+                instance_id=plan.agent_instance_id,
+                execution_id=execution_id,
+                event_type=EVENT_PLAN_UPDATED,
+                payload={
+                    "plan_id": plan.plan_id,
+                    "status": PLAN_ABANDONED,
+                    "reason": reason,
+                    "unknown_steps": [
+                        item.step_id
+                        for item in steps
+                        if item.status == STEP_UNKNOWN
+                    ],
+                    "skipped_steps": [
+                        item.step_id
+                        for item in steps
+                        if item.status == STEP_SKIPPED
+                    ],
+                },
                 now=now,
             )
             await session.flush()
