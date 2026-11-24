@@ -215,12 +215,12 @@ def upgrade() -> None:
         sa.Column("resource_usage_json", sa.Text(), nullable=False),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(
-            ["job_id"], ["asset_processing_jobs.job_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["job_id"], ["asset_processing_jobs.job_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("step_id"),
     )
-    op.create_index("ix_asset_processing_steps_job", "asset_processing_steps", ["job_id", "node_id"])
+    op.create_index(
+        "ix_asset_processing_steps_job", "asset_processing_steps", ["job_id", "node_id"]
+    )
 
     op.create_table(
         "asset_import_jobs",
@@ -352,14 +352,10 @@ def upgrade() -> None:
         sa.Column("content_hash", sa.String(length=64), nullable=True),
         sa.Column("metadata_json", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["license_id"], ["asset_licenses.license_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["license_id"], ["asset_licenses.license_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("evidence_id"),
     )
-    op.create_index(
-        "ix_asset_license_evidence_license", "asset_license_evidence", ["license_id"]
-    )
+    op.create_index("ix_asset_license_evidence_license", "asset_license_evidence", ["license_id"])
 
     op.create_table(
         "asset_quality_reviews",
@@ -382,7 +378,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("review_id"),
     )
     op.create_index(
-        "ix_asset_quality_reviews_version", "asset_quality_reviews", ["asset_version_id", "review_status"]
+        "ix_asset_quality_reviews_version",
+        "asset_quality_reviews",
+        ["asset_version_id", "review_status"],
     )
     op.create_index("ix_asset_quality_reviews_asset", "asset_quality_reviews", ["asset_id"])
 
@@ -426,9 +424,7 @@ def upgrade() -> None:
         "asset_dependencies",
         ["project_id", "target_reference"],
     )
-    op.create_index(
-        "ix_asset_dependencies_version", "asset_dependencies", ["asset_version_id"]
-    )
+    op.create_index("ix_asset_dependencies_version", "asset_dependencies", ["asset_version_id"])
 
     op.create_table(
         "asset_deliveries",
@@ -474,13 +470,9 @@ def upgrade() -> None:
             ["asset_version_id"], ["asset_versions.version_id"], ondelete="SET NULL"
         ),
         sa.PrimaryKeyConstraint("object_id"),
-        sa.UniqueConstraint(
-            "project_id", "relative_path", name="uq_asset_storage_objects_path"
-        ),
+        sa.UniqueConstraint("project_id", "relative_path", name="uq_asset_storage_objects_path"),
     )
-    op.create_index(
-        "ix_asset_storage_objects_hash", "asset_storage_objects", ["content_hash"]
-    )
+    op.create_index("ix_asset_storage_objects_hash", "asset_storage_objects", ["content_hash"])
 
     op.create_table(
         "asset_provider_jobs",
@@ -503,9 +495,7 @@ def upgrade() -> None:
             "provider_id", "provider_job_id", name="uq_asset_provider_jobs_external"
         ),
     )
-    op.create_index(
-        "ix_asset_provider_jobs_generation", "asset_provider_jobs", ["generation_id"]
-    )
+    op.create_index("ix_asset_provider_jobs_generation", "asset_provider_jobs", ["generation_id"])
 
 
 def downgrade() -> None:

@@ -110,7 +110,9 @@ class ImagePart:
             except (binascii.Error, ValueError) as exc:
                 raise ValidationFailed("图片 base64 内容非法") from exc
             if len(raw) > _IMAGE_MAX_BYTES:
-                raise ValidationFailed("图片超过大小限制", details={"limit_bytes": _IMAGE_MAX_BYTES})
+                raise ValidationFailed(
+                    "图片超过大小限制", details={"limit_bytes": _IMAGE_MAX_BYTES}
+                )
 
 
 ContentPart = TextPart | ImagePart
@@ -141,9 +143,7 @@ class ToolDefinition:
         if not _TOOL_NAME_PATTERN.match(self.name or ""):
             raise ValidationFailed("工具名称非法", details={"name": self.name})
         if self.parameters.get("type") != "object":
-            raise ValidationFailed(
-                "工具参数 Schema 必须是 object", details={"name": self.name}
-            )
+            raise ValidationFailed("工具参数 Schema 必须是 object", details={"name": self.name})
 
 
 @dataclass(frozen=True, slots=True)

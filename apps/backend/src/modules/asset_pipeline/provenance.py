@@ -93,9 +93,7 @@ class ProvenanceRequest:
         if not self.asset_version_id.strip():
             raise AssetStateInvalid("缺少资产版本 ID")
         if self.source_type not in SOURCE_TYPES:
-            raise AssetStateInvalid(
-                "未知资产来源类型", details={"source_type": self.source_type}
-            )
+            raise AssetStateInvalid("未知资产来源类型", details={"source_type": self.source_type})
         for name, values in (
             ("input_hashes", self.input_hashes),
             ("output_hashes", self.output_hashes),
@@ -139,9 +137,7 @@ class TraceEntry:
     provenance: ProvenanceView | None
 
 
-def _provenance_view(
-    entity: AssetProvenanceModel, *, created: bool
-) -> ProvenanceView:
+def _provenance_view(entity: AssetProvenanceModel, *, created: bool) -> ProvenanceView:
     graph = _load(entity.processing_graph_json, None)
     return ProvenanceView(
         provenance_id=entity.provenance_id,
@@ -223,9 +219,7 @@ class ProvenanceService:
                 if request.processing_graph is not None
                 else None
             ),
-            processor_versions_json=_dump(
-                [dict(item) for item in request.processor_versions]
-            ),
+            processor_versions_json=_dump([dict(item) for item in request.processor_versions]),
             operator_agent_id=request.operator_agent_id,
             operator_user_id=request.operator_user_id,
             license_reference=request.license_reference,
@@ -245,9 +239,7 @@ class ProvenanceService:
         )
         return _provenance_view(entity, created=True)
 
-    async def get(
-        self, project_id: str, asset_version_id: str
-    ) -> ProvenanceView | None:
+    async def get(self, project_id: str, asset_version_id: str) -> ProvenanceView | None:
         async with self._database.session() as session:
             version = await AssetVersionRepository(session).get(asset_version_id)
             if version is None:
@@ -263,9 +255,7 @@ class ProvenanceService:
                         "asset_version_id": asset_version_id,
                     },
                 )
-            entity = await AssetProvenanceRepository(session).get_for_version(
-                asset_version_id
-            )
+            entity = await AssetProvenanceRepository(session).get_for_version(asset_version_id)
             if entity is None:
                 return None
             session.expunge(entity)
@@ -308,9 +298,7 @@ class ProvenanceService:
                         source_type=version.source_type,
                         change_reason=version.change_reason,
                         provenance=(
-                            _provenance_view(entity, created=False)
-                            if entity is not None
-                            else None
+                            _provenance_view(entity, created=False) if entity is not None else None
                         ),
                     )
                 )
@@ -318,9 +306,7 @@ class ProvenanceService:
         entries.reverse()
         return tuple(entries)
 
-    async def assert_complete(
-        self, project_id: str, asset_version_id: str
-    ) -> ProvenanceView:
+    async def assert_complete(self, project_id: str, asset_version_id: str) -> ProvenanceView:
         """交付完整性检查；不满足时抛出 ``AssetStateInvalid``。"""
 
         entries = await self.trace(project_id, asset_version_id)
@@ -396,9 +382,7 @@ class ProvenanceService:
                     details={"project_id": project_id, "asset_id": asset_id},
                 )
 
-    def _matches(
-        self, entity: AssetProvenanceModel, request: ProvenanceRequest
-    ) -> bool:
+    def _matches(self, entity: AssetProvenanceModel, request: ProvenanceRequest) -> bool:
         scalar_fields = (
             "provider_id",
             "model_id",
@@ -420,33 +404,27 @@ class ProvenanceService:
                 continue
             if getattr(entity, name) != value:
                 return False
-        if request.input_hashes and list(
-            _load(entity.input_hashes_json, [])
-        ) != list(request.input_hashes):
+        if request.input_hashes and list(_load(entity.input_hashes_json, [])) != list(
+            request.input_hashes
+        ):
             return False
-        if request.output_hashes and list(
-            _load(entity.output_hashes_json, [])
-        ) != list(request.output_hashes):
+        if request.output_hashes and list(_load(entity.output_hashes_json, [])) != list(
+            request.output_hashes
+        ):
             return False
-        if request.processor_versions and list(
-            _load(entity.processor_versions_json, [])
-        ) != [dict(item) for item in request.processor_versions]:
+        if request.processor_versions and list(_load(entity.processor_versions_json, [])) != [
+            dict(item) for item in request.processor_versions
+        ]:
             return False
         if request.processing_graph is not None:
-            return _load(entity.processing_graph_json, None) == dict(
-                request.processing_graph
-            )
+            return _load(entity.processing_graph_json, None) == dict(request.processing_graph)
         return True
 
-    async def _publish(
-        self, event_type: str, payload: dict[str, Any], *, project_id: str
-    ) -> None:
+    async def _publish(self, event_type: str, payload: dict[str, Any], *, project_id: str) -> None:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不阻断来源记录
             log_event(
                 self._logger,

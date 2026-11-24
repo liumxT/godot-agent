@@ -100,9 +100,7 @@ class TeamObservabilityService:
     async def assignment_dashboard(self, assignment_id: str) -> dict[str, Any]:
         assignment = await self._assignments.get(assignment_id)
         async with self._database.session() as session:
-            locks = await AgentResourceLockRepository(session).list_for_assignment(
-                assignment_id
-            )
+            locks = await AgentResourceLockRepository(session).list_for_assignment(assignment_id)
         dependencies = []
         for dependency_id in assignment.dependencies:
             try:
@@ -124,9 +122,7 @@ class TeamObservabilityService:
             "handoffs": to_jsonable(await self._handoffs.list_for_source(assignment_id)),
             "reviews": to_jsonable(await self._reviews.list_for_target(assignment_id)),
             "blocked": [
-                item["assignment_id"]
-                for item in dependencies
-                if item["status"] != "COMPLETED"
+                item["assignment_id"] for item in dependencies if item["status"] != "COMPLETED"
             ],
         }
 
@@ -182,9 +178,7 @@ class TeamObservabilityService:
                     "task_id": team.task_id,
                     "status": team.status,
                     "assignment_count": len(assignments),
-                    "completed_count": sum(
-                        1 for item in assignments if item.status == "COMPLETED"
-                    ),
+                    "completed_count": sum(1 for item in assignments if item.status == "COMPLETED"),
                     "open_conflicts": sum(
                         1
                         for item in conflicts

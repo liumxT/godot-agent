@@ -181,9 +181,7 @@ def _read(artifact: ProcessingArtifact, context: ProcessingContext) -> _WavData:
         raise _invalid("采样率非法", sample_rate=sample_rate)
     frames = len(raw) // (channel_count * sample_width)
     if frames > _MAX_FRAMES:
-        raise _invalid(
-            "音频帧数超过处理限制", frames=frames, max_frames=_MAX_FRAMES
-        )
+        raise _invalid("音频帧数超过处理限制", frames=frames, max_frames=_MAX_FRAMES)
     samples = _decode_samples(raw[: frames * channel_count * sample_width], sample_width)
     channels = [array("d") for _ in range(channel_count)]
     for index, value in enumerate(samples):
@@ -273,9 +271,7 @@ def _resample(wav: _WavData, target_rate: int) -> _WavData:
             fraction = position - left_index
             output.append(channel[left_index] * (1.0 - fraction) + channel[right_index] * fraction)
         channels.append(output)
-    return _WavData(
-        channels=channels, sample_rate=target_rate, sample_width=wav.sample_width
-    )
+    return _WavData(channels=channels, sample_rate=target_rate, sample_width=wav.sample_width)
 
 
 class AudioResampleProcessor:
@@ -350,9 +346,7 @@ class AudioLoudnessNormalizeProcessor:
     version = PROCESSOR_VERSION
 
     def validate(self, parameters: Mapping[str, Any]) -> None:
-        _number_param(
-            parameters, "target_peak_db", default=-1.0, minimum=-60.0, maximum=0.0
-        )
+        _number_param(parameters, "target_peak_db", default=-1.0, minimum=-60.0, maximum=0.0)
 
     def process(
         self,
@@ -382,9 +376,7 @@ class AudioPeakLimitProcessor:
     version = PROCESSOR_VERSION
 
     def validate(self, parameters: Mapping[str, Any]) -> None:
-        _number_param(
-            parameters, "max_peak_db", default=-0.1, minimum=-60.0, maximum=0.0
-        )
+        _number_param(parameters, "max_peak_db", default=-0.1, minimum=-60.0, maximum=0.0)
 
     def process(
         self,
@@ -426,9 +418,7 @@ class AudioSilenceTrimProcessor:
         self.validate(parameters)
         wav = _read(_single(payload), context)
         threshold = _db_to_ratio(
-            _number_param(
-                parameters, "threshold_db", default=-50.0, minimum=-120.0, maximum=0.0
-            )
+            _number_param(parameters, "threshold_db", default=-50.0, minimum=-120.0, maximum=0.0)
         )
         first = None
         last = None
@@ -525,9 +515,7 @@ class AudioLoopPointDetectProcessor:
         artifact = _single(payload)
         wav = _read(artifact, context)
         threshold = _db_to_ratio(
-            _number_param(
-                parameters, "threshold_db", default=-50.0, minimum=-120.0, maximum=0.0
-            )
+            _number_param(parameters, "threshold_db", default=-50.0, minimum=-120.0, maximum=0.0)
         )
         first = 0
         last = wav.frame_count - 1
@@ -541,9 +529,7 @@ class AudioLoopPointDetectProcessor:
                 break
         seam = 0.0
         if wav.frame_count > 1:
-            seam = max(
-                abs(channel[last] - channel[first]) for channel in wav.channels
-            )
+            seam = max(abs(channel[last] - channel[first]) for channel in wav.channels)
         metadata = dict(artifact.metadata)
         metadata["loop"] = {
             "loop_start_frame": first,

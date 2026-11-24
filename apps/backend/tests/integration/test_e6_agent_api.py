@@ -69,9 +69,7 @@ async def _session_for(app, client, client_type: str) -> str:
             ),
         },
     )
-    issued = await client.post(
-        "/api/v1/sessions", headers=_bearer(verified.json()["access_token"])
-    )
+    issued = await client.post("/api/v1/sessions", headers=_bearer(verified.json()["access_token"]))
     return issued.json()["session_token"]
 
 
@@ -104,9 +102,7 @@ async def _project_and_task(app, client, headers, tmp_path: Path) -> tuple[str, 
     project_id = created.json()["project_id"]
 
     prompts = app.state.services.get("prompt_service", PromptService)
-    await prompts.create(
-        name="e6_api_prompt", category="AGENT", content="You are an E6 API agent."
-    )
+    await prompts.create(name="e6_api_prompt", category="AGENT", content="You are an E6 API agent.")
     tasks = app.state.services.get("task_service", TaskService)
     attempts = app.state.services.get("task_attempt_service", AttemptService)
     task = await tasks.create(project_id=project_id, title="Agent API task")
@@ -119,9 +115,7 @@ async def test_agent_api_lifecycle_and_observability(tmp_path: Path) -> None:
         await _register_model(app)
         token = await _session_for(app, client, "admin")
         headers = _bearer(token)
-        project_id, task_id, attempt_id = await _project_and_task(
-            app, client, headers, tmp_path
-        )
+        project_id, task_id, attempt_id = await _project_and_task(app, client, headers, tmp_path)
 
         definition = await client.post(
             "/api/v1/agents/definitions",
@@ -174,12 +168,8 @@ async def test_agent_api_lifecycle_and_observability(tmp_path: Path) -> None:
         assert started.status_code == 200, started.text
         assert started.json()["status"] == "RUNNING"
 
-        executions = app.state.services.get(
-            "agent_execution_service", AgentExecutionService
-        )
-        instances = app.state.services.get(
-            "agent_instance_service", AgentInstanceService
-        )
+        executions = app.state.services.get("agent_execution_service", AgentExecutionService)
+        instances = app.state.services.get("agent_instance_service", AgentInstanceService)
         execution = await executions.start_execution(await instances.get(instance_id))
 
         paused = await client.post(
@@ -222,9 +212,7 @@ async def test_agent_api_lifecycle_and_observability(tmp_path: Path) -> None:
         assert steps.status_code == 200
         assert steps.json()["items"] == []
 
-        events = await client.get(
-            f"/api/v1/agents/instances/{instance_id}/events", headers=headers
-        )
+        events = await client.get(f"/api/v1/agents/instances/{instance_id}/events", headers=headers)
         assert events.status_code == 200
         event_types = [item["event_type"] for item in events.json()["items"]]
         assert "RESUME_REQUESTED" in event_types
@@ -290,9 +278,7 @@ async def test_agent_instance_requires_project_access(tmp_path: Path) -> None:
 
         editor_token = await _session_for(app, client, "godot_editor")
         editor_headers = _bearer(editor_token)
-        denied = await client.get(
-            f"/api/v1/agents/instances/{instance_id}", headers=editor_headers
-        )
+        denied = await client.get(f"/api/v1/agents/instances/{instance_id}", headers=editor_headers)
         assert denied.status_code == 403
         assert denied.json()["error"]["code"] == "PROJECT_ACCESS_DENIED"
 

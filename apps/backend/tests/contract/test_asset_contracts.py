@@ -77,9 +77,9 @@ def test_schema_enums_match_domain_models() -> None:
     assert _enum_values("asset_version.schema.json", "properties", "source_type") == set(
         models.SOURCE_TYPES
     )
-    assert _enum_values(
-        "asset_generation.schema.json", "properties", "generation_status"
-    ) == set(models.GENERATION_STATUSES)
+    assert _enum_values("asset_generation.schema.json", "properties", "generation_status") == set(
+        models.GENERATION_STATUSES
+    )
     assert _enum_values(
         "asset_processing_job.schema.json", "properties", "processing_status"
     ) == set(models.PROCESSING_STATUSES)
@@ -89,9 +89,9 @@ def test_schema_enums_match_domain_models() -> None:
     assert _enum_values("asset_license.schema.json", "properties", "verification_status") == set(
         models.LICENSE_STATUSES
     )
-    assert _enum_values(
-        "asset_quality_review.schema.json", "properties", "review_status"
-    ) == set(models.QUALITY_STATUSES)
+    assert _enum_values("asset_quality_review.schema.json", "properties", "review_status") == set(
+        models.QUALITY_STATUSES
+    )
     assert _enum_values("asset_delivery.schema.json", "properties", "delivery_status") == set(
         models.DELIVERY_STATUSES
     )

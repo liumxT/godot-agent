@@ -86,13 +86,8 @@ def test_delivery_request_rejects_invalid_input() -> None:
 
 
 def test_recovery_idempotency_keys() -> None:
-    assert (
-        AssetRecoveryService.idempotency_key("import", "aij_1") == "import:aij_1"
-    )
-    assert (
-        AssetRecoveryService.idempotency_key("project_write", " cs_1 ")
-        == "project_write:cs_1"
-    )
+    assert AssetRecoveryService.idempotency_key("import", "aij_1") == "import:aij_1"
+    assert AssetRecoveryService.idempotency_key("project_write", " cs_1 ") == "project_write:cs_1"
     with pytest.raises(AssetRecoveryRequired):
         AssetRecoveryService.idempotency_key("unknown", "x")
     with pytest.raises(AssetRecoveryRequired):

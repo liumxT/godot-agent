@@ -19,9 +19,7 @@ REQUIRED_CONTEXT_BY_TYPE: dict[str, tuple[str, ...]] = {
 }
 
 
-def evidence_context_problems(
-    evidence_type: str, metadata: dict[str, Any]
-) -> tuple[str, ...]:
+def evidence_context_problems(evidence_type: str, metadata: dict[str, Any]) -> tuple[str, ...]:
     problems: list[str] = []
     for key in REQUIRED_CONTEXT_BY_TYPE.get(evidence_type, ()):
         if not metadata.get(key):

@@ -34,9 +34,13 @@ def test_topological_order_is_deterministic() -> None:
         acceptance_criteria=("移动", "跳跃", "HUD"),
         subtasks=(
             _subtask("qa", dependencies=("code", "hud"), covers=("跳跃",)),
-            _subtask("code", dependencies=("design",), covers=("移动",), acceptance_criteria=("移动",)),
+            _subtask(
+                "code", dependencies=("design",), covers=("移动",), acceptance_criteria=("移动",)
+            ),
             _subtask("design", covers=("移动",)),
-            _subtask("hud", dependencies=("design",), covers=("HUD",), acceptance_criteria=("HUD",)),
+            _subtask(
+                "hud", dependencies=("design",), covers=("HUD",), acceptance_criteria=("HUD",)
+            ),
         ),
     )
     order = [spec.key for spec in plan.validate()]
@@ -81,9 +85,7 @@ def test_acceptance_coverage_is_enforced() -> None:
     plan = DecompositionPlan(
         task_objective="覆盖检查",
         acceptance_criteria=("玩家可以跳跃", "敌人会受伤"),
-        subtasks=(
-            _subtask("a", covers=("玩家可以跳跃",), acceptance_criteria=("玩家可以跳跃",)),
-        ),
+        subtasks=(_subtask("a", covers=("玩家可以跳跃",), acceptance_criteria=("玩家可以跳跃",)),),
     )
     with pytest.raises(AgentDecompositionInvalid) as exc_info:
         plan.validate()

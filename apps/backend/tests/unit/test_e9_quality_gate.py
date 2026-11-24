@@ -60,9 +60,7 @@ def test_waiver_requires_traceable_fields() -> None:
     assert waiver_problem(valid, now) is None
     assert waiver_problem(None, now) == "缺少豁免记录"
     assert (
-        waiver_problem(
-            GateWaiver("", "原因", "风险", "范围", now + timedelta(days=1)), now
-        )
+        waiver_problem(GateWaiver("", "原因", "风险", "范围", now + timedelta(days=1)), now)
         == "豁免缺少授权者"
     )
     assert (
@@ -106,9 +104,7 @@ def test_layer_gate_maps_result_statuses() -> None:
 
 
 def test_combine_outcomes_distinguishes_partial_and_blocking() -> None:
-    passed = combine_outcomes(
-        [GateOutcome(GATE_STATIC, GATE_PASSED, True)]
-    )
+    passed = combine_outcomes([GateOutcome(GATE_STATIC, GATE_PASSED, True)])
     assert passed.status == GATE_PASSED
 
     partial = combine_outcomes(
@@ -120,9 +116,7 @@ def test_combine_outcomes_distinguishes_partial_and_blocking() -> None:
     assert partial.status == GATE_OVERALL_PARTIAL
     assert partial.pending == (GATE_EVIDENCE,)
 
-    unknown = combine_outcomes(
-        [GateOutcome(GATE_EVIDENCE, GATE_UNKNOWN, True)]
-    )
+    unknown = combine_outcomes([GateOutcome(GATE_EVIDENCE, GATE_UNKNOWN, True)])
     assert unknown.status == GATE_UNKNOWN
 
     failed = combine_outcomes(

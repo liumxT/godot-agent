@@ -105,7 +105,7 @@ class GodotToolAdapter:
                 self._payload(context, PHASE_INSPECT),
                 timeout=context.timeout_seconds,
             )
-        except (EditorCommandTimeout, EditorNotConnected):
+        except EditorCommandTimeout, EditorNotConnected:
             return None
         if not response.success:
             return None

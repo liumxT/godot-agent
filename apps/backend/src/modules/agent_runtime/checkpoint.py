@@ -90,9 +90,7 @@ class CheckpointService:
         async with self._database.session() as session:
             entity = await AgentCheckpointRepository(session).get(checkpoint_id)
         if entity is None:
-            raise NotFoundError(
-                "Agent Checkpoint 不存在", details={"checkpoint_id": checkpoint_id}
-            )
+            raise NotFoundError("Agent Checkpoint 不存在", details={"checkpoint_id": checkpoint_id})
         return _view(entity)
 
     async def latest(self, instance_id: str) -> CheckpointView | None:
@@ -113,9 +111,7 @@ class CheckpointService:
         async with self._database.session() as session, transaction(session):
             instance = await AgentInstanceRepository(session).get(instance_id)
             if instance is None:
-                raise NotFoundError(
-                    "Agent Instance 不存在", details={"instance_id": instance_id}
-                )
+                raise NotFoundError("Agent Instance 不存在", details={"instance_id": instance_id})
             execution = await AgentExecutionRepository(session).get(execution_id)
             if execution is None:
                 raise NotFoundError(
@@ -129,19 +125,15 @@ class CheckpointService:
                 (
                     item
                     for item in steps
-                    if item.status
-                    in {STEP_RUNNING, STEP_WAITING_TOOL, STEP_WAITING_APPROVAL}
+                    if item.status in {STEP_RUNNING, STEP_WAITING_TOOL, STEP_WAITING_APPROVAL}
                 ),
                 None,
             )
-            completed = [
-                item.step_id for item in steps if item.status == STEP_COMPLETED
-            ]
+            completed = [item.step_id for item in steps if item.status == STEP_COMPLETED]
             pending = [
                 item.step_id
                 for item in steps
-                if item.status
-                not in {STEP_COMPLETED, "FAILED", "SKIPPED"}
+                if item.status not in {STEP_COMPLETED, "FAILED", "SKIPPED"}
             ]
             state = {
                 "instance_status": instance.status,
@@ -159,9 +151,7 @@ class CheckpointService:
                 "pending_action": dict(pending_action) if pending_action else None,
                 "trigger": trigger,
             }
-            last_event_sequence = (
-                await AgentEventRepository(session).next_sequence(instance_id) - 1
-            )
+            last_event_sequence = await AgentEventRepository(session).next_sequence(instance_id) - 1
             entity = AgentCheckpointModel(
                 checkpoint_id="agck_" + uuid4().hex[:12],
                 agent_instance_id=instance_id,
@@ -173,9 +163,9 @@ class CheckpointService:
                 budget_snapshot=execution.budget_usage_json or "{}",
                 context_snapshot_id=context_id,
                 last_event_sequence=last_event_sequence,
-                checkpoint_version=await AgentCheckpointRepository(
-                    session
-                ).next_version(instance_id),
+                checkpoint_version=await AgentCheckpointRepository(session).next_version(
+                    instance_id
+                ),
                 created_at=now,
             )
             await AgentCheckpointRepository(session).add(entity)

@@ -51,9 +51,7 @@ class AgentContextBindingService:
         self._prompts = prompts
         self._contexts = contexts
 
-    async def build(
-        self, instance: InstanceView, snapshot: ConfigSnapshotView
-    ) -> ContextBundle:
+    async def build(self, instance: InstanceView, snapshot: ConfigSnapshotView) -> ContextBundle:
         prompt = await self._prompts.get_version(
             snapshot.prompt_profile_id, snapshot.prompt_version
         )

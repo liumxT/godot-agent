@@ -44,6 +44,6 @@ class AgentScheduler:
         for candidate in page.items:
             try:
                 return await self._lifecycle.start(candidate.instance_id)
-            except (AgentStateInvalid, VersionConflict):
+            except AgentStateInvalid, VersionConflict:
                 continue
         return None

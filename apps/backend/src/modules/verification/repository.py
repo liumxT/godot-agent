@@ -116,9 +116,7 @@ class PlanRepository(BaseRepository[VerificationPlanModel]):
 class TestCaseRepository(BaseRepository[VerificationTestCaseModel]):
     model = VerificationTestCaseModel
 
-    async def get_by_name(
-        self, project_id: str, name: str
-    ) -> VerificationTestCaseModel | None:
+    async def get_by_name(self, project_id: str, name: str) -> VerificationTestCaseModel | None:
         return await self.session.scalar(
             select(VerificationTestCaseModel).where(
                 VerificationTestCaseModel.project_id == project_id,
@@ -126,9 +124,7 @@ class TestCaseRepository(BaseRepository[VerificationTestCaseModel]):
             )
         )
 
-    async def list_by_ids(
-        self, test_case_ids: Sequence[str]
-    ) -> list[VerificationTestCaseModel]:
+    async def list_by_ids(self, test_case_ids: Sequence[str]) -> list[VerificationTestCaseModel]:
         if not test_case_ids:
             return []
         rows = await self.session.scalars(
@@ -184,9 +180,7 @@ class TestCaseRepository(BaseRepository[VerificationTestCaseModel]):
 class CriterionRepository(BaseRepository[VerificationCriterionModel]):
     model = VerificationCriterionModel
 
-    async def list_for_requirement(
-        self, requirement_id: str
-    ) -> list[VerificationCriterionModel]:
+    async def list_for_requirement(self, requirement_id: str) -> list[VerificationCriterionModel]:
         rows = await self.session.scalars(
             select(VerificationCriterionModel)
             .where(VerificationCriterionModel.requirement_id == requirement_id)
@@ -250,9 +244,7 @@ class TestLinkRepository(BaseRepository[VerificationTestLinkModel]):
             )
         )
 
-    async def list_for_requirement(
-        self, requirement_id: str
-    ) -> list[VerificationTestLinkModel]:
+    async def list_for_requirement(self, requirement_id: str) -> list[VerificationTestLinkModel]:
         rows = await self.session.scalars(
             select(VerificationTestLinkModel)
             .where(VerificationTestLinkModel.requirement_id == requirement_id)
@@ -260,9 +252,7 @@ class TestLinkRepository(BaseRepository[VerificationTestLinkModel]):
         )
         return list(rows.all())
 
-    async def list_for_test_case(
-        self, test_case_id: str
-    ) -> list[VerificationTestLinkModel]:
+    async def list_for_test_case(self, test_case_id: str) -> list[VerificationTestLinkModel]:
         rows = await self.session.scalars(
             select(VerificationTestLinkModel).where(
                 VerificationTestLinkModel.test_case_id == test_case_id
@@ -277,8 +267,7 @@ class TestLinkRepository(BaseRepository[VerificationTestLinkModel]):
             select(VerificationTestLinkModel)
             .join(
                 VerificationTestCaseModel,
-                VerificationTestCaseModel.test_case_id
-                == VerificationTestLinkModel.test_case_id,
+                VerificationTestCaseModel.test_case_id == VerificationTestLinkModel.test_case_id,
             )
             .where(
                 VerificationTestCaseModel.project_id == project_id,
@@ -295,8 +284,7 @@ class TestLinkRepository(BaseRepository[VerificationTestLinkModel]):
             select(VerificationTestLinkModel.requirement_id)
             .join(
                 VerificationTestCaseModel,
-                VerificationTestCaseModel.test_case_id
-                == VerificationTestLinkModel.test_case_id,
+                VerificationTestCaseModel.test_case_id == VerificationTestLinkModel.test_case_id,
             )
             .where(
                 VerificationTestCaseModel.project_id == project_id,
@@ -334,8 +322,7 @@ class RunRepository(BaseRepository[VerificationRunModel]):
             select(VerificationRunModel)
             .join(
                 VerificationCampaignModel,
-                VerificationCampaignModel.campaign_id
-                == VerificationRunModel.campaign_id,
+                VerificationCampaignModel.campaign_id == VerificationRunModel.campaign_id,
             )
             .where(VerificationCampaignModel.project_id == project_id)
             .order_by(VerificationRunModel.created_at.desc())
@@ -395,9 +382,7 @@ class ResultRepository(BaseRepository[VerificationResultModel]):
             filters=[VerificationResultModel.campaign_id == campaign_id],
         )
 
-    async def list_all_for_campaign(
-        self, campaign_id: str
-    ) -> list[VerificationResultModel]:
+    async def list_all_for_campaign(self, campaign_id: str) -> list[VerificationResultModel]:
         rows = await self.session.scalars(
             select(VerificationResultModel)
             .where(VerificationResultModel.campaign_id == campaign_id)
@@ -405,9 +390,7 @@ class ResultRepository(BaseRepository[VerificationResultModel]):
         )
         return list(rows.all())
 
-    async def latest_for_requirement(
-        self, requirement_id: str
-    ) -> VerificationResultModel | None:
+    async def latest_for_requirement(self, requirement_id: str) -> VerificationResultModel | None:
         return await self.session.scalar(
             select(VerificationResultModel)
             .where(
@@ -489,9 +472,7 @@ class EvidenceRepository(BaseRepository[VerificationEvidenceModel]):
         )
         return list(rows.all())
 
-    async def list_by_ids(
-        self, evidence_ids: Sequence[str]
-    ) -> list[VerificationEvidenceModel]:
+    async def list_by_ids(self, evidence_ids: Sequence[str]) -> list[VerificationEvidenceModel]:
         if not evidence_ids:
             return []
         rows = await self.session.scalars(
@@ -614,9 +595,7 @@ class DebuggerErrorRepository(BaseRepository[VerificationDebuggerErrorModel]):
             filters.append(VerificationDebuggerErrorModel.is_baseline == is_baseline)
         return await self.paginate(limit=limit, offset=offset, filters=filters)
 
-    async def list_for_gate(
-        self, project_id: str
-    ) -> list[VerificationDebuggerErrorModel]:
+    async def list_for_gate(self, project_id: str) -> list[VerificationDebuggerErrorModel]:
         rows = await self.session.scalars(
             select(VerificationDebuggerErrorModel)
             .where(VerificationDebuggerErrorModel.project_id == project_id)
@@ -708,9 +687,7 @@ class QualityGateResultRepository(BaseRepository[QualityGateResultModel]):
         )
         return list(rows.all())
 
-    async def latest_for_campaign(
-        self, campaign_id: str
-    ) -> list[QualityGateResultModel]:
+    async def latest_for_campaign(self, campaign_id: str) -> list[QualityGateResultModel]:
         """返回每个门禁的最新一次评估结果。"""
 
         rows = await self.list_for_campaign(campaign_id)

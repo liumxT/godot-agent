@@ -238,9 +238,7 @@ class IntegrationService:
         self, integration_id: str, plan: str, *, expected_version: int
     ) -> IntegrationView:
         if not (plan or "").strip():
-            raise AgentTeamInvalid(
-                "集成计划不能为空", details={"reasons": ["PLAN_REQUIRED"]}
-            )
+            raise AgentTeamInvalid("集成计划不能为空", details={"reasons": ["PLAN_REQUIRED"]})
         async with self._database.session() as session, transaction(session):
             repository = AgentIntegrationRepository(session)
             entity = await repository.get(integration_id)
@@ -287,9 +285,7 @@ class IntegrationService:
         grouped: dict[str, list[str]] = {}
         for item in assignments:
             grouped.setdefault(item.output_reference or "", []).append(item.assignment_id)
-        duplicates = {
-            reference: ids for reference, ids in grouped.items() if len(ids) > 1
-        }
+        duplicates = {reference: ids for reference, ids in grouped.items() if len(ids) > 1}
         if duplicates:
             raise AgentTeamInvalid(
                 "集成结果存在接口冲突",
@@ -341,9 +337,7 @@ class IntegrationService:
                     "Integration 版本已变化",
                     details={"expected": expected_version, "actual": entity.version},
                 )
-            if INTEGRATION_COMPLETED not in INTEGRATION_TRANSITIONS.get(
-                entity.status, frozenset()
-            ):
+            if INTEGRATION_COMPLETED not in INTEGRATION_TRANSITIONS.get(entity.status, frozenset()):
                 raise AgentTeamInvalid(
                     "Integration 当前状态不可提交验证",
                     details={"reasons": ["INVALID_TRANSITION"], "status": entity.status},
@@ -419,9 +413,7 @@ class LeadAgentService:
                 "Assignment 未加入 Team",
                 details={"reasons": ["MEMBER_NOT_FOUND"], "assignment_id": assignment_id},
             )
-        return await self._teams.set_lead(
-            team_id, assignment_id, expected_version=team.version
-        )
+        return await self._teams.set_lead(team_id, assignment_id, expected_version=team.version)
 
     async def status_board(self, team_id: str) -> LeadStatusBoard:
         team = await self._teams.get(team_id)
@@ -456,9 +448,7 @@ class LeadAgentService:
     ) -> IntegrationView:
         board = await self.status_board(team_id)
         sources = tuple(
-            item.assignment_id
-            for item in board.assignments
-            if item.status == ASSIGNMENT_COMPLETED
+            item.assignment_id for item in board.assignments if item.status == ASSIGNMENT_COMPLETED
         )
         if not sources:
             raise AgentTeamInvalid(

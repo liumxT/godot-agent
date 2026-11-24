@@ -25,12 +25,8 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     with op.batch_alter_table("verification_test_cases") as batch:
-        batch.add_column(
-            sa.Column("setup_json", sa.Text(), nullable=False, server_default="[]")
-        )
-        batch.add_column(
-            sa.Column("cleanup_json", sa.Text(), nullable=False, server_default="[]")
-        )
+        batch.add_column(sa.Column("setup_json", sa.Text(), nullable=False, server_default="[]"))
+        batch.add_column(sa.Column("cleanup_json", sa.Text(), nullable=False, server_default="[]"))
         batch.add_column(
             sa.Column("timeout_seconds", sa.Integer(), nullable=False, server_default="300")
         )
@@ -119,9 +115,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_verification_debugger_errors_run", table_name="verification_debugger_errors"
-    )
+    op.drop_index("ix_verification_debugger_errors_run", table_name="verification_debugger_errors")
     op.drop_index(
         "ix_verification_debugger_errors_project_severity",
         table_name="verification_debugger_errors",

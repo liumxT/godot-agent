@@ -153,17 +153,13 @@ class FunctionalTestRunner:
                         status = FUNCTIONAL_INFRASTRUCTURE_ERROR
                         failure_step = index
                         failure_reason = f"第 {index} 步环境故障: {exc}"
-                        steps.append(
-                            FunctionalStepResult(index, action, "UNKNOWN", str(exc))
-                        )
+                        steps.append(FunctionalStepResult(index, action, "UNKNOWN", str(exc)))
                         break
                     except Exception as exc:  # noqa: BLE001
                         status = FUNCTIONAL_FAILED
                         failure_step = index
                         failure_reason = f"第 {index} 步异常: {exc}"
-                        steps.append(
-                            FunctionalStepResult(index, action, "FAILED", str(exc))
-                        )
+                        steps.append(FunctionalStepResult(index, action, "FAILED", str(exc)))
                         break
                     if not passed:
                         status = FUNCTIONAL_FAILED
@@ -201,9 +197,7 @@ class FunctionalTestRunner:
             status = FUNCTIONAL_SKIPPED
             failure_reason = "测试未定义步骤或预期结果，未形成有效验证"
 
-        return self._result(
-            status, steps, cleanup_errors, started, failure_step, failure_reason
-        )
+        return self._result(status, steps, cleanup_errors, started, failure_step, failure_reason)
 
     def _result(
         self,

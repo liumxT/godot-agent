@@ -561,9 +561,7 @@ def _plan_view(entity: VerificationPlanModel) -> PlanView:
         campaign_id=entity.campaign_id,
         requirement_ids=tuple(str(item) for item in _load(entity.requirement_ids_json, [])),
         test_suite_ids=tuple(str(item) for item in _load(entity.test_suite_ids_json, [])),
-        verification_layers=tuple(
-            str(item) for item in _load(entity.verification_layers_json, [])
-        ),
+        verification_layers=tuple(str(item) for item in _load(entity.verification_layers_json, [])),
         environment_profile=entity.environment_profile,
         target_platforms=tuple(str(item) for item in _load(entity.target_platforms_json, [])),
         acceptance_policy=_load(entity.acceptance_policy_json, {}),
@@ -607,9 +605,7 @@ def _criterion_view(entity: VerificationCriterionModel) -> CriterionView:
         verification_method=entity.verification_method,
         expected=_load(entity.expected_json, {}),
         threshold=_load(entity.threshold_json, {}),
-        required_evidence=tuple(
-            str(item) for item in _load(entity.required_evidence_json, [])
-        ),
+        required_evidence=tuple(str(item) for item in _load(entity.required_evidence_json, [])),
         priority=entity.priority,
         status=entity.status,
         version=entity.version,
@@ -739,9 +735,7 @@ def _defect_view(entity: VerificationDefectModel) -> DefectView:
         category=entity.category,
         title=entity.title,
         description=entity.description,
-        reproduction_steps=tuple(
-            str(item) for item in _load(entity.reproduction_steps_json, [])
-        ),
+        reproduction_steps=tuple(str(item) for item in _load(entity.reproduction_steps_json, [])),
         expected_result=entity.expected_result,
         actual_result=entity.actual_result,
         evidence_ids=tuple(str(item) for item in _load(entity.evidence_ids_json, [])),
@@ -787,9 +781,7 @@ def _gate_policy_view(entity: QualityGatePolicyModel) -> GatePolicyView:
         name=entity.name,
         campaign_type=entity.campaign_type,
         risk_level=entity.risk_level,
-        required_gates=tuple(
-            str(item) for item in _load(entity.required_gates_json, [])
-        ),
+        required_gates=tuple(str(item) for item in _load(entity.required_gates_json, [])),
         waivers_allowed=entity.waivers_allowed,
         created_by=entity.created_by,
         version=entity.version,
@@ -962,9 +954,7 @@ class VerificationService:
             if entity is None:
                 raise NotFoundError("验证活动不存在", details={"campaign_id": campaign_id})
             _ensure_transition(CAMPAIGN_TRANSITIONS, entity.status, status, "验证活动")
-            completed_at = (
-                utcnow() if status in {"COMPLETED", "FAILED", "CANCELLED"} else None
-            )
+            completed_at = utcnow() if status in {"COMPLETED", "FAILED", "CANCELLED"} else None
             moved = await repository.transition(
                 campaign_id,
                 from_statuses=frozenset({entity.status}),
@@ -1317,9 +1307,7 @@ class VerificationService:
             if criterion_id is not None:
                 criterion = await criteria.get(criterion_id)
                 if criterion is None:
-                    raise NotFoundError(
-                        "验收标准不存在", details={"criterion_id": criterion_id}
-                    )
+                    raise NotFoundError("验收标准不存在", details={"criterion_id": criterion_id})
                 if criterion.requirement_id != requirement_id:
                     raise VerificationRequirementUntraceable(
                         "验收标准不属于该需求",
@@ -1427,9 +1415,7 @@ class VerificationService:
         offset: int = 0,
     ) -> dict[str, Any]:
         if validity_status is not None and validity_status not in EVIDENCE_VALIDITY_STATUSES:
-            raise ValidationFailed(
-                "未知证据有效状态", details={"validity_status": validity_status}
-            )
+            raise ValidationFailed("未知证据有效状态", details={"validity_status": validity_status})
         async with self._database.session() as session:
             page = await EvidenceRepository(session).list_page(
                 project_id=project_id,
@@ -1599,7 +1585,9 @@ class VerificationService:
             raise NotFoundError("验证执行不存在", details={"run_id": run_id})
         return _run_view(entity)
 
-    async def list_runs(self, campaign_id: str, *, limit: int = 100, offset: int = 0) -> dict[str, Any]:
+    async def list_runs(
+        self, campaign_id: str, *, limit: int = 100, offset: int = 0
+    ) -> dict[str, Any]:
         async with self._database.session() as session:
             page = await RunRepository(session).list_for_campaign(
                 campaign_id, limit=limit, offset=offset
@@ -1619,9 +1607,7 @@ class VerificationService:
         return {
             "allowed_actions": sorted(AGENT_ALLOWED_ACTIONS),
             "forbidden_actions": sorted(AGENT_FORBIDDEN_ACTIONS),
-            "budgets": {
-                risk: limits.to_dict() for risk, limits in DEFAULT_BUDGET_BY_RISK.items()
-            },
+            "budgets": {risk: limits.to_dict() for risk, limits in DEFAULT_BUDGET_BY_RISK.items()},
         }
 
     async def verification_budget(
@@ -1650,9 +1636,7 @@ class VerificationService:
         for run in runs:
             if run.started_at is not None:
                 finished = now if run.completed_at is None else ensure_utc(run.completed_at)
-                runtime_seconds += max(
-                    0.0, (finished - ensure_utc(run.started_at)).total_seconds()
-                )
+                runtime_seconds += max(0.0, (finished - ensure_utc(run.started_at)).total_seconds())
             key = run.test_case_id or run.test_suite_id or run.run_id
             attempts[key] = attempts.get(key, 0) + 1
         usage = {
@@ -1705,9 +1689,7 @@ class VerificationService:
                     "allowed": list(VERIFICATION_BUDGET_DIMENSIONS),
                 },
             )
-        status = await self.verification_budget(
-            campaign_id, risk_level=risk_level, limits=limits
-        )
+        status = await self.verification_budget(campaign_id, risk_level=risk_level, limits=limits)
         problems = exhausted_dimensions(
             status["usage"],
             budget_limits_for(risk_level, limits),
@@ -1812,9 +1794,7 @@ class VerificationService:
                 RUN_TRANSITIONS, entity.execution_status, execution_status, "验证执行"
             )
             from_statuses = frozenset(
-                status
-                for status, allowed in RUN_TRANSITIONS.items()
-                if execution_status in allowed
+                status for status, allowed in RUN_TRANSITIONS.items() if execution_status in allowed
             )
             completed_at = None if execution_status == RUN_UNKNOWN else now
             moved = await repository.transition(
@@ -1856,9 +1836,7 @@ class VerificationService:
         if result_status == RESULT_FAILED and not (failure_reason or "").strip():
             raise VerificationResultInvalid("失败结果必须给出失败原因")
         if confidence_level is not None and confidence_level not in _CONFIDENCE_LEVELS:
-            raise ValidationFailed(
-                "未知置信度", details={"confidence_level": confidence_level}
-            )
+            raise ValidationFailed("未知置信度", details={"confidence_level": confidence_level})
         now = utcnow()
         async with self._database.session() as session, transaction(session):
             campaign = await CampaignRepository(session).get(campaign_id)
@@ -2230,9 +2208,7 @@ class VerificationService:
             )
         resolved_priority = (priority or default_priority(severity)).upper()
         if resolved_priority not in DEFECT_PRIORITIES:
-            raise ValidationFailed(
-                "未知缺陷优先级", details={"priority": resolved_priority}
-            )
+            raise ValidationFailed("未知缺陷优先级", details={"priority": resolved_priority})
         cleaned_title = title.strip()
         if not cleaned_title:
             raise ValidationFailed("缺陷标题不能为空")
@@ -2354,9 +2330,7 @@ class VerificationService:
             elif assigned_agent_id is not None:
                 entity.assigned_agent_id = assigned_agent_id
             if status == DEFECT_RESOLVED:
-                reference = (
-                    resolution_reference or entity.resolution_reference or ""
-                ).strip()
+                reference = (resolution_reference or entity.resolution_reference or "").strip()
                 if not reference:
                     raise VerificationStateInvalid(
                         "缺陷解决前必须提供修复验证引用",
@@ -2398,13 +2372,10 @@ class VerificationService:
                 raise ValidationFailed("未配置 ChangeSet 服务，无法按变更集分析")
             changeset = await self._changesets.get(changeset_id)
             if getattr(changeset, "project_id", None) != project_id:
-                raise ValidationFailed(
-                    "变更集不属于该项目", details={"changeset_id": changeset_id}
-                )
+                raise ValidationFailed("变更集不属于该项目", details={"changeset_id": changeset_id})
             detail = await self._changesets.detail(changeset_id)
             collected.extend(
-                ChangedFile.from_manifest_item(item)
-                for item in detail.get("manifest", [])
+                ChangedFile.from_manifest_item(item) for item in detail.get("manifest", [])
             )
         collected.extend(coerce_changed_file(item) for item in changed_files)
         deduped: dict[str, ChangedFile] = {}
@@ -2536,9 +2507,7 @@ class VerificationService:
         if not cleaned_name:
             raise ValidationFailed("门禁策略名称不能为空")
         if campaign_type is not None and campaign_type not in CAMPAIGN_TYPES:
-            raise ValidationFailed(
-                "未知验证活动类型", details={"campaign_type": campaign_type}
-            )
+            raise ValidationFailed("未知验证活动类型", details={"campaign_type": campaign_type})
         if risk_level is not None and risk_level not in RISK_LEVELS:
             raise ValidationFailed("未知风险等级", details={"risk_level": risk_level})
         selected = (
@@ -2586,16 +2555,12 @@ class VerificationService:
         async with self._database.session() as session:
             campaign = await CampaignRepository(session).get(campaign_id)
             if campaign is None or campaign.project_id != project_id:
-                raise NotFoundError(
-                    "验证活动不存在", details={"campaign_id": campaign_id}
-                )
+                raise NotFoundError("验证活动不存在", details={"campaign_id": campaign_id})
             policy = None
             if policy_id is not None:
                 policy = await QualityGatePolicyRepository(session).get(policy_id)
                 if policy is None or policy.project_id != project_id:
-                    raise NotFoundError(
-                        "质量门禁策略不存在", details={"gate_policy_id": policy_id}
-                    )
+                    raise NotFoundError("质量门禁策略不存在", details={"gate_policy_id": policy_id})
             plan = await PlanRepository(session).get_for_campaign(campaign_id)
             results = await ResultRepository(session).list_all_for_campaign(campaign_id)
             test_cases = await TestCaseRepository(session).list_active(project_id)
@@ -2624,9 +2589,7 @@ class VerificationService:
         selected_set = set(selected)
         plan_layers = set(_load(plan.verification_layers_json, [])) if plan else set()
         requirement_ids = (
-            [str(item) for item in _load(plan.requirement_ids_json, [])]
-            if plan is not None
-            else []
+            [str(item) for item in _load(plan.requirement_ids_json, [])] if plan is not None else []
         )
         covered = {link.requirement_id for link in links}
         results_by_layer: dict[str, list[str]] = {}
@@ -2650,9 +2613,7 @@ class VerificationService:
         outcomes: list[GateOutcome] = []
         for gate in QUALITY_GATES:
             if gate not in selected_set:
-                outcomes.append(
-                    GateOutcome(gate, GATE_NOT_REQUIRED, False, "不在本次门禁策略内")
-                )
+                outcomes.append(GateOutcome(gate, GATE_NOT_REQUIRED, False, "不在本次门禁策略内"))
                 continue
             if gate == GATE_REQUIREMENT_COMPLETENESS:
                 missing = [item for item in requirement_ids if item not in covered]
@@ -2690,32 +2651,20 @@ class VerificationService:
                 layer = layer_gates[gate]
                 if plan is not None and layer not in plan_layers:
                     outcomes.append(
-                        GateOutcome(
-                            gate, GATE_NOT_REQUIRED, True, "验证计划未包含该层"
-                        )
+                        GateOutcome(gate, GATE_NOT_REQUIRED, True, "验证计划未包含该层")
                     )
                 else:
-                    outcomes.append(
-                        layer_gate(gate, results_by_layer.get(layer, []))
-                    )
+                    outcomes.append(layer_gate(gate, results_by_layer.get(layer, [])))
             elif gate == GATE_EVIDENCE:
-                valid_rows = [
-                    row for row in evidence_rows if row.validity_status == EVIDENCE_VALID
-                ]
+                valid_rows = [row for row in evidence_rows if row.validity_status == EVIDENCE_VALID]
                 problems: list[str] = []
                 for row in valid_rows:
                     metadata = _load(row.metadata_json, {})
-                    problems.extend(
-                        evidence_context_problems(row.evidence_type, metadata)
-                    )
-                    problems.extend(
-                        verify_file_reference(row.source_reference, row.content_hash)
-                    )
+                    problems.extend(evidence_context_problems(row.evidence_type, metadata))
+                    problems.extend(verify_file_reference(row.source_reference, row.content_hash))
                 if not valid_rows:
                     outcomes.append(
-                        GateOutcome(
-                            gate, GATE_UNKNOWN, True, "没有可用的有效证据", {"evidence": 0}
-                        )
+                        GateOutcome(gate, GATE_UNKNOWN, True, "没有可用的有效证据", {"evidence": 0})
                     )
                 elif problems:
                     outcomes.append(
@@ -2751,29 +2700,19 @@ class VerificationService:
                             GATE_FAILED,
                             True,
                             "存在未解决的阻断性缺陷",
-                            {
-                                "defect_ids": sorted(
-                                    row.defect_id for row in blocking_defects
-                                )
-                            },
+                            {"defect_ids": sorted(row.defect_id for row in blocking_defects)},
                         )
                     )
                 else:
-                    outcomes.append(
-                        GateOutcome(gate, GATE_PASSED, True, "没有未解决的阻断性缺陷")
-                    )
+                    outcomes.append(GateOutcome(gate, GATE_PASSED, True, "没有未解决的阻断性缺陷"))
             elif gate == GATE_REGRESSION:
                 if not getattr(campaign, "changeset_id", None):
                     outcomes.append(
-                        GateOutcome(
-                            gate, GATE_NOT_REQUIRED, True, "验证活动未关联变更集"
-                        )
+                        GateOutcome(gate, GATE_NOT_REQUIRED, True, "验证活动未关联变更集")
                     )
                 elif regression_page.total == 0:
                     outcomes.append(
-                        GateOutcome(
-                            gate, GATE_FAILED, True, "存在变更集但没有回归计划"
-                        )
+                        GateOutcome(gate, GATE_FAILED, True, "存在变更集但没有回归计划")
                     )
                 else:
                     outcomes.append(
@@ -2788,14 +2727,10 @@ class VerificationService:
             elif gate == GATE_LICENSE:
                 if campaign.campaign_type == CAMPAIGN_TYPE_ASSET:
                     outcomes.append(
-                        GateOutcome(
-                            gate, GATE_UNKNOWN, True, "缺少资产与 License 校验数据源"
-                        )
+                        GateOutcome(gate, GATE_UNKNOWN, True, "缺少资产与 License 校验数据源")
                     )
                 else:
-                    outcomes.append(
-                        GateOutcome(gate, GATE_NOT_REQUIRED, False, "非资产类验证")
-                    )
+                    outcomes.append(GateOutcome(gate, GATE_NOT_REQUIRED, False, "非资产类验证"))
             elif gate == GATE_SECURITY:
                 sensitive: list[str] = []
                 if getattr(campaign, "changeset_id", None) and self._changesets is not None:
@@ -2816,9 +2751,7 @@ class VerificationService:
                         )
                     )
                 else:
-                    outcomes.append(
-                        GateOutcome(gate, GATE_NOT_REQUIRED, False, "没有安全敏感变更")
-                    )
+                    outcomes.append(GateOutcome(gate, GATE_NOT_REQUIRED, False, "没有安全敏感变更"))
 
         adjusted: list[GateOutcome] = []
         for outcome in outcomes:
@@ -2876,8 +2809,7 @@ class VerificationService:
             evaluated_at=now,
             decision=decision.to_dict(),
             gates=tuple(
-                _gate_result_view(entity, waivers.get(entity.gate_name))
-                for entity in entities
+                _gate_result_view(entity, waivers.get(entity.gate_name)) for entity in entities
             ),
         )
 
@@ -2885,21 +2817,15 @@ class VerificationService:
         async with self._database.session() as session:
             entity = await QualityGateResultRepository(session).get(gate_result_id)
             if entity is None:
-                raise NotFoundError(
-                    "门禁结果不存在", details={"gate_result_id": gate_result_id}
-                )
+                raise NotFoundError("门禁结果不存在", details={"gate_result_id": gate_result_id})
             waiver = await QualityGateWaiverRepository(session).active_for_gate(
                 entity.campaign_id, entity.gate_name
             )
         return _gate_result_view(entity, waiver)
 
-    async def list_gate_results(
-        self, project_id: str, *, campaign_id: str
-    ) -> list[GateResultView]:
+    async def list_gate_results(self, project_id: str, *, campaign_id: str) -> list[GateResultView]:
         async with self._database.session() as session:
-            rows = await QualityGateResultRepository(session).latest_for_campaign(
-                campaign_id
-            )
+            rows = await QualityGateResultRepository(session).latest_for_campaign(campaign_id)
             views: list[GateResultView] = []
             for row in rows:
                 if row.project_id != project_id:
@@ -2932,13 +2858,9 @@ class VerificationService:
             repository = QualityGateResultRepository(session)
             entity = await repository.get(gate_result_id)
             if entity is None:
-                raise NotFoundError(
-                    "门禁结果不存在", details={"gate_result_id": gate_result_id}
-                )
+                raise NotFoundError("门禁结果不存在", details={"gate_result_id": gate_result_id})
             if entity.gate_policy_id is not None:
-                policy = await QualityGatePolicyRepository(session).get(
-                    entity.gate_policy_id
-                )
+                policy = await QualityGatePolicyRepository(session).get(entity.gate_policy_id)
                 if policy is not None and not policy.waivers_allowed:
                     raise ValidationFailed(
                         "该门禁策略不允许豁免",
@@ -2985,14 +2907,10 @@ class VerificationService:
             async with self._database.session() as session:
                 campaign = await CampaignRepository(session).get(campaign_id)
             if campaign is None or campaign.project_id != project_id:
-                raise NotFoundError(
-                    "验证活动不存在", details={"campaign_id": campaign_id}
-                )
+                raise NotFoundError("验证活动不存在", details={"campaign_id": campaign_id})
         gate_view = None
         if campaign_id is not None:
-            gate_view = await self.evaluate_quality_gate(
-                project_id, campaign_id=campaign_id
-            )
+            gate_view = await self.evaluate_quality_gate(project_id, campaign_id=campaign_id)
         async with self._database.session() as session:
             counters = (
                 await ResultRepository(session).count_by_status(campaign_id)
@@ -3061,12 +2979,8 @@ class VerificationService:
         async with self._database.session() as session:
             entity = await PhaseReviewRepository(session).get(review_id)
             if entity is None:
-                raise NotFoundError(
-                    "Phase Review 不存在", details={"review_id": review_id}
-                )
-            decisions = await PhaseReviewDecisionRepository(session).list_for_review(
-                review_id
-            )
+                raise NotFoundError("Phase Review 不存在", details={"review_id": review_id})
+            decisions = await PhaseReviewDecisionRepository(session).list_for_review(review_id)
         return _phase_review_view(entity, decisions)
 
     async def list_phase_reviews(
@@ -3104,9 +3018,7 @@ class VerificationService:
             repository = PhaseReviewRepository(session)
             entity = await repository.get(review_id)
             if entity is None:
-                raise NotFoundError(
-                    "Phase Review 不存在", details={"review_id": review_id}
-                )
+                raise NotFoundError("Phase Review 不存在", details={"review_id": review_id})
             _ensure_transition(
                 PHASE_REVIEW_TRANSITIONS, entity.status, PHASE_REVIEW_SUBMITTED, "Phase Review"
             )
@@ -3133,9 +3045,7 @@ class VerificationService:
             repository = PhaseReviewRepository(session)
             entity = await repository.get(review_id)
             if entity is None:
-                raise NotFoundError(
-                    "Phase Review 不存在", details={"review_id": review_id}
-                )
+                raise NotFoundError("Phase Review 不存在", details={"review_id": review_id})
             if entity.status == PHASE_REVIEW_SUBMITTED:
                 entity.status = PHASE_REVIEW_UNDER_REVIEW
             target = PHASE_REVIEW_DECISION_STATUS[decision]
@@ -3188,8 +3098,7 @@ class VerificationService:
         failed = counts.get(RESULT_FAILED, 0)
         executed = passed + failed
         unknown = sum(
-            counts.get(status, 0)
-            for status in (RESULT_UNKNOWN, RESULT_NOT_RUN, RESULT_SKIPPED)
+            counts.get(status, 0) for status in (RESULT_UNKNOWN, RESULT_NOT_RUN, RESULT_SKIPPED)
         )
         blocking_defects = sum(
             1
@@ -3243,9 +3152,7 @@ class VerificationService:
         for run in runs:
             duration = None
             if run.started_at is not None and run.completed_at is not None:
-                duration = round(
-                    (run.completed_at - run.started_at).total_seconds(), 3
-                )
+                duration = round((run.completed_at - run.started_at).total_seconds(), 3)
             run_items.append(
                 {
                     "run_id": run.run_id,
@@ -3391,14 +3298,11 @@ class VerificationService:
         found = {row.evidence_id: row for row in rows}
         missing = [item for item in evidence_ids if item not in found]
         if missing:
-            raise VerificationEvidenceInvalid(
-                "引用的证据不存在", details={"missing": missing}
-            )
+            raise VerificationEvidenceInvalid("引用的证据不存在", details={"missing": missing})
         stale = [
             item
             for item in evidence_ids
-            if found[item].validity_status != EVIDENCE_VALID
-            or found[item].project_id != project_id
+            if found[item].validity_status != EVIDENCE_VALID or found[item].project_id != project_id
         ]
         if stale:
             raise VerificationEvidenceStale(

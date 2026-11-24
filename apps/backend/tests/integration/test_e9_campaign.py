@@ -172,9 +172,7 @@ async def test_evidence_rules_and_waiver(tmp_path: Path) -> None:
         verification = _service(app, "verification_service", VerificationService)
         project_id = await _project(app, tmp_path, "Evidence")
         requirement_id = await _requirement(app, project_id, key="REQ-ATTACK")
-        campaign = await verification.create_campaign(
-            project_id=project_id, campaign_type="TASK"
-        )
+        campaign = await verification.create_campaign(project_id=project_id, campaign_type="TASK")
 
         with pytest.raises(VerificationStateInvalid):
             await verification.start_run(campaign.campaign_id)
@@ -183,13 +181,9 @@ async def test_evidence_rules_and_waiver(tmp_path: Path) -> None:
             await verification.transition_campaign(campaign.campaign_id, "COMPLETED")
 
         with pytest.raises(VerificationPlanInvalid):
-            await verification.create_plan(
-                campaign.campaign_id, verification_layers=("UNKNOWN",)
-            )
+            await verification.create_plan(campaign.campaign_id, verification_layers=("UNKNOWN",))
 
-        await verification.create_plan(
-            campaign.campaign_id, verification_layers=("RUNTIME",)
-        )
+        await verification.create_plan(campaign.campaign_id, verification_layers=("RUNTIME",))
 
         run = await verification.start_run(campaign.campaign_id)
 

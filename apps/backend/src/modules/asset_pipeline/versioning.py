@@ -148,9 +148,7 @@ class AssetVersionService:
     ) -> AssetVersionView:
         digest = _validate_hash(content_hash)
         if source_type not in SOURCE_TYPES:
-            raise AssetStateInvalid(
-                "来源类型非法", details={"source_type": source_type}
-            )
+            raise AssetStateInvalid("来源类型非法", details={"source_type": source_type})
         metadata = metadata or {}
         if not isinstance(metadata, dict):
             raise AssetStateInvalid("版本元数据必须是对象")
@@ -237,9 +235,7 @@ class AssetVersionService:
             "metadata_added": sorted(right_keys - left_keys),
             "metadata_removed": sorted(left_keys - right_keys),
             "metadata_changed": sorted(
-                key
-                for key in left_keys & right_keys
-                if left.metadata[key] != right.metadata[key]
+                key for key in left_keys & right_keys if left.metadata[key] != right.metadata[key]
             ),
         }
 
@@ -304,7 +300,8 @@ class AssetVersionService:
     ) -> AssetVariantView:
         if variant_type not in _VARIANT_TYPES:
             raise AssetStateInvalid(
-                "变体类型非法", details={"variant_type": variant_type, "allowed": sorted(_VARIANT_TYPES)}
+                "变体类型非法",
+                details={"variant_type": variant_type, "allowed": sorted(_VARIANT_TYPES)},
             )
         clean_key = variant_key.strip()
         if not clean_key:
@@ -323,7 +320,11 @@ class AssetVersionService:
             if await variants.get_by_key(asset_id, variant_type, clean_key) is not None:
                 raise AssetStateInvalid(
                     "变体已存在",
-                    details={"asset_id": asset_id, "variant_type": variant_type, "variant_key": clean_key},
+                    details={
+                        "asset_id": asset_id,
+                        "variant_type": variant_type,
+                        "variant_key": clean_key,
+                    },
                 )
             entity = await variants.add(
                 AssetVariantModel(
@@ -374,9 +375,7 @@ class AssetVersionService:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不回滚已提交版本
             log_event(
                 self._logger,

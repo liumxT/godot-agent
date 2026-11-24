@@ -66,9 +66,7 @@ class AgentToolBindingService:
                     "冻结的工具已不存在", details={"tool_id": tool_id}
                 ) from exc
             if not tool.enabled:
-                raise AgentPermissionDenied(
-                    "冻结的工具已停用", details={"tool_id": tool_id}
-                )
+                raise AgentPermissionDenied("冻结的工具已停用", details={"tool_id": tool_id})
             tools.append(tool)
         return tuple(tools)
 
@@ -87,9 +85,7 @@ class AgentToolBindingService:
         return self.build_policy(snapshot, tools)
 
     @staticmethod
-    def build_policy(
-        snapshot: ConfigSnapshotView, tools: Sequence[ToolView]
-    ) -> AgentPolicy:
+    def build_policy(snapshot: ConfigSnapshotView, tools: Sequence[ToolView]) -> AgentPolicy:
         capabilities: set[str] = set()
         for tool in tools:
             capabilities.update(tool.required_capabilities)
@@ -134,6 +130,4 @@ class AgentToolBindingService:
             actor_id=f"agent:{instance.instance_id}",
             resource_scope=resource_scope,
         )
-        return await self._execution.execute(
-            request, agent_policy=await self.policy(snapshot)
-        )
+        return await self._execution.execute(request, agent_policy=await self.policy(snapshot))

@@ -79,7 +79,7 @@ def _write_platformer(root: Path, *, broken_player: bool = False) -> None:
     (root / "scripts" / "player.gd").write_text(player, encoding="utf-8")
     (root / "scripts" / "coin.gd").write_text("extends Area2D\n", encoding="utf-8")
     (root / "scenes" / "main.tscn").write_text(
-        '[gd_scene load_steps=2 format=3]\n\n'
+        "[gd_scene load_steps=2 format=3]\n\n"
         '[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]\n\n'
         '[node name="Main" type="Node2D"]\n\n'
         '[node name="Player" type="CharacterBody2D" parent="."]\n'
@@ -136,9 +136,7 @@ async def _requirement(app, project_id: str, key: str, title: str) -> str:
 async def test_platformer_demo_full_verification_flow(tmp_path: Path) -> None:
     async with _running(tmp_path) as app:
         verification = _service(app, "verification_service", VerificationService)
-        orchestrator = _service(
-            app, "verification_orchestrator", VerificationOrchestrator
-        )
+        orchestrator = _service(app, "verification_orchestrator", VerificationOrchestrator)
         project_id, root = await _project(app, tmp_path)
 
         req_start = await _requirement(app, project_id, "REQ-START", "启动主场景")
@@ -320,9 +318,7 @@ async def test_platformer_demo_full_verification_flow(tmp_path: Path) -> None:
         assert review.status == "DRAFT"
         assert "确认未执行测试是否可接受" in review.summary["user_confirmations"]
 
-        review = await verification.submit_phase_review(
-            review.review_id, submitted_by="agent_qa"
-        )
+        review = await verification.submit_phase_review(review.review_id, submitted_by="agent_qa")
         assert review.status == "SUBMITTED"
         review = await verification.decide_phase_review(
             review.review_id,
@@ -347,9 +343,7 @@ async def test_platformer_demo_full_verification_flow(tmp_path: Path) -> None:
 async def test_platformer_defect_fix_and_regression_loop(tmp_path: Path) -> None:
     async with _running(tmp_path) as app:
         verification = _service(app, "verification_service", VerificationService)
-        orchestrator = _service(
-            app, "verification_orchestrator", VerificationOrchestrator
-        )
+        orchestrator = _service(app, "verification_orchestrator", VerificationOrchestrator)
         project_id, root = await _project(app, tmp_path, broken_player=True)
 
         req_move = await _requirement(app, project_id, "REQ-MOVE", "玩家左右移动")
@@ -389,9 +383,7 @@ async def test_platformer_defect_fix_and_regression_loop(tmp_path: Path) -> None
         assert broken_report.summary["FAILED"] == 1
 
         results = await verification.list_results(campaign_id=campaign.campaign_id)
-        failed_result = next(
-            item for item in results["items"] if item.result_status == "FAILED"
-        )
+        failed_result = next(item for item in results["items"] if item.result_status == "FAILED")
 
         # 缺陷发现 → 分派 → 修复 → 回归 → 关闭
         defect = await verification.create_defect(
@@ -410,9 +402,7 @@ async def test_platformer_defect_fix_and_regression_loop(tmp_path: Path) -> None
 
         # 修复脚本并执行回归
         _write_platformer(root, broken_player=False)
-        impact = await verification.analyze_impact(
-            project_id, changed_files=("scripts/player.gd",)
-        )
+        impact = await verification.analyze_impact(project_id, changed_files=("scripts/player.gd",))
         # main.tscn 反向依赖 player.gd，影响分析必须升级为依赖回归
         assert impact.strategy == "DEPENDENCY"
         assert "STATIC_ANALYSIS" in impact.required_checks

@@ -60,9 +60,7 @@ def _routing(app) -> ModelRoutingService:
 
 
 def _configuration(app) -> ProviderConfigurationService:
-    return app.state.services.get(
-        "provider_configuration_service", ProviderConfigurationService
-    )
+    return app.state.services.get("provider_configuration_service", ProviderConfigurationService)
 
 
 def _supported(evidence: str = "official-docs") -> CapabilitySetting:
@@ -88,9 +86,7 @@ async def test_registry_registers_models_with_versioned_prices(tmp_path: Path) -
             capabilities={
                 CAPABILITY_TEXT_INPUT: _supported(),
                 CAPABILITY_STREAMING: _supported("provider-probe"),
-                CAPABILITY_TOOL_CALLING: CapabilitySetting(
-                    support_status=CAPABILITY_UNKNOWN
-                ),
+                CAPABILITY_TOOL_CALLING: CapabilitySetting(support_status=CAPABILITY_UNKNOWN),
             },
             input_price="1.5",
             output_price="6",
@@ -174,9 +170,7 @@ async def test_provider_configuration_versions_and_secret_handling(tmp_path: Pat
             )
         assert len(await configuration.list_versions(provider.provider_id)) == 2
 
-        local = await registry.register_provider(
-            name="ollama", provider_type=PROVIDER_TYPE_LOCAL
-        )
+        local = await registry.register_provider(name="ollama", provider_type=PROVIDER_TYPE_LOCAL)
         local_config = await configuration.save(
             local.provider_id, endpoint="http://127.0.0.1:11434"
         )
@@ -270,9 +264,7 @@ async def test_routing_excludes_disabled_provider_and_oversized_context(
     async with _running(tmp_path) as app:
         registry = _registry(app)
         routing = _routing(app)
-        provider = await registry.register_provider(
-            name="local", provider_type=PROVIDER_TYPE_LOCAL
-        )
+        provider = await registry.register_provider(name="local", provider_type=PROVIDER_TYPE_LOCAL)
         model = await registry.register_model(
             provider_id=provider.provider_id,
             model_key="local-small",
@@ -298,7 +290,5 @@ async def test_routing_excludes_disabled_provider_and_oversized_context(
         assert "PROVIDER_DISABLED" in exc_info.value.details["reasons"]
 
         await registry.set_provider_status(provider.provider_id, "ENABLED")
-        selected = await routing.select(
-            ModelRoutingRequest(requested_model=model.model_id)
-        )
+        selected = await routing.select(ModelRoutingRequest(requested_model=model.model_id))
         assert selected.selected_model_id == model.model_id

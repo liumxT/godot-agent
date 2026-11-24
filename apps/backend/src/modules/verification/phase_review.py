@@ -82,23 +82,19 @@ def build_review_summary(
     counts = dict(result_counts or {})
     defect_items = list(defects)
     blocking = [
-        item
-        for item in defect_items
-        if str(item.get("severity")) in {"BLOCKER", "CRITICAL"}
+        item for item in defect_items if str(item.get("severity")) in {"BLOCKER", "CRITICAL"}
     ]
     passed = counts.get(RESULT_PASSED, 0)
     failed = counts.get(RESULT_FAILED, 0)
     unknown = sum(
-        counts.get(status, 0)
-        for status in (RESULT_UNKNOWN, RESULT_NOT_RUN, RESULT_SKIPPED)
+        counts.get(status, 0) for status in (RESULT_UNKNOWN, RESULT_NOT_RUN, RESULT_SKIPPED)
     )
     waived = counts.get(RESULT_WAIVED, 0)
     executed = passed + failed
     risks: list[str] = []
     for item in blocking:
         risks.append(
-            f"阻断缺陷：{item.get('title') or item.get('defect_id')} "
-            f"({item.get('severity')})"
+            f"阻断缺陷：{item.get('title') or item.get('defect_id')} ({item.get('severity')})"
         )
     if gate_details:
         for gate in gate_details.get("gates", []):

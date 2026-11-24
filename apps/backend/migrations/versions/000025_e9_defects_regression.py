@@ -116,10 +116,6 @@ def downgrade() -> None:
 
     op.drop_index("ix_verification_defects_changeset", table_name="verification_defects")
     op.drop_index("ix_verification_defects_requirement", table_name="verification_defects")
-    op.drop_index(
-        "ix_verification_defects_project_severity", table_name="verification_defects"
-    )
-    op.drop_index(
-        "ix_verification_defects_project_status", table_name="verification_defects"
-    )
+    op.drop_index("ix_verification_defects_project_severity", table_name="verification_defects")
+    op.drop_index("ix_verification_defects_project_status", table_name="verification_defects")
     op.drop_table("verification_defects")

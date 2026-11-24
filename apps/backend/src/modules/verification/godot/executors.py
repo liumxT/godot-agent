@@ -120,16 +120,12 @@ class RuntimeTestExecutor:
         evidence = EvidenceDraft(
             evidence_type="RUNTIME_TRACE",
             source_type="GODOT_RUNTIME",
-            source_reference=(
-                f"runtime://{self._environment.environment_id}/{self._spec.test_id}"
-            ),
+            source_reference=(f"runtime://{self._environment.environment_id}/{self._spec.test_id}"),
             content_hash=execution.content_hash(),
             metadata={
                 "project_revision": self._environment.project_revision,
                 "runtime_instance_id": (
-                    execution.runtime_instance_id
-                    or self._environment.runtime_instance_id
-                    or ""
+                    execution.runtime_instance_id or self._environment.runtime_instance_id or ""
                 ),
                 "report": execution.to_report(),
             },

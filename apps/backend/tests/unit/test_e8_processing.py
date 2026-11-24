@@ -53,9 +53,7 @@ def _context() -> ProcessingContext:
 
 
 def _payload(data: bytes, image_format: str = "png") -> ProcessingPayload:
-    return ProcessingPayload(
-        (ProcessingArtifact(data=data, format=image_format),)
-    )
+    return ProcessingPayload((ProcessingArtifact(data=data, format=image_format),))
 
 
 def _png(
@@ -162,9 +160,7 @@ def test_processing_graph_requires_single_terminal_and_rejects_cycles() -> None:
 
 
 def test_image_decode_and_resize_report_metadata() -> None:
-    decoded = ImageDecodeProcessor().process(
-        _payload(_png(8, 4)), {}, _context()
-    )
+    decoded = ImageDecodeProcessor().process(_payload(_png(8, 4)), {}, _context())
     assert decoded.artifacts[0].metadata["image"]["width"] == 8
 
     resized = ImageResizeProcessor().process(
@@ -179,14 +175,10 @@ def test_image_decode_and_resize_report_metadata() -> None:
 
 
 def test_image_crop_validates_bounds() -> None:
-    cropped = ImageCropProcessor().process(
-        _payload(_png(8, 8)), {"box": [1, 1, 5, 5]}, _context()
-    )
+    cropped = ImageCropProcessor().process(_payload(_png(8, 8)), {"box": [1, 1, 5, 5]}, _context())
     assert Image.open(io.BytesIO(cropped.artifacts[0].data)).size == (4, 4)
     with pytest.raises(AssetProcessingInvalid):
-        ImageCropProcessor().process(
-            _payload(_png(8, 8)), {"box": [0, 0, 20, 20]}, _context()
-        )
+        ImageCropProcessor().process(_payload(_png(8, 8)), {"box": [0, 0, 20, 20]}, _context())
 
 
 def test_image_background_remove_and_alpha_validate() -> None:
@@ -224,14 +216,10 @@ def test_image_format_color_and_compress() -> None:
     )
     assert compressed.artifacts[0].metadata["format"] == "webp"
 
-    scaled = ImagePixelArtScaleProcessor().process(
-        _payload(_png(4, 4)), {"scale": 3}, _context()
-    )
+    scaled = ImagePixelArtScaleProcessor().process(_payload(_png(4, 4)), {"scale": 3}, _context())
     assert Image.open(io.BytesIO(scaled.artifacts[0].data)).size == (12, 12)
 
-    metadata = ImageMetadataExtractProcessor().process(
-        _payload(_png(4, 4)), {}, _context()
-    )
+    metadata = ImageMetadataExtractProcessor().process(_payload(_png(4, 4)), {}, _context())
     assert metadata.artifacts[0].metadata["image"]["frames"] == 1
 
 
@@ -276,9 +264,7 @@ def test_image_sprite_sheet_slice_and_atlas_pack() -> None:
 
 def test_audio_processors_operate_on_pcm_wav() -> None:
     source = _payload(_wav(), "wav")
-    resampled = AudioResampleProcessor().process(
-        source, {"sample_rate": 4000}, _context()
-    )
+    resampled = AudioResampleProcessor().process(source, {"sample_rate": 4000}, _context())
     metrics = _wav_metrics(resampled.artifacts[0].data)
     assert metrics["sample_rate"] == 4000
     assert 0 < metrics["frames"] < 40
@@ -344,6 +330,4 @@ def test_model3d_inspection_reports_geometry_and_materials() -> None:
     assert materials.artifacts[0].metadata["materials"]["material_count"] == 0
 
     with pytest.raises(AssetProcessingInvalid):
-        MeshInspectionProcessor().process(
-            _payload(b"not a model", "fbx"), {}, _context()
-        )
+        MeshInspectionProcessor().process(_payload(b"not a model", "fbx"), {}, _context())

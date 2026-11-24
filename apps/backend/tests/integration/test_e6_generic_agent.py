@@ -77,18 +77,14 @@ def _service(app, name: str, expected):
 async def _session(app) -> tuple[str, str]:
     clients = _service(app, "client_service", ClientService)
     registered = await clients.register(client_type="godot_editor", client_name="Editor")
-    issued = await _service(app, "session_service", SessionService).create(
-        registered.client_id
-    )
+    issued = await _service(app, "session_service", SessionService).create(registered.client_id)
     return issued.session.session_id, registered.client_id
 
 
 async def test_generic_agent_is_idempotent_and_completes_task(tmp_path: Path) -> None:
     async with _running(tmp_path) as app:
         registry = _service(app, "model_registry_service", ModelRegistryService)
-        provider = await registry.register_provider(
-            name="fake-provider", provider_type="OPENAI"
-        )
+        provider = await registry.register_provider(name="fake-provider", provider_type="OPENAI")
         await registry.register_model(
             provider_id=provider.provider_id,
             model_key="fake-1",
@@ -96,16 +92,12 @@ async def test_generic_agent_is_idempotent_and_completes_task(tmp_path: Path) ->
             context_window=16000,
             max_output_tokens=1024,
             capabilities={
-                name: CapabilitySetting(
-                    support_status="SUPPORTED", evidence_source="test-fixture"
-                )
+                name: CapabilitySetting(support_status="SUPPORTED", evidence_source="test-fixture")
                 for name in MODEL_CAPABILITIES
             },
         )
 
-        definitions = _service(
-            app, "agent_definition_registry_service", DefinitionRegistryService
-        )
+        definitions = _service(app, "agent_definition_registry_service", DefinitionRegistryService)
         generic = _service(app, "generic_agent_service", GenericAgentService)
         first = await generic.ensure()
         second = await generic.ensure()
@@ -153,9 +145,7 @@ async def test_generic_agent_is_idempotent_and_completes_task(tmp_path: Path) ->
                     {
                         "action": "CREATE_PLAN",
                         "objective": "读取并总结玩家脚本",
-                        "steps": [
-                            {"type": "TOOL_EXECUTION", "description": "读取 player.gd"}
-                        ],
+                        "steps": [{"type": "TOOL_EXECUTION", "description": "读取 player.gd"}],
                     }
                 ),
                 json.dumps(
@@ -172,22 +162,16 @@ async def test_generic_agent_is_idempotent_and_completes_task(tmp_path: Path) ->
         loop = AgentExecutionLoop(
             instances=instances,
             lifecycle=services.get("agent_lifecycle_service", AgentLifecycleService),
-            executions=services.get(
-                "agent_execution_service", AgentExecutionService
-            ),
+            executions=services.get("agent_execution_service", AgentExecutionService),
             events=services.get("agent_event_service", AgentEventService),
             planning=services.get("agent_planning_service", PlanningService),
-            context=services.get(
-                "agent_context_binding_service", AgentContextBindingService
-            ),
+            context=services.get("agent_context_binding_service", AgentContextBindingService),
             models=AgentModelBindingService(
                 definitions=definitions,
                 routing=services.get("model_routing_service", ModelRoutingService),
                 gateway=gateway,
             ),
-            tools=services.get(
-                "agent_tool_binding_service", AgentToolBindingService
-            ),
+            tools=services.get("agent_tool_binding_service", AgentToolBindingService),
             budget=services.get("agent_budget_manager", BudgetManager),
             checkpoints=services.get("agent_checkpoint_service", CheckpointService),
         )

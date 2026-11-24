@@ -82,18 +82,14 @@ async def _seed(app, tmp_path: Path):
     projects = app.state.services.get("project_registry_service", ProjectRegistryService)
     project = await projects.register(project_root=str(root), name="E5 Demo")
     registry = _registry(app)
-    provider = await registry.register_provider(
-        name="local-llm", provider_type=PROVIDER_TYPE_LOCAL
-    )
+    provider = await registry.register_provider(name="local-llm", provider_type=PROVIDER_TYPE_LOCAL)
     configuration = app.state.services.get(
         "provider_configuration_service", ProviderConfigurationService
     )
     await configuration.save(
         provider.provider_id, endpoint="http://127.0.0.1:11434/v1", timeout_seconds=5
     )
-    supported = CapabilitySetting(
-        support_status=CAPABILITY_SUPPORTED, evidence_source="test"
-    )
+    supported = CapabilitySetting(support_status=CAPABILITY_SUPPORTED, evidence_source="test")
     model = await registry.register_model(
         provider_id=provider.provider_id,
         model_key="demo-model",

@@ -103,18 +103,14 @@ async def _register_model(app) -> None:
 async def _session(app) -> tuple[str, str]:
     clients = _service(app, "client_service", ClientService)
     registered = await clients.register(client_type="godot_editor", client_name="Editor")
-    issued = await _service(app, "session_service", SessionService).create(
-        registered.client_id
-    )
+    issued = await _service(app, "session_service", SessionService).create(registered.client_id)
     return issued.session.session_id, registered.client_id
 
 
 async def _prepare(app, tmp_path: Path, *, name: str, tools: tuple[str, ...]):
     projects = _service(app, "project_registry_service", ProjectRegistryService)
     prompts = _service(app, "prompt_service", PromptService)
-    definitions = _service(
-        app, "agent_definition_registry_service", DefinitionRegistryService
-    )
+    definitions = _service(app, "agent_definition_registry_service", DefinitionRegistryService)
     tasks = _service(app, "task_service", TaskService)
     attempts = _service(app, "task_attempt_service", AttemptService)
     instances = _service(app, "agent_instance_service", AgentInstanceService)
@@ -169,9 +165,7 @@ def _loop(app, gateway) -> AgentExecutionLoop:
         executions=services.get("agent_execution_service", AgentExecutionService),
         events=services.get("agent_event_service", AgentEventService),
         planning=services.get("agent_planning_service", PlanningService),
-        context=services.get(
-            "agent_context_binding_service", AgentContextBindingService
-        ),
+        context=services.get("agent_context_binding_service", AgentContextBindingService),
         models=AgentModelBindingService(
             definitions=services.get(
                 "agent_definition_registry_service", DefinitionRegistryService
@@ -257,9 +251,9 @@ async def test_tool_outside_whitelist_is_rejected_without_execution(tmp_path: Pa
 
         assert result.status == "FAILED"
         assert result.reason == "AGENT_PERMISSION_DENIED"
-        instance = await _service(
-            app, "agent_instance_service", AgentInstanceService
-        ).get(ctx["instance"].instance_id)
+        instance = await _service(app, "agent_instance_service", AgentInstanceService).get(
+            ctx["instance"].instance_id
+        )
         assert instance.status == "FAILED"
         events = await _service(app, "agent_event_service", AgentEventService).list_after(
             ctx["instance"].instance_id
@@ -294,9 +288,9 @@ async def test_hidden_reasoning_is_not_persisted(tmp_path: Path) -> None:
         )
         assert "SECRET_CHAIN" not in event_dump
 
-        trace = await _service(
-            app, "agent_observability_service", AgentObservabilityService
-        ).trace(result.execution_id)
+        trace = await _service(app, "agent_observability_service", AgentObservabilityService).trace(
+            result.execution_id
+        )
         assert "SECRET_CHAIN" not in json.dumps(trace, ensure_ascii=False, default=str)
 
 
@@ -310,7 +304,7 @@ async def test_model_unknown_marks_unknown_without_retry(tmp_path: Path) -> None
         assert result.status == "UNKNOWN"
         assert result.reason == "MODEL_REQUEST_UNKNOWN"
         assert len(gateway.requests) == 1
-        instance = await _service(
-            app, "agent_instance_service", AgentInstanceService
-        ).get(ctx["instance"].instance_id)
+        instance = await _service(app, "agent_instance_service", AgentInstanceService).get(
+            ctx["instance"].instance_id
+        )
         assert instance.status == "UNKNOWN"

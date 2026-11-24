@@ -1,4 +1,4 @@
-﻿"""迁移服务测试（E1-T04-UT-001…005 / IT-001）。"""
+"""迁移服务测试（E1-T04-UT-001…005 / IT-001）。"""
 
 from __future__ import annotations
 

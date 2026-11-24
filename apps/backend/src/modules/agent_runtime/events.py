@@ -82,9 +82,7 @@ class AgentEventService:
         now: datetime | None = None,
     ) -> AgentEventView:
         if event_type not in AGENT_EVENT_TYPES:
-            raise ValidationFailed(
-                "未知的 Agent 事件类型", details={"event_type": event_type}
-            )
+            raise ValidationFailed("未知的 Agent 事件类型", details={"event_type": event_type})
         resolved_now = now or self._clock()
         repository = AgentEventRepository(session)
         sequence = await repository.next_sequence(instance_id)

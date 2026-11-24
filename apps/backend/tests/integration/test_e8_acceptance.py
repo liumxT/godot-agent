@@ -92,9 +92,7 @@ async def _project(app, tmp_path: Path, *, name: str = "Platformer Demo"):
     root = tmp_path / "game"
     root.mkdir(exist_ok=True)
     (root / "project.godot").write_text("[application]\n", encoding="utf-8")
-    projects = app.state.services.get(
-        "project_registry_service", ProjectRegistryService
-    )
+    projects = app.state.services.get("project_registry_service", ProjectRegistryService)
     return await projects.register(project_root=str(root), name=name)
 
 
@@ -227,9 +225,7 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
     async with _running(tmp_path) as app:
         project = await _project(app, tmp_path)
         asset = await _asset(app, project.project_id)
-        version = await _seed_version(
-            app, project.project_id, asset.asset_id, _png()
-        )
+        version = await _seed_version(app, project.project_id, asset.asset_id, _png())
 
         briefs = app.state.services.get("asset_brief_service", AssetBriefService)
         brief = await briefs.create(
@@ -254,9 +250,7 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
         approved_brief = await briefs.approve(brief.brief_id)
         assert approved_brief.status == "APPROVED"
 
-        provenance = app.state.services.get(
-            "asset_provenance_service", ProvenanceService
-        )
+        provenance = app.state.services.get("asset_provenance_service", ProvenanceService)
         await provenance.record(
             ProvenanceRequest(
                 project_id=project.project_id,
@@ -273,9 +267,7 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
             )
         )
 
-        processing = app.state.services.get(
-            "asset_processing_pipeline", ProcessingPipelineService
-        )
+        processing = app.state.services.get("asset_processing_pipeline", ProcessingPipelineService)
         job = await processing.submit(
             ProcessingRequest(
                 project_id=project.project_id,
@@ -303,25 +295,17 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
         processed_id = job.output_version_id
 
         async with _database(app).session() as session:
-            objects = await AssetStorageObjectRepository(session).list_for_version(
-                processed_id
-            )
+            objects = await AssetStorageObjectRepository(session).list_for_version(processed_id)
         assert len(objects) == 1
         output = objects[0]
-        processed_bytes = app.state.services.get(
-            "asset_storage", AssetStorage
-        ).read_bytes(project.project_id, output.storage_area, output.relative_path)
+        processed_bytes = app.state.services.get("asset_storage", AssetStorage).read_bytes(
+            project.project_id, output.storage_area, output.relative_path
+        )
 
-        quality = app.state.services.get(
-            "asset_quality_control", QualityControlService
-        )
-        machine = await quality.run_machine_review(
-            project.project_id, asset.asset_id, processed_id
-        )
+        quality = app.state.services.get("asset_quality_control", QualityControlService)
+        machine = await quality.run_machine_review(project.project_id, asset.asset_id, processed_id)
         assert machine.review_status == "MACHINE_PASSED"
-        human = await quality.request_human_review(
-            project.project_id, asset.asset_id, processed_id
-        )
+        human = await quality.request_human_review(project.project_id, asset.asset_id, processed_id)
         final_review = await quality.record_human_decision(
             project.project_id,
             asset.asset_id,
@@ -357,9 +341,7 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
         )
         assert verified.verification_status == "VERIFIED"
 
-        dependencies = app.state.services.get(
-            "asset_dependency_service", AssetDependencyService
-        )
+        dependencies = app.state.services.get("asset_dependency_service", AssetDependencyService)
         await dependencies.record(
             project.project_id,
             processed_id,
@@ -374,9 +356,7 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
             ],
         )
 
-        delivery_service = app.state.services.get(
-            "asset_delivery_service", AssetDeliveryService
-        )
+        delivery_service = app.state.services.get("asset_delivery_service", AssetDeliveryService)
         delivery = await delivery_service.prepare(
             DeliveryRequest(
                 project_id=project.project_id,
@@ -388,9 +368,7 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
             )
         )
         approval = await delivery_service.submit_for_approval(delivery.delivery_id)
-        await delivery_service.approve(
-            delivery.delivery_id, approval.approval_id, actor_id="lead"
-        )
+        await delivery_service.approve(delivery.delivery_id, approval.approval_id, actor_id="lead")
         await delivery_service.begin_apply(
             delivery.delivery_id, approval.approval_id, actor_id="lead"
         )
@@ -402,9 +380,7 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
         imports = GodotImportService(
             _database(app),
             hub=_FakeHub(_FakeConnection([_imported()])),
-            projects=app.state.services.get(
-                "project_registry_service", ProjectRegistryService
-            ),
+            projects=app.state.services.get("project_registry_service", ProjectRegistryService),
         )
         import_view = await imports.submit(
             ImportRequest(
@@ -419,23 +395,15 @@ async def test_platformer_demo_full_asset_pipeline_closure(tmp_path: Path) -> No
         assert import_view.import_status == IMPORT_IMPORTED
         assert import_view.godot_uid == "uid://e8m8player"
 
-        await delivery_service.mark_importing(
-            delivery.delivery_id, import_view.import_job_id
-        )
+        await delivery_service.mark_importing(delivery.delivery_id, import_view.import_job_id)
         delivered = await delivery_service.mark_delivered(delivery.delivery_id)
         assert delivered.delivery_status == DELIVERY_DELIVERED
         assert delivered.delivered_at is not None
 
-        impact = await dependencies.replacement_impact(
-            project.project_id, processed_id
-        )
-        assert [item.source_reference for item in impact.references] == [
-            "res://scenes/player.tscn"
-        ]
+        impact = await dependencies.replacement_impact(project.project_id, processed_id)
+        assert [item.source_reference for item in impact.references] == ["res://scenes/player.tscn"]
 
-        dashboard = app.state.services.get(
-            "asset_dashboard_service", AssetDashboardService
-        )
+        dashboard = app.state.services.get("asset_dashboard_service", AssetDashboardService)
         snapshot = await dashboard.snapshot(project.project_id)
         row = next(item for item in snapshot["items"] if item["asset_id"] == asset.asset_id)
         assert row["quality_status"] == QUALITY_HUMAN_APPROVED
@@ -454,31 +422,21 @@ async def test_security_path_traversal_and_cross_project_isolation(
     async with _running(tmp_path) as app:
         project = await _project(app, tmp_path)
         asset = await _asset(app, project.project_id)
-        version = await _seed_version(
-            app, project.project_id, asset.asset_id, _png()
-        )
+        version = await _seed_version(app, project.project_id, asset.asset_id, _png())
         storage = app.state.services.get("asset_storage", AssetStorage)
         with pytest.raises(AssetPathInvalid):
-            storage.write_bytes(
-                project.project_id, STORAGE_GENERATED, "../escape.png", _png()
-            )
+            storage.write_bytes(project.project_id, STORAGE_GENERATED, "../escape.png", _png())
 
         other_root = tmp_path / "other"
         other_root.mkdir()
         (other_root / "project.godot").write_text("[application]\n", encoding="utf-8")
-        projects = app.state.services.get(
-            "project_registry_service", ProjectRegistryService
-        )
+        projects = app.state.services.get("project_registry_service", ProjectRegistryService)
         other = await projects.register(project_root=str(other_root), name="Other")
         licenses = app.state.services.get("asset_license_service", LicenseService)
         with pytest.raises(NotFoundError):
-            await licenses.latest_for_version(
-                other.project_id, version.version_id
-            )
+            await licenses.latest_for_version(other.project_id, version.version_id)
 
-        delivery = app.state.services.get(
-            "asset_delivery_service", AssetDeliveryService
-        )
+        delivery = app.state.services.get("asset_delivery_service", AssetDeliveryService)
         with pytest.raises(NotFoundError):
             await delivery.prepare(
                 DeliveryRequest(
@@ -498,9 +456,7 @@ async def test_fault_injection_license_expiry_and_unknown_processing(
     async with _running(tmp_path) as app:
         project = await _project(app, tmp_path)
         asset = await _asset(app, project.project_id)
-        version = await _seed_version(
-            app, project.project_id, asset.asset_id, _png()
-        )
+        version = await _seed_version(app, project.project_id, asset.asset_id, _png())
         licenses = app.state.services.get("asset_license_service", LicenseService)
         expired = await licenses.record(
             LicenseRequest(
@@ -511,17 +467,13 @@ async def test_fault_injection_license_expiry_and_unknown_processing(
                 source_type=SOURCE_AI_GENERATED,
                 expiration_at=utcnow() - timedelta(days=1),
                 evidence=[
-                    LicenseEvidenceInput(
-                        evidence_type="LICENSE_FILE", reference="legal/old.pdf"
-                    )
+                    LicenseEvidenceInput(evidence_type="LICENSE_FILE", reference="legal/old.pdf")
                 ],
             )
         )
         assert expired.verification_status in {LICENSE_EXPIRED, "PENDING_REVIEW"}
         with pytest.raises(AssetDeliveryBlocked):
-            await licenses.check_deliverable(
-                project.project_id, version.version_id
-            )
+            await licenses.check_deliverable(project.project_id, version.version_id)
 
         now = utcnow()
         async with _database(app).session() as session, transaction(session):
@@ -541,12 +493,8 @@ async def test_fault_injection_license_expiry_and_unknown_processing(
                     completed_at=None,
                 )
             )
-        recovery = app.state.services.get(
-            "asset_recovery_service", AssetRecoveryService
-        )
+        recovery = app.state.services.get("asset_recovery_service", AssetRecoveryService)
         inventory = await recovery.list_unknown(project.project_id)
         assert inventory.processing_job_ids == ("apj_e8m8_unknown",)
         with pytest.raises(AssetRecoveryRequired):
-            await recovery.resolve_processing(
-                project.project_id, "apj_e8m8_unknown"
-            )
+            await recovery.resolve_processing(project.project_id, "apj_e8m8_unknown")

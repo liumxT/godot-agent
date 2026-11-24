@@ -91,9 +91,7 @@ async def _project(app, tmp_path: Path, *, name: str = "E8 M5"):
     root = tmp_path / "game"
     root.mkdir(exist_ok=True)
     (root / "project.godot").write_text("[application]\n", encoding="utf-8")
-    projects = app.state.services.get(
-        "project_registry_service", ProjectRegistryService
-    )
+    projects = app.state.services.get("project_registry_service", ProjectRegistryService)
     return await projects.register(project_root=str(root), name=name)
 
 
@@ -117,9 +115,7 @@ async def _seed_version(
     filename: str = "hero.png",
 ):
     storage = app.state.services.get("asset_storage", AssetStorage)
-    versions = app.state.services.get(
-        "asset_version_service", AssetVersionService
-    )
+    versions = app.state.services.get("asset_version_service", AssetVersionService)
     relative_path = f"{asset_id}/{filename}"
     written = storage.write_bytes(project_id, STORAGE_GENERATED, relative_path, data)
     version = await versions.create_version(
@@ -241,9 +237,7 @@ def _import_service(app, connection) -> GodotImportService:
     return GodotImportService(
         _database(app),
         hub=_FakeHub(connection),
-        projects=app.state.services.get(
-            "project_registry_service", ProjectRegistryService
-        ),
+        projects=app.state.services.get("project_registry_service", ProjectRegistryService),
     )
 
 
@@ -426,9 +420,7 @@ async def test_import_requires_connected_editor_session(tmp_path: Path) -> None:
 
 
 def _provenance(app) -> ProvenanceService:
-    return app.state.services.get(
-        "asset_provenance_service", ProvenanceService
-    )
+    return app.state.services.get("asset_provenance_service", ProvenanceService)
 
 
 def _license(app) -> LicenseService:
@@ -499,9 +491,7 @@ async def test_provenance_record_is_unique_and_traceable(tmp_path: Path) -> None
             )
         )
         with pytest.raises(AssetStateInvalid):
-            await service.assert_complete(
-                project.project_id, unknown_version.version_id
-            )
+            await service.assert_complete(project.project_id, unknown_version.version_id)
 
 
 def _processing_graph() -> dict:
@@ -543,9 +533,7 @@ async def test_processing_version_records_derived_provenance(tmp_path: Path) -> 
                 output_hashes=[version.content_hash],
             )
         )
-        pipeline = app.state.services.get(
-            "asset_processing_pipeline", ProcessingPipelineService
-        )
+        pipeline = app.state.services.get("asset_processing_pipeline", ProcessingPipelineService)
 
         output = await pipeline.submit(
             ProcessingRequest(
@@ -658,9 +646,7 @@ async def test_license_unknown_blocks_delivery_until_manual_verification(
                 version.version_id,
                 require_redistribution=True,
             )
-        delivered = await service.check_deliverable(
-            project.project_id, version.version_id
-        )
+        delivered = await service.check_deliverable(project.project_id, version.version_id)
         assert delivered.license_id == verified.license_id
 
 

@@ -77,9 +77,7 @@ class DecompositionPlan:
                     reasons.append(f"UNKNOWN_DEPENDENCY:{key}->{dependency}")
 
         if reasons:
-            raise AgentDecompositionInvalid(
-                "任务分解不合法", details={"reasons": reasons}
-            )
+            raise AgentDecompositionInvalid("任务分解不合法", details={"reasons": reasons})
 
         order = _topological_order(by_key)
         if order is None:
@@ -96,9 +94,7 @@ class DecompositionPlan:
         return tuple(by_key[key] for key in order)
 
 
-def _uncovered_criteria(
-    criteria: tuple[str, ...], subtasks
-) -> list[str]:
+def _uncovered_criteria(criteria: tuple[str, ...], subtasks) -> list[str]:
     if not criteria:
         return []
     covered: set[str] = set()

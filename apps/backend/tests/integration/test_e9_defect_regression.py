@@ -136,9 +136,7 @@ async def test_impact_analysis_from_changeset(tmp_path: Path) -> None:
 
         (root / "scripts").mkdir()
         (root / "scenes").mkdir()
-        (root / "scripts" / "player.gd").write_text(
-            "extends CharacterBody2D\n", encoding="utf-8"
-        )
+        (root / "scripts" / "player.gd").write_text("extends CharacterBody2D\n", encoding="utf-8")
         (root / "scenes" / "main.tscn").write_text(
             '[ext_resource path="res://scripts/player.gd" type="Script" id="1"]\n',
             encoding="utf-8",

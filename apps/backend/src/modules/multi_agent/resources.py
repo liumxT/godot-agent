@@ -309,7 +309,10 @@ class ParallelExecutionManager:
                 if row.status != ASSIGNMENT_BLOCKED:
                     continue
                 links = await dependencies.list_for_assignment(row.assignment_id)
-                if all(statuses.get(link.depends_on_assignment_id) == ASSIGNMENT_COMPLETED for link in links):
+                if all(
+                    statuses.get(link.depends_on_assignment_id) == ASSIGNMENT_COMPLETED
+                    for link in links
+                ):
                     promotable.append(row.assignment_id)
         promoted: list[AssignmentView] = []
         for assignment_id in promotable:
@@ -339,20 +342,14 @@ class ParallelExecutionManager:
             (row for row in rows if row.status == ASSIGNMENT_READY),
             key=lambda row: (-row.priority, row.assigned_at),
         )
-        resource_map = {
-            key: set(value)
-            for key, value in (resources_by_assignment or {}).items()
-        }
+        resource_map = {key: set(value) for key, value in (resources_by_assignment or {}).items()}
         batches: list[ParallelBatch] = []
         deferred: list[str] = []
         current: list[AssignmentView] = []
         occupied: set[str] = set()
         for row in ready:
             resources = resource_map.get(row.assignment_id, set())
-            if current and (
-                len(current) >= max_parallel
-                or occupied & resources
-            ):
+            if current and (len(current) >= max_parallel or occupied & resources):
                 batches.append(ParallelBatch(assignments=tuple(current)))
                 current = []
                 occupied = set()

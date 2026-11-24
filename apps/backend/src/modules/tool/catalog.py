@@ -15,7 +15,9 @@ from modules.tool.registry import ToolRegistryService
 GENERIC_OUTPUT: dict[str, Any] = {"type": "object"}
 
 
-def _obj(properties: dict[str, Any] | None = None, required: tuple[str, ...] = ()) -> dict[str, Any]:
+def _obj(
+    properties: dict[str, Any] | None = None, required: tuple[str, ...] = ()
+) -> dict[str, Any]:
     schema: dict[str, Any] = {
         "type": "object",
         "additionalProperties": False,
@@ -140,7 +142,10 @@ GODOT_TOOLS: tuple[ToolSpec, ...] = (
         "godot.node.rename",
         "NODE",
         "重命名节点",
-        _obj({"node_path": _NODE, "new_name": _str("新名称"), "scene_path": _SCENE}, ("node_path", "new_name")),
+        _obj(
+            {"node_path": _NODE, "new_name": _str("新名称"), "scene_path": _SCENE},
+            ("node_path", "new_name"),
+        ),
     ),
     _write(
         "godot.node.set_parent",
@@ -161,7 +166,10 @@ GODOT_TOOLS: tuple[ToolSpec, ...] = (
         "godot.inspector.get_property",
         "INSPECTOR",
         "读取单个属性值",
-        _obj({"node_path": _NODE, "property": _str("属性名"), "scene_path": _SCENE}, ("node_path", "property")),
+        _obj(
+            {"node_path": _NODE, "property": _str("属性名"), "scene_path": _SCENE},
+            ("node_path", "property"),
+        ),
     ),
     _write(
         "godot.inspector.set_property",
@@ -173,7 +181,9 @@ GODOT_TOOLS: tuple[ToolSpec, ...] = (
         ),
         risk_level="R1",
     ),
-    _read("godot.signal.list", "SIGNAL", "列出节点信号", _obj({"node_path": _NODE}, ("node_path",))),
+    _read(
+        "godot.signal.list", "SIGNAL", "列出节点信号", _obj({"node_path": _NODE}, ("node_path",))
+    ),
     _write(
         "godot.signal.connect",
         "SIGNAL",
@@ -204,7 +214,9 @@ GODOT_TOOLS: tuple[ToolSpec, ...] = (
         ),
         risk_level="R1",
     ),
-    _read("godot.group.list", "GROUP", "列出节点的分组", _obj({"node_path": _NODE}, ("node_path",))),
+    _read(
+        "godot.group.list", "GROUP", "列出节点的分组", _obj({"node_path": _NODE}, ("node_path",))
+    ),
     _write(
         "godot.group.add",
         "GROUP",
@@ -229,7 +241,9 @@ GODOT_TOOLS: tuple[ToolSpec, ...] = (
         "godot.animation.create",
         "ANIMATION",
         "创建动画",
-        _obj({"node_path": _NODE, "animation_name": _str("动画名")}, ("node_path", "animation_name")),
+        _obj(
+            {"node_path": _NODE, "animation_name": _str("动画名")}, ("node_path", "animation_name")
+        ),
     ),
     _write(
         "godot.animation.add_track",

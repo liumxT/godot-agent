@@ -145,9 +145,7 @@ def upgrade() -> None:
             ["test_case_id"], ["verification_test_cases.test_case_id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("link_id"),
-        sa.UniqueConstraint(
-            "requirement_id", "test_case_id", name="uq_verification_test_link"
-        ),
+        sa.UniqueConstraint("requirement_id", "test_case_id", name="uq_verification_test_link"),
     )
     op.create_index(
         "ix_verification_test_links_requirement",
@@ -173,9 +171,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["campaign_id"], ["verification_campaigns.campaign_id"], ondelete="CASCADE"
         ),
-        sa.ForeignKeyConstraint(
-            ["plan_id"], ["verification_plans.plan_id"], ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["plan_id"], ["verification_plans.plan_id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["test_case_id"], ["verification_test_cases.test_case_id"], ondelete="SET NULL"
         ),
@@ -206,9 +202,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["campaign_id"], ["verification_campaigns.campaign_id"], ondelete="CASCADE"
         ),
-        sa.ForeignKeyConstraint(
-            ["run_id"], ["verification_runs.run_id"], ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["run_id"], ["verification_runs.run_id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
             ["requirement_id"], ["requirements.requirement_id"], ondelete="SET NULL"
         ),
@@ -290,7 +284,5 @@ def downgrade() -> None:
 
     op.drop_index("ix_verification_campaigns_phase", table_name="verification_campaigns")
     op.drop_index("ix_verification_campaigns_task", table_name="verification_campaigns")
-    op.drop_index(
-        "ix_verification_campaigns_project_status", table_name="verification_campaigns"
-    )
+    op.drop_index("ix_verification_campaigns_project_status", table_name="verification_campaigns")
     op.drop_table("verification_campaigns")

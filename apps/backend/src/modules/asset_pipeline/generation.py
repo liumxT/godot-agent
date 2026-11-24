@@ -349,9 +349,7 @@ class GenerationOrchestrator:
         async with self._database.session() as session:
             entity = await AssetGenerationRepository(session).get(generation_id)
             if entity is None:
-                raise NotFoundError(
-                    "资产生成任务不存在", details={"generation_id": generation_id}
-                )
+                raise NotFoundError("资产生成任务不存在", details={"generation_id": generation_id})
             asset = await AssetRepository(session).get(entity.asset_id)
             if asset is None:
                 raise NotFoundError(
@@ -364,18 +362,14 @@ class GenerationOrchestrator:
                 entity, project_id=asset.project_id, outputs=outputs, created=False
             )
 
-    async def list_for_asset(
-        self, project_id: str, asset_id: str
-    ) -> list[GenerationView]:
+    async def list_for_asset(self, project_id: str, asset_id: str) -> list[GenerationView]:
         asset = await self._load_asset(project_id, asset_id)
         async with self._database.session() as session:
             entities = await AssetGenerationRepository(session).list_for_asset(asset_id)
             output_repository = AssetGenerationOutputRepository(session)
             views: list[GenerationView] = []
             for entity in entities:
-                outputs = await output_repository.list_for_generation(
-                    entity.generation_id
-                )
+                outputs = await output_repository.list_for_generation(entity.generation_id)
                 views.append(
                     _generation_view(
                         entity, project_id=asset.project_id, outputs=outputs, created=False
@@ -389,9 +383,7 @@ class GenerationOrchestrator:
         async with self._database.session() as session:
             entity = await AssetGenerationRepository(session).get(generation_id)
             if entity is None:
-                raise NotFoundError(
-                    "资产生成任务不存在", details={"generation_id": generation_id}
-                )
+                raise NotFoundError("资产生成任务不存在", details={"generation_id": generation_id})
             asset = await AssetRepository(session).get(entity.asset_id)
             if asset is None:
                 raise NotFoundError(
@@ -435,9 +427,7 @@ class GenerationOrchestrator:
         async with self._database.session() as session:
             entity = await AssetGenerationRepository(session).get(generation_id)
             if entity is None:
-                raise NotFoundError(
-                    "资产生成任务不存在", details={"generation_id": generation_id}
-                )
+                raise NotFoundError("资产生成任务不存在", details={"generation_id": generation_id})
             asset = await AssetRepository(session).get(entity.asset_id)
             if asset is None:
                 raise NotFoundError(
@@ -547,9 +537,7 @@ class GenerationOrchestrator:
             project_id=request.project_id,
         )
         try:
-            result = await self._gateway.submit_asset_generation(
-                resolved, adapter_request
-            )
+            result = await self._gateway.submit_asset_generation(resolved, adapter_request)
         except AssetGenerationUnknown as error:
             await self._mark_status(
                 entity.generation_id,
@@ -743,8 +731,7 @@ class GenerationOrchestrator:
                         source_type=SOURCE_AI_GENERATED,
                         provider_id=resolved.provider_id,
                         model_id=resolved.model_id,
-                        model_version=str(adapter_request.parameter("model_version", ""))
-                        or None,
+                        model_version=str(adapter_request.parameter("model_version", "")) or None,
                         generation_id=entity.generation_id,
                         request_reference=entity.generation_id,
                         prompt_version_id=None,
@@ -860,9 +847,7 @@ class GenerationOrchestrator:
         async with self._database.session() as session, transaction(session):
             entity = await AssetGenerationRepository(session).get(generation_id)
             if entity is None:
-                raise NotFoundError(
-                    "资产生成任务不存在", details={"generation_id": generation_id}
-                )
+                raise NotFoundError("资产生成任务不存在", details={"generation_id": generation_id})
             if status != entity.generation_status and status not in GENERATION_TRANSITIONS.get(
                 entity.generation_status, frozenset()
             ):
@@ -885,26 +870,18 @@ class GenerationOrchestrator:
         async with self._database.session() as session:
             entity = await AssetGenerationRepository(session).get(generation_id)
         if entity is None:
-            raise NotFoundError(
-                "资产生成任务不存在", details={"generation_id": generation_id}
-            )
+            raise NotFoundError("资产生成任务不存在", details={"generation_id": generation_id})
         return entity.generation_status
 
-    async def _find_by_idempotency(
-        self, idempotency_key: str
-    ) -> AssetGenerationModel | None:
+    async def _find_by_idempotency(self, idempotency_key: str) -> AssetGenerationModel | None:
         async with self._database.session() as session:
-            entity = await AssetGenerationRepository(session).get_by_idempotency(
-                idempotency_key
-            )
+            entity = await AssetGenerationRepository(session).get_by_idempotency(idempotency_key)
             if entity is not None:
                 # 在会话关闭前读取所有标量，避免 detached 属性访问。
                 session.expunge(entity)
             return entity
 
-    async def _view_for(
-        self, entity: AssetGenerationModel, *, created: bool
-    ) -> GenerationView:
+    async def _view_for(self, entity: AssetGenerationModel, *, created: bool) -> GenerationView:
         async with self._database.session() as session:
             asset = await AssetRepository(session).get(entity.asset_id)
             if asset is None:
@@ -915,9 +892,7 @@ class GenerationOrchestrator:
             outputs = await AssetGenerationOutputRepository(session).list_for_generation(
                 entity.generation_id
             )
-        return _generation_view(
-            entity, project_id=project_id, outputs=outputs, created=created
-        )
+        return _generation_view(entity, project_id=project_id, outputs=outputs, created=created)
 
     async def _load_asset(self, project_id: str, asset_id: str) -> AssetModel:
         async with self._database.session() as session:
@@ -1095,15 +1070,11 @@ class GenerationOrchestrator:
             reservation.setdefault("check", "OUTPUTS_ONLY")
         return reservation
 
-    async def _publish(
-        self, event_type: str, payload: dict[str, Any], *, project_id: str
-    ) -> None:
+    async def _publish(self, event_type: str, payload: dict[str, Any], *, project_id: str) -> None:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
             log_event(
                 self._logger,
                 logging.INFO,
@@ -1124,9 +1095,7 @@ class GenerationOrchestrator:
 def _extension(output_format: str) -> str:
     value = output_format.strip().lower()
     if not _EXTENSION_PATTERN.match(value):
-        raise AssetGenerationInvalid(
-            "生成产物格式非法", details={"format": output_format}
-        )
+        raise AssetGenerationInvalid("生成产物格式非法", details={"format": output_format})
     return value
 
 

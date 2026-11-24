@@ -59,9 +59,7 @@ class OpenAIAudioAdapter(BaseAssetGenerationAdapter):
         if not 0.25 <= parsed_speed <= 4.0:
             raise _invalid("speed", "必须在 0.25 到 4.0 之间")
 
-    async def submit_generation(
-        self, request: AssetGenerationRequest
-    ) -> AssetGenerationResult:
+    async def submit_generation(self, request: AssetGenerationRequest) -> AssetGenerationResult:
         self.validate_configuration()
         output_format = request.format(self.default_format)
         payload = {
@@ -91,9 +89,7 @@ class OpenAIAudioAdapter(BaseAssetGenerationAdapter):
         except AssetGenerationInvalidAudio as error:
             raise _audio_error(error) from error
         except AssetGenerationInvalid as error:
-            raise ProviderCallFailure(
-                _provider_error(error.message), sent=True
-            ) from error
+            raise ProviderCallFailure(_provider_error(error.message), sent=True) from error
         output = AssetGenerationOutput(
             data=data,
             format=output_format,
@@ -215,9 +211,7 @@ class AssetGenerationInvalidAudio(Exception):
 def _invalid(name: str, reason: str):
     from core.errors import AssetGenerationInvalid
 
-    return AssetGenerationInvalid(
-        "音频生成参数非法", details={"parameter": name, "reason": reason}
-    )
+    return AssetGenerationInvalid("音频生成参数非法", details={"parameter": name, "reason": reason})
 
 
 def _provider_error(message: str):

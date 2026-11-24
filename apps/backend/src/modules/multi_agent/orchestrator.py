@@ -376,9 +376,7 @@ class OrchestratorService:
         return created
 
     async def _active_definitions(self) -> list[DefinitionView]:
-        page = await self._definitions.list(
-            status="ACTIVE", limit=_DEFINITION_PAGE_SIZE, offset=0
-        )
+        page = await self._definitions.list(status="ACTIVE", limit=_DEFINITION_PAGE_SIZE, offset=0)
         return list(page["items"])
 
     def _profile(self, definition: DefinitionView, tool_names: dict[str, str]) -> CandidateProfile:

@@ -126,9 +126,7 @@ ASSIGNMENT_TRANSITIONS: dict[str, frozenset[str]] = {
     ASSIGNMENT_READY: frozenset(
         {ASSIGNMENT_ASSIGNED, ASSIGNMENT_BLOCKED, ASSIGNMENT_CANCELLED, ASSIGNMENT_FAILED}
     ),
-    ASSIGNMENT_ASSIGNED: frozenset(
-        {ASSIGNMENT_STARTING, ASSIGNMENT_FAILED, ASSIGNMENT_CANCELLED}
-    ),
+    ASSIGNMENT_ASSIGNED: frozenset({ASSIGNMENT_STARTING, ASSIGNMENT_FAILED, ASSIGNMENT_CANCELLED}),
     ASSIGNMENT_STARTING: frozenset(
         {ASSIGNMENT_RUNNING, ASSIGNMENT_FAILED, ASSIGNMENT_CANCELLED, ASSIGNMENT_UNKNOWN}
     ),
@@ -155,12 +153,8 @@ ASSIGNMENT_TRANSITIONS: dict[str, frozenset[str]] = {
     ASSIGNMENT_COMPLETED: frozenset(),
     ASSIGNMENT_FAILED: frozenset(),
     ASSIGNMENT_CANCELLED: frozenset(),
-    ASSIGNMENT_BLOCKED: frozenset(
-        {ASSIGNMENT_READY, ASSIGNMENT_CANCELLED, ASSIGNMENT_FAILED}
-    ),
-    ASSIGNMENT_UNKNOWN: frozenset(
-        {ASSIGNMENT_FAILED, ASSIGNMENT_CANCELLED, ASSIGNMENT_COMPLETED}
-    ),
+    ASSIGNMENT_BLOCKED: frozenset({ASSIGNMENT_READY, ASSIGNMENT_CANCELLED, ASSIGNMENT_FAILED}),
+    ASSIGNMENT_UNKNOWN: frozenset({ASSIGNMENT_FAILED, ASSIGNMENT_CANCELLED, ASSIGNMENT_COMPLETED}),
 }
 
 HANDOFF_REQUESTED = "REQUESTED"
@@ -324,9 +318,7 @@ REVIEW_TYPES = frozenset(
 REVIEW_ACCEPTED = "ACCEPTED"
 REVIEW_NEEDS_REVISION = "NEEDS_REVISION"
 REVIEW_REJECTED = "REJECTED"
-REVIEW_ACCEPTANCE_STATUSES = frozenset(
-    {REVIEW_ACCEPTED, REVIEW_NEEDS_REVISION, REVIEW_REJECTED}
-)
+REVIEW_ACCEPTANCE_STATUSES = frozenset({REVIEW_ACCEPTED, REVIEW_NEEDS_REVISION, REVIEW_REJECTED})
 
 CONTEXT_ACTIVE = "ACTIVE"
 CONTEXT_SUPERSEDED = "SUPERSEDED"
@@ -409,12 +401,8 @@ CONFLICT_TYPES = frozenset(
     }
 )
 CONFLICT_TRANSITIONS: dict[str, frozenset[str]] = {
-    CONFLICT_DETECTED: frozenset(
-        {CONFLICT_ANALYZING, CONFLICT_ESCALATED, CONFLICT_RESOLVED}
-    ),
-    CONFLICT_ANALYZING: frozenset(
-        {CONFLICT_RESOLVING, CONFLICT_ESCALATED, CONFLICT_RESOLVED}
-    ),
+    CONFLICT_DETECTED: frozenset({CONFLICT_ANALYZING, CONFLICT_ESCALATED, CONFLICT_RESOLVED}),
+    CONFLICT_ANALYZING: frozenset({CONFLICT_RESOLVING, CONFLICT_ESCALATED, CONFLICT_RESOLVED}),
     CONFLICT_RESOLVING: frozenset({CONFLICT_RESOLVED, CONFLICT_ESCALATED}),
     CONFLICT_ESCALATED: frozenset({CONFLICT_RESOLVED}),
     CONFLICT_RESOLVED: frozenset(),
@@ -475,7 +463,9 @@ class AgentCapabilityModel(Base):
     required_tools: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     required_model_capabilities: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     dependencies: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
-    risk_profile: Mapped[str] = mapped_column(String(4), nullable=False, default=DEFAULT_RISK_PROFILE)
+    risk_profile: Mapped[str] = mapped_column(
+        String(4), nullable=False, default=DEFAULT_RISK_PROFILE
+    )
     validation_method: Mapped[str | None] = mapped_column(String(128), nullable=True)
     version: Mapped[str] = mapped_column(String(32), nullable=False, default="1.0.0")
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -521,7 +511,9 @@ class AgentTeamMemberModel(Base):
         String(64), ForeignKey("agent_teams.team_id", ondelete="CASCADE"), nullable=False
     )
     assignment_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"),
+        nullable=False,
     )
     agent_instance_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     role: Mapped[str] = mapped_column(String(16), nullable=False, default=TEAM_MEMBER_WORKER)
@@ -586,10 +578,14 @@ class AgentAssignmentDependencyModel(Base):
 
     dependency_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     assignment_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"),
+        nullable=False,
     )
     depends_on_assignment_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"),
+        nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -607,7 +603,9 @@ class AgentHandoffModel(Base):
 
     handoff_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     source_assignment_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"),
+        nullable=False,
     )
     target_assignment_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     source_agent_instance_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -702,7 +700,9 @@ class AgentResourceLockModel(Base):
         String(64), ForeignKey("agent_teams.team_id", ondelete="CASCADE"), nullable=False
     )
     assignment_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"),
+        nullable=False,
     )
     resource_type: Mapped[str] = mapped_column(String(32), nullable=False)
     resource_key: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -752,7 +752,9 @@ class AgentReviewModel(Base):
         String(64), ForeignKey("agent_teams.team_id", ondelete="CASCADE"), nullable=False
     )
     target_assignment_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("agent_assignments.assignment_id", ondelete="CASCADE"),
+        nullable=False,
     )
     reviewer_assignment_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     review_type: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -778,9 +780,7 @@ class AgentTeamBudgetModel(Base):
     budget_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     usage_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     allocation_log_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
-    status: Mapped[str] = mapped_column(
-        String(16), nullable=False, default=TEAM_BUDGET_ACTIVE
-    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default=TEAM_BUDGET_ACTIVE)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

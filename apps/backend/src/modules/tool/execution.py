@@ -81,7 +81,13 @@ EXECUTION_TRANSITIONS = {
     EXECUTION_AUTHORIZED: frozenset({EXECUTION_READY, EXECUTION_FAILED, EXECUTION_CANCELLED}),
     EXECUTION_READY: frozenset({EXECUTION_EXECUTING, EXECUTION_FAILED, EXECUTION_CANCELLED}),
     EXECUTION_EXECUTING: frozenset(
-        {EXECUTION_SUCCEEDED, EXECUTION_FAILED, EXECUTION_CANCELLED, EXECUTION_TIMEOUT, EXECUTION_UNKNOWN}
+        {
+            EXECUTION_SUCCEEDED,
+            EXECUTION_FAILED,
+            EXECUTION_CANCELLED,
+            EXECUTION_TIMEOUT,
+            EXECUTION_UNKNOWN,
+        }
     ),
 }
 
@@ -324,7 +330,9 @@ class ToolExecutionService:
             tool_name=tool.name,
             tool_version=tool.version,
             risk_level=risk.level,
-            input_payload=json.dumps(input_payload, ensure_ascii=False, sort_keys=True, default=str),
+            input_payload=json.dumps(
+                input_payload, ensure_ascii=False, sort_keys=True, default=str
+            ),
             input_hash=_hash_payload(input_payload),
             changeset_id=request.changeset_id,
             approval_id=request.approval_id,
@@ -455,9 +463,7 @@ class ToolExecutionService:
                 ),
                 error_code=adapter_result.error_code,
                 error_message=adapter_result.error_message,
-                evidence_refs=json.dumps(
-                    list(adapter_result.evidence_refs), ensure_ascii=False
-                ),
+                evidence_refs=json.dumps(list(adapter_result.evidence_refs), ensure_ascii=False),
                 verification_status=verification.verification_status,
                 completed_at=completed_at,
             )
@@ -578,9 +584,7 @@ class ToolExecutionService:
                 error_code="EVENT_PUBLISH_FAILED",
             )
 
-    async def _release_locks(
-        self, locks: tuple[ResourceLockView, ...], execution_id: str
-    ) -> None:
+    async def _release_locks(self, locks: tuple[ResourceLockView, ...], execution_id: str) -> None:
         for lock in locks:
             try:
                 await self._locks.release(lock.lock_id, owner_id=execution_id)
@@ -611,9 +615,7 @@ class ToolExecutionService:
             entity.updated_at = self._clock()
             await session.flush()
 
-    async def _transition(
-        self, execution_id: str, target: str, **fields: Any
-    ) -> ToolExecutionView:
+    async def _transition(self, execution_id: str, target: str, **fields: Any) -> ToolExecutionView:
         async with self._database.session() as session, transaction(session):
             entity = await ToolExecutionRepository(session).get(execution_id)
             if entity is None:
@@ -662,7 +664,8 @@ class ToolExecutionService:
         for ref in request.resource_scope:
             if not ref.strip() or ":" not in ref:
                 raise ValidationFailed(
-                    "resource_scope 格式非法", details={"resource_scope": list(request.resource_scope)}
+                    "resource_scope 格式非法",
+                    details={"resource_scope": list(request.resource_scope)},
                 )
 
 

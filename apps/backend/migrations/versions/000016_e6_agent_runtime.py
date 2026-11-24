@@ -66,9 +66,7 @@ def upgrade() -> None:
             ["agent_definition_id"], ["agent_definitions.definition_id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("version_id"),
-        sa.UniqueConstraint(
-            "agent_definition_id", "version", name="uq_agent_definition_version"
-        ),
+        sa.UniqueConstraint("agent_definition_id", "version", name="uq_agent_definition_version"),
     )
     op.create_index(
         "ix_agent_definition_versions_def",
@@ -104,9 +102,7 @@ def upgrade() -> None:
     op.create_index(
         "ix_agent_config_snapshots_def", "agent_config_snapshots", ["agent_definition_id"]
     )
-    op.create_index(
-        "ix_agent_config_snapshots_project", "agent_config_snapshots", ["project_id"]
-    )
+    op.create_index("ix_agent_config_snapshots_project", "agent_config_snapshots", ["project_id"])
 
     op.create_table(
         "agent_instances",
@@ -129,9 +125,7 @@ def upgrade() -> None:
             ["agent_definition_id"], ["agent_definitions.definition_id"], ondelete="RESTRICT"
         ),
         sa.ForeignKeyConstraint(["task_id"], ["tasks.task_id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(
-            ["attempt_id"], ["task_attempts.attempt_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["attempt_id"], ["task_attempts.attempt_id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["project_id"], ["projects.project_id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["config_snapshot_id"],
@@ -191,9 +185,7 @@ def upgrade() -> None:
             ["execution_id"], ["agent_executions.execution_id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("plan_id"),
-        sa.UniqueConstraint(
-            "execution_id", "plan_version", name="uq_agent_plan_version"
-        ),
+        sa.UniqueConstraint("execution_id", "plan_version", name="uq_agent_plan_version"),
     )
     op.create_index("ix_agent_plans_execution", "agent_plans", ["execution_id", "status"])
 
@@ -222,9 +214,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("step_id"),
         sa.UniqueConstraint("plan_id", "step_number", name="uq_agent_step_number"),
     )
-    op.create_index(
-        "ix_agent_steps_execution_status", "agent_steps", ["execution_id", "status"]
-    )
+    op.create_index("ix_agent_steps_execution_status", "agent_steps", ["execution_id", "status"])
 
     op.create_table(
         "agent_checkpoints",
@@ -269,9 +259,7 @@ def upgrade() -> None:
             ["agent_instance_id"], ["agent_instances.instance_id"], ondelete="CASCADE"
         ),
         sa.PrimaryKeyConstraint("event_id"),
-        sa.UniqueConstraint(
-            "agent_instance_id", "sequence_number", name="uq_agent_event_sequence"
-        ),
+        sa.UniqueConstraint("agent_instance_id", "sequence_number", name="uq_agent_event_sequence"),
     )
     op.create_index(
         "ix_agent_events_instance", "agent_events", ["agent_instance_id", "sequence_number"]

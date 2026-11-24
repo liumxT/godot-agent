@@ -36,9 +36,7 @@ CATEGORY_AUDIO = "AUDIO"
 CATEGORY_MODEL_3D = "MODEL_3D"
 CATEGORY_RESOURCE = "RESOURCE"
 
-ASSET_CATEGORIES = frozenset(
-    {CATEGORY_IMAGE, CATEGORY_AUDIO, CATEGORY_MODEL_3D, CATEGORY_RESOURCE}
-)
+ASSET_CATEGORIES = frozenset({CATEGORY_IMAGE, CATEGORY_AUDIO, CATEGORY_MODEL_3D, CATEGORY_RESOURCE})
 
 ASSET_TYPES: dict[str, frozenset[str]] = {
     CATEGORY_IMAGE: frozenset(
@@ -111,9 +109,7 @@ GENERATION_STATUSES = frozenset(
     }
 )
 GENERATION_TRANSITIONS: dict[str, frozenset[str]] = {
-    GENERATION_CREATED: frozenset(
-        {GENERATION_SUBMITTED, GENERATION_CANCELLED, GENERATION_FAILED}
-    ),
+    GENERATION_CREATED: frozenset({GENERATION_SUBMITTED, GENERATION_CANCELLED, GENERATION_FAILED}),
     GENERATION_SUBMITTED: frozenset(
         {
             GENERATION_RUNNING,
@@ -145,13 +141,17 @@ PROCESSING_SUCCEEDED = "SUCCEEDED"
 PROCESSING_FAILED = "FAILED"
 PROCESSING_UNKNOWN = "UNKNOWN"
 PROCESSING_STATUSES = frozenset(
-    {PROCESSING_QUEUED, PROCESSING_RUNNING, PROCESSING_SUCCEEDED, PROCESSING_FAILED, PROCESSING_UNKNOWN}
+    {
+        PROCESSING_QUEUED,
+        PROCESSING_RUNNING,
+        PROCESSING_SUCCEEDED,
+        PROCESSING_FAILED,
+        PROCESSING_UNKNOWN,
+    }
 )
 PROCESSING_TRANSITIONS: dict[str, frozenset[str]] = {
     PROCESSING_QUEUED: frozenset({PROCESSING_RUNNING, PROCESSING_FAILED, PROCESSING_UNKNOWN}),
-    PROCESSING_RUNNING: frozenset(
-        {PROCESSING_SUCCEEDED, PROCESSING_FAILED, PROCESSING_UNKNOWN}
-    ),
+    PROCESSING_RUNNING: frozenset({PROCESSING_SUCCEEDED, PROCESSING_FAILED, PROCESSING_UNKNOWN}),
     PROCESSING_SUCCEEDED: frozenset(),
     PROCESSING_FAILED: frozenset(),
     PROCESSING_UNKNOWN: frozenset({PROCESSING_SUCCEEDED, PROCESSING_FAILED}),
@@ -321,9 +321,7 @@ DELIVERY_STATUSES = frozenset(
 DELIVERY_TRANSITIONS: dict[str, frozenset[str]] = {
     DELIVERY_DRAFT: frozenset({DELIVERY_READY, DELIVERY_CANCELLED}),
     DELIVERY_READY: frozenset({DELIVERY_WAITING_APPROVAL, DELIVERY_CANCELLED}),
-    DELIVERY_WAITING_APPROVAL: frozenset(
-        {DELIVERY_APPROVED, DELIVERY_FAILED, DELIVERY_CANCELLED}
-    ),
+    DELIVERY_WAITING_APPROVAL: frozenset({DELIVERY_APPROVED, DELIVERY_FAILED, DELIVERY_CANCELLED}),
     DELIVERY_APPROVED: frozenset({DELIVERY_APPLYING, DELIVERY_FAILED, DELIVERY_CANCELLED}),
     DELIVERY_APPLYING: frozenset({DELIVERY_IMPORTING, DELIVERY_FAILED, DELIVERY_UNKNOWN}),
     DELIVERY_IMPORTING: frozenset({DELIVERY_VERIFYING, DELIVERY_FAILED, DELIVERY_UNKNOWN}),
@@ -437,9 +435,7 @@ class AssetVariantModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
-        UniqueConstraint(
-            "asset_id", "variant_type", "variant_key", name="uq_asset_variants_key"
-        ),
+        UniqueConstraint("asset_id", "variant_type", "variant_key", name="uq_asset_variants_key"),
     )
 
 
@@ -500,9 +496,7 @@ class AssetGenerationModel(Base):
     created_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_checked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
@@ -517,7 +511,9 @@ class AssetGenerationOutputModel(Base):
 
     output_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     generation_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("asset_generations.generation_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("asset_generations.generation_id", ondelete="CASCADE"),
+        nullable=False,
     )
     temporary_reference: Mapped[str] = mapped_column(String(512), nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -618,7 +614,9 @@ class AssetImportEvidenceModel(Base):
 
     evidence_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     import_job_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("asset_import_jobs.import_job_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("asset_import_jobs.import_job_id", ondelete="CASCADE"),
+        nullable=False,
     )
     project_id: Mapped[str] = mapped_column(String(64), nullable=False)
     editor_session_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
@@ -700,7 +698,9 @@ class AssetLicenseModel(Base):
     territory: Mapped[str | None] = mapped_column(String(128), nullable=True)
     evidence_reference: Mapped[str | None] = mapped_column(String(512), nullable=True)
     verification_method: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    verification_status: Mapped[str] = mapped_column(String(24), nullable=False, default=LICENSE_UNKNOWN)
+    verification_status: Mapped[str] = mapped_column(
+        String(24), nullable=False, default=LICENSE_UNKNOWN
+    )
     reviewer_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -758,7 +758,9 @@ class AssetQualityFindingModel(Base):
 
     finding_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     review_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("asset_quality_reviews.review_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("asset_quality_reviews.review_id", ondelete="CASCADE"),
+        nullable=False,
     )
     rule_id: Mapped[str] = mapped_column(String(128), nullable=False)
     severity: Mapped[str] = mapped_column(String(16), nullable=False)
@@ -810,11 +812,11 @@ class AssetDeliveryModel(Base):
     changeset_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     approval_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     import_job_id: Mapped[str | None] = mapped_column(
-        String(64), ForeignKey("asset_import_jobs.import_job_id", ondelete="SET NULL"), nullable=True
+        String(64),
+        ForeignKey("asset_import_jobs.import_job_id", ondelete="SET NULL"),
+        nullable=True,
     )
-    delivery_status: Mapped[str] = mapped_column(
-        String(24), nullable=False, default=DELIVERY_DRAFT
-    )
+    delivery_status: Mapped[str] = mapped_column(String(24), nullable=False, default=DELIVERY_DRAFT)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -853,7 +855,9 @@ class AssetProviderJobModel(Base):
 
     record_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     generation_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("asset_generations.generation_id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("asset_generations.generation_id", ondelete="CASCADE"),
+        nullable=False,
     )
     provider_id: Mapped[str] = mapped_column(String(64), nullable=False)
     model_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -862,9 +866,7 @@ class AssetProviderJobModel(Base):
     status: Mapped[str] = mapped_column(String(24), nullable=False)
     result_reference: Mapped[str | None] = mapped_column(String(512), nullable=True)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    last_checked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (

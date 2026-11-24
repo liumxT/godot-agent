@@ -153,16 +153,12 @@ class AssetService:
             raise AssetStateInvalid("资产名称不能为空")
         clean_tags = _validate_tags(tags)
         if lifecycle_status not in ASSET_STATUSES:
-            raise AssetStateInvalid(
-                "资产生命周期状态非法", details={"status": lifecycle_status}
-            )
+            raise AssetStateInvalid("资产生命周期状态非法", details={"status": lifecycle_status})
         now = utcnow()
         async with self._database.session() as session, transaction(session):
             repository = AssetRepository(session)
             if await repository.get_by_name(project_id, clean_name) is not None:
-                raise AssetStateInvalid(
-                    "同项目下资产名称已存在", details={"name": clean_name}
-                )
+                raise AssetStateInvalid("同项目下资产名称已存在", details={"name": clean_name})
             entity = await repository.add(
                 AssetModel(
                     asset_id=_new_id("ast_"),
@@ -257,9 +253,7 @@ class AssetService:
                     raise AssetStateInvalid("资产名称不能为空")
                 existing = await repository.get_by_name(entity.project_id, clean_name)
                 if existing is not None and existing.asset_id != asset_id:
-                    raise AssetStateInvalid(
-                        "同项目下资产名称已存在", details={"name": clean_name}
-                    )
+                    raise AssetStateInvalid("同项目下资产名称已存在", details={"name": clean_name})
                 values["name"] = clean_name
             if description is not None:
                 values["description"] = description
@@ -274,9 +268,7 @@ class AssetService:
             entity = await repository.get(asset_id)
             assert entity is not None
             view = _asset_view(entity)
-        await self._publish(
-            "asset.updated", {"asset_id": asset_id}, project_id=view.project_id
-        )
+        await self._publish("asset.updated", {"asset_id": asset_id}, project_id=view.project_id)
         return view
 
     async def transition(
@@ -334,18 +326,14 @@ class AssetService:
         return await self.transition(asset_id, ASSET_ACTIVE, expected_version=expected_version)
 
     async def deprecate(self, asset_id: str, *, expected_version: int | None = None) -> AssetView:
-        return await self.transition(
-            asset_id, "DEPRECATED", expected_version=expected_version
-        )
+        return await self.transition(asset_id, "DEPRECATED", expected_version=expected_version)
 
     async def archive(self, asset_id: str, *, expected_version: int | None = None) -> AssetView:
         return await self.transition(
             asset_id, ASSET_ARCHIVED, expected_version=expected_version, archive=True
         )
 
-    async def set_current_version(
-        self, asset_id: str, version_id: str
-    ) -> AssetView:
+    async def set_current_version(self, asset_id: str, version_id: str) -> AssetView:
         async with self._database.session() as session:
             repository = AssetRepository(session)
             entity = await repository.get(asset_id)
@@ -353,9 +341,7 @@ class AssetService:
                 raise NotFoundError("资产不存在", details={"asset_id": asset_id})
             version_entity = await AssetVersionRepository(session).get(version_id)
             if version_entity is None or version_entity.asset_id != asset_id:
-                raise AssetStateInvalid(
-                    "目标版本不属于该资产", details={"version_id": version_id}
-                )
+                raise AssetStateInvalid("目标版本不属于该资产", details={"version_id": version_id})
             now = utcnow()
             async with transaction(session):
                 changed = await repository.set_current_version(asset_id, version_id, now)
@@ -422,9 +408,7 @@ class AssetService:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不回滚已提交元数据
             log_event(
                 self._logger,

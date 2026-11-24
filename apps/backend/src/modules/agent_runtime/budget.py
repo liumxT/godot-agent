@@ -93,16 +93,12 @@ class BudgetTracker:
         self._reserved[dimension] = self._reserved.get(dimension, 0) + amount
         return BudgetReservation(dimension=dimension, amount=amount)
 
-    def settle(
-        self, reservation: BudgetReservation, *, actual: float | None = None
-    ) -> None:
+    def settle(self, reservation: BudgetReservation, *, actual: float | None = None) -> None:
         used = reservation.amount if actual is None else actual
         self._reserved[reservation.dimension] = max(
             0, self._reserved.get(reservation.dimension, 0) - reservation.amount
         )
-        self.usage[reservation.dimension] = (
-            self.used(reservation.dimension) + used
-        )
+        self.usage[reservation.dimension] = self.used(reservation.dimension) + used
 
     def release(self, reservation: BudgetReservation) -> None:
         self._reserved[reservation.dimension] = max(
@@ -151,15 +147,11 @@ class BudgetManager:
         self._database = database
         self._clock = clock
 
-    async def load(
-        self, execution_id: str, budget: Mapping[str, Any] | None
-    ) -> BudgetTracker:
+    async def load(self, execution_id: str, budget: Mapping[str, Any] | None) -> BudgetTracker:
         async with self._database.session() as session:
             entity = await AgentExecutionRepository(session).get(execution_id)
         if entity is None:
-            raise NotFoundError(
-                "Agent Execution 不存在", details={"execution_id": execution_id}
-            )
+            raise NotFoundError("Agent Execution 不存在", details={"execution_id": execution_id})
         payload = dict(budget or {})
         return BudgetTracker(
             limits=payload,

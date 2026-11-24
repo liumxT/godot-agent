@@ -81,9 +81,7 @@ class ProcessingContext:
     deadline: float
 
     @classmethod
-    def create(
-        cls, project_id: str, asset_id: str, limits: ProcessingLimits
-    ) -> ProcessingContext:
+    def create(cls, project_id: str, asset_id: str, limits: ProcessingLimits) -> ProcessingContext:
         return cls(
             project_id=project_id,
             asset_id=asset_id,
@@ -143,9 +141,7 @@ class ProcessingProcessorRegistry:
     def get(self, processor_id: str) -> ProcessingProcessor:
         processor = self._processors.get(processor_id)
         if processor is None:
-            raise AssetProcessingInvalid(
-                "处理器未注册", details={"processor_id": processor_id}
-            )
+            raise AssetProcessingInvalid("处理器未注册", details={"processor_id": processor_id})
         return processor
 
     def ids(self) -> tuple[str, ...]:
@@ -161,9 +157,7 @@ class ProcessingNode:
 
     def __post_init__(self) -> None:
         if not _NODE_ID_PATTERN.match(self.node_id):
-            raise AssetProcessingInvalid(
-                "处理节点 ID 非法", details={"node_id": self.node_id}
-            )
+            raise AssetProcessingInvalid("处理节点 ID 非法", details={"node_id": self.node_id})
         if self.node_id == _INPUT_ALIAS:
             raise AssetProcessingInvalid("处理节点不能使用保留 ID input")
         if not self.processor.strip():
@@ -253,9 +247,7 @@ def parse_processing_graph(raw: Mapping[str, Any] | list[Any]) -> ProcessingGrap
         except (TypeError, ValueError) as error:
             raise AssetProcessingInvalid("处理节点格式非法") from error
         if node.node_id in seen:
-            raise AssetProcessingInvalid(
-                "处理节点 ID 重复", details={"node_id": node.node_id}
-            )
+            raise AssetProcessingInvalid("处理节点 ID 重复", details={"node_id": node.node_id})
         seen.add(node.node_id)
         nodes.append(node)
     dependents: dict[str, int] = {node.node_id: 0 for node in nodes}
@@ -265,9 +257,7 @@ def parse_processing_graph(raw: Mapping[str, Any] | list[Any]) -> ProcessingGrap
                 dependents[dependency] += 1
     terminals = [node_id for node_id, count in dependents.items() if count == 0]
     if len(terminals) != 1:
-        raise AssetProcessingInvalid(
-            "处理图必须只有一个输出节点", details={"terminals": terminals}
-        )
+        raise AssetProcessingInvalid("处理图必须只有一个输出节点", details={"terminals": terminals})
     graph = ProcessingGraph(nodes=tuple(nodes), terminal=terminals[0])
     graph.ordered()
     return graph

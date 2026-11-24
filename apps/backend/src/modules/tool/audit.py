@@ -95,7 +95,9 @@ def _view(entity: ToolAuditRecordModel) -> ToolAuditView:
 
 
 class ToolAuditService:
-    def __init__(self, database: DatabaseService, *, clock: Callable[[], datetime] = utcnow) -> None:
+    def __init__(
+        self, database: DatabaseService, *, clock: Callable[[], datetime] = utcnow
+    ) -> None:
         self._database = database
         self._clock = clock
 

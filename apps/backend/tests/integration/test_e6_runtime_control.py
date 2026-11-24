@@ -99,9 +99,7 @@ async def _register_model(app) -> None:
 async def _session(app) -> tuple[str, str]:
     clients = _service(app, "client_service", ClientService)
     registered = await clients.register(client_type="godot_editor", client_name="Editor")
-    issued = await _service(app, "session_service", SessionService).create(
-        registered.client_id
-    )
+    issued = await _service(app, "session_service", SessionService).create(registered.client_id)
     return issued.session.session_id, registered.client_id
 
 
@@ -116,9 +114,7 @@ async def _prepare(
 ):
     projects = _service(app, "project_registry_service", ProjectRegistryService)
     prompts = _service(app, "prompt_service", PromptService)
-    definitions = _service(
-        app, "agent_definition_registry_service", DefinitionRegistryService
-    )
+    definitions = _service(app, "agent_definition_registry_service", DefinitionRegistryService)
     tasks = _service(app, "task_service", TaskService)
     attempts = _service(app, "task_attempt_service", AttemptService)
     instances = _service(app, "agent_instance_service", AgentInstanceService)
@@ -180,9 +176,7 @@ def _loop(app, gateway) -> AgentExecutionLoop:
         executions=services.get("agent_execution_service", AgentExecutionService),
         events=services.get("agent_event_service", AgentEventService),
         planning=services.get("agent_planning_service", PlanningService),
-        context=services.get(
-            "agent_context_binding_service", AgentContextBindingService
-        ),
+        context=services.get("agent_context_binding_service", AgentContextBindingService),
         models=AgentModelBindingService(
             definitions=services.get(
                 "agent_definition_registry_service", DefinitionRegistryService
@@ -219,9 +213,7 @@ async def test_budget_usage_and_checkpoints_are_persisted(tmp_path: Path) -> Non
                     {
                         "action": "CREATE_PLAN",
                         "objective": "读取玩家脚本",
-                        "steps": [
-                            {"type": "TOOL_EXECUTION", "description": "读取 player.gd"}
-                        ],
+                        "steps": [{"type": "TOOL_EXECUTION", "description": "读取 player.gd"}],
                     }
                 ),
                 json.dumps(
@@ -249,9 +241,10 @@ async def test_budget_usage_and_checkpoints_are_persisted(tmp_path: Path) -> Non
         assert latest is not None
         assert latest.state["trigger"] == "COMPLETED"
         events = _service(app, "agent_event_service", AgentEventService)
-        assert latest.last_event_sequence == await events.last_sequence(
-            ctx["instance"].instance_id
-        ) - 1
+        assert (
+            latest.last_event_sequence
+            == await events.last_sequence(ctx["instance"].instance_id) - 1
+        )
 
         event_types = [
             item.event_type for item in await events.list_after(ctx["instance"].instance_id)
@@ -305,9 +298,7 @@ async def test_pause_then_resume_round_trip(tmp_path: Path) -> None:
         assert paused.status == "PAUSED"
 
         executions = _service(app, "agent_execution_service", AgentExecutionService)
-        assert (
-            await executions.latest_for_instance(instance.instance_id)
-        ).status == "PAUSED"
+        assert (await executions.latest_for_instance(instance.instance_id)).status == "PAUSED"
         checkpoints = _service(app, "agent_checkpoint_service", CheckpointService)
         latest = await checkpoints.latest(instance.instance_id)
         assert latest is not None
@@ -319,14 +310,11 @@ async def test_pause_then_resume_round_trip(tmp_path: Path) -> None:
 
         resumed = await control.resume(instance.instance_id, actor="tester")
         assert resumed.status == "RUNNING"
-        assert (
-            await executions.latest_for_instance(instance.instance_id)
-        ).status == "RUNNING"
+        assert (await executions.latest_for_instance(instance.instance_id)).status == "RUNNING"
 
         events = _service(app, "agent_event_service", AgentEventService)
         event_types = [
-            item.event_type
-            for item in await events.list_after(ctx["instance"].instance_id)
+            item.event_type for item in await events.list_after(ctx["instance"].instance_id)
         ]
         for expected in ("PAUSE_REQUESTED", "PAUSED", "RESUME_REQUESTED", "RESUMED"):
             assert expected in event_types
@@ -383,9 +371,7 @@ async def test_cancel_abandons_plan_and_stops_instance(tmp_path: Path) -> None:
         assert latest_execution.status == "STOPPED"
 
         events = _service(app, "agent_event_service", AgentEventService)
-        event_types = [
-            item.event_type for item in await events.list_after(instance.instance_id)
-        ]
+        event_types = [item.event_type for item in await events.list_after(instance.instance_id)]
         assert "CANCEL_REQUESTED" in event_types
         assert "STOPPED" in event_types
 
@@ -471,17 +457,13 @@ async def test_recovery_pauses_instance_with_valid_checkpoint(tmp_path: Path) ->
         instances = _service(app, "agent_instance_service", AgentInstanceService)
         assert (await instances.get(instance.instance_id)).status == "PAUSED"
         executions = _service(app, "agent_execution_service", AgentExecutionService)
-        assert (
-            await executions.latest_for_instance(instance.instance_id)
-        ).status == "PAUSED"
+        assert (await executions.latest_for_instance(instance.instance_id)).status == "PAUSED"
         latest = await checkpoints.latest(instance.instance_id)
         assert latest is not None
         assert latest.state["trigger"] == "RECOVERY"
 
         events = _service(app, "agent_event_service", AgentEventService)
-        event_types = [
-            item.event_type for item in await events.list_after(instance.instance_id)
-        ]
+        event_types = [item.event_type for item in await events.list_after(instance.instance_id)]
         assert "RECOVERY_STARTED" in event_types
         assert "RECOVERY_COMPLETED" in event_types
 
@@ -501,9 +483,7 @@ async def test_recovery_marks_unknown_without_checkpoint(tmp_path: Path) -> None
         instances = _service(app, "agent_instance_service", AgentInstanceService)
         assert (await instances.get(instance.instance_id)).status == "UNKNOWN"
         executions = _service(app, "agent_execution_service", AgentExecutionService)
-        assert (
-            await executions.latest_for_instance(instance.instance_id)
-        ).status == "UNKNOWN"
+        assert (await executions.latest_for_instance(instance.instance_id)).status == "UNKNOWN"
 
 
 async def test_recovery_skips_ready_instance(tmp_path: Path) -> None:

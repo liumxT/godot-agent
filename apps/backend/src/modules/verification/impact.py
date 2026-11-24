@@ -243,9 +243,7 @@ def _matches_test(path: str, test: TestCaseRef) -> bool:
     stem = Path(path).stem.lower()
     if len(stem) < 3:
         return False
-    haystack = " ".join(
-        (test.name, test.execution_method or "", test.description or "")
-    ).lower()
+    haystack = " ".join((test.name, test.execution_method or "", test.description or "")).lower()
     return stem in haystack
 
 
@@ -366,12 +364,8 @@ def build_regression_plan(
         changed_files=tuple(sorted(changed_paths)),
         affected_requirements=tuple(sorted(affected_requirements)),
         affected_test_cases=tuple(sorted(matched_test_ids)),
-        affected_scenes=tuple(
-            path for path in affected_sorted if file_kind(path) == "scene"
-        ),
-        affected_scripts=tuple(
-            path for path in affected_sorted if file_kind(path) == "script"
-        ),
+        affected_scenes=tuple(path for path in affected_sorted if file_kind(path) == "scene"),
+        affected_scripts=tuple(path for path in affected_sorted if file_kind(path) == "script"),
         affected_resources=tuple(
             path for path in affected_sorted if file_kind(path) in {"resource", "import"}
         ),

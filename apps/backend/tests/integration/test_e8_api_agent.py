@@ -39,9 +39,7 @@ async def _running(tmp_path: Path):
     app = create_app(settings)
     async with app.state.lifecycle.lifespan(app):
         transport = httpx.ASGITransport(app=app)
-        async with httpx.AsyncClient(
-            transport=transport, base_url="http://test"
-        ) as client:
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
             yield app, client
 
 
@@ -65,9 +63,7 @@ async def _session(app, client) -> str:
     )
     body = registered.json()
     challenge = (
-        await client.post(
-            "/api/v1/auth/challenge", json={"client_id": body["client_id"]}
-        )
+        await client.post("/api/v1/auth/challenge", json={"client_id": body["client_id"]})
     ).json()
     verified = await client.post(
         "/api/v1/auth/verify",
@@ -81,9 +77,7 @@ async def _session(app, client) -> str:
             ),
         },
     )
-    issued = await client.post(
-        "/api/v1/sessions", headers=_bearer(verified.json()["access_token"])
-    )
+    issued = await client.post("/api/v1/sessions", headers=_bearer(verified.json()["access_token"]))
     return issued.json()["session_token"]
 
 
@@ -169,15 +163,11 @@ async def test_asset_api_browser_and_dashboard(tmp_path: Path) -> None:
         asset,
         _version,
     ):
-        listed = await client.get(
-            f"/api/v1/projects/{project_id}/assets", headers=headers
-        )
+        listed = await client.get(f"/api/v1/projects/{project_id}/assets", headers=headers)
         assert listed.status_code == 200, listed.text
         assert listed.json()["total"] == 1
 
-        fetched = await client.get(
-            f"/api/v1/assets/{asset['asset_id']}", headers=headers
-        )
+        fetched = await client.get(f"/api/v1/assets/{asset['asset_id']}", headers=headers)
         assert fetched.status_code == 200
         assert fetched.json()["name"] == "hero"
 
@@ -189,9 +179,7 @@ async def test_asset_api_browser_and_dashboard(tmp_path: Path) -> None:
         assert patched.status_code == 200, patched.text
         assert patched.json()["tags"] == ["pixel"]
 
-        versions = await client.get(
-            f"/api/v1/assets/{asset['asset_id']}/versions", headers=headers
-        )
+        versions = await client.get(f"/api/v1/assets/{asset['asset_id']}/versions", headers=headers)
         assert versions.status_code == 200
         assert versions.json()["total"] == 1
 

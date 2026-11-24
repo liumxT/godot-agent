@@ -60,7 +60,7 @@ def _check_text_resource(path: Path, root: Path) -> list[Finding]:
     relative = _relative(path, root)
     try:
         text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
+    except OSError, UnicodeDecodeError:
         return [error("resource_unreadable", "资源无法读取", relative)]
 
     findings: list[Finding] = []

@@ -64,9 +64,7 @@ class EditorConnection:
         timeout: float,
     ) -> EditorCommandResponse:
         if self._closed:
-            raise EditorNotConnected(
-                "编辑器连接已断开", details={"session_id": self._session_id}
-            )
+            raise EditorNotConnected("编辑器连接已断开", details={"session_id": self._session_id})
         from app.ws.protocol import build_request
 
         request_id = f"req_{uuid4().hex[:12]}"
@@ -93,7 +91,11 @@ class EditorConnection:
             self._pending.pop(request_id, None)
             raise EditorCommandTimeout(
                 "编辑器命令超时",
-                details={"session_id": self._session_id, "request_id": request_id, "action": action},
+                details={
+                    "session_id": self._session_id,
+                    "request_id": request_id,
+                    "action": action,
+                },
             ) from exc
 
     def resolve(self, frame: dict) -> bool:
@@ -138,9 +140,7 @@ class EditorCommandHub:
         previous = self._connections.get(session_id)
         if previous is not None:
             previous.close("EDITOR_SESSION_REPLACED")
-        connection = EditorConnection(
-            session_id=session_id, project_id=project_id, sender=sender
-        )
+        connection = EditorConnection(session_id=session_id, project_id=project_id, sender=sender)
         self._connections[session_id] = connection
         return connection
 

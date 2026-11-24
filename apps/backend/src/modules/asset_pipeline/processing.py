@@ -320,9 +320,7 @@ class ProcessingPipelineService:
         async with self._database.session() as session:
             entity = await AssetProcessingJobRepository(session).get(job_id)
             if entity is None:
-                raise NotFoundError(
-                    "资产处理任务不存在", details={"job_id": job_id}
-                )
+                raise NotFoundError("资产处理任务不存在", details={"job_id": job_id})
             asset = await AssetRepository(session).get(entity.asset_id)
             if asset is None:
                 raise NotFoundError(
@@ -338,9 +336,7 @@ class ProcessingPipelineService:
                 created=False,
             )
 
-    async def list_for_asset(
-        self, project_id: str, asset_id: str
-    ) -> list[ProcessingView]:
+    async def list_for_asset(self, project_id: str, asset_id: str) -> list[ProcessingView]:
         async with self._database.session() as session:
             asset = await AssetRepository(session).get_active(asset_id)
             if asset is None or asset.project_id != project_id:
@@ -422,9 +418,7 @@ class ProcessingPipelineService:
                     "输入版本不属于该资产",
                     details={"asset_id": asset_id, "version_id": version_id},
                 )
-            objects = await AssetStorageObjectRepository(session).list_for_version(
-                version_id
-            )
+            objects = await AssetStorageObjectRepository(session).list_for_version(version_id)
             if not objects:
                 raise AssetProcessingInvalid(
                     "输入版本没有可处理的存储对象",
@@ -448,9 +442,7 @@ class ProcessingPipelineService:
             )
         artifacts: list[ProcessingArtifact] = []
         for item in references:
-            data = self._storage.read_bytes(
-                project_id, str(item["area"]), str(item["path"])
-            )
+            data = self._storage.read_bytes(project_id, str(item["area"]), str(item["path"]))
             if hashlib.sha256(data).hexdigest() != item["hash"]:
                 raise AssetProcessingInvalid(
                     "输入文件 Hash 与存储记录不一致",
@@ -486,9 +478,7 @@ class ProcessingPipelineService:
             project_id=request.project_id,
         )
         context = ProcessingContext.create(request.project_id, request.asset_id, limits)
-        payloads: dict[str, ProcessingPayload] = {
-            "input": ProcessingPayload(input_artifacts)
-        }
+        payloads: dict[str, ProcessingPayload] = {"input": ProcessingPayload(input_artifacts)}
         try:
             for node in graph.ordered():
                 context.check_deadline()
@@ -605,8 +595,7 @@ class ProcessingPipelineService:
             )
         composite_hash = hashlib.sha256("".join(hashes).encode("ascii")).hexdigest()
         processors = [
-            {"node_id": node.node_id, "processor_id": node.processor}
-            for node in graph.nodes
+            {"node_id": node.node_id, "processor_id": node.processor} for node in graph.nodes
         ]
         processor_versions = []
         for node in graph.nodes:
@@ -744,9 +733,7 @@ class ProcessingPipelineService:
         async with self._database.session() as session, transaction(session):
             entity = await AssetProcessingJobRepository(session).get(job_id)
             if entity is None:
-                raise NotFoundError(
-                    "资产处理任务不存在", details={"job_id": job_id}
-                )
+                raise NotFoundError("资产处理任务不存在", details={"job_id": job_id})
             if status != entity.processing_status and status not in PROCESSING_TRANSITIONS.get(
                 entity.processing_status, frozenset()
             ):
@@ -791,29 +778,21 @@ class ProcessingPipelineService:
                 error_code="ASSET_STATE_INVALID",
             )
 
-    async def _find_by_idempotency(
-        self, idempotency_key: str
-    ) -> AssetProcessingJobModel | None:
+    async def _find_by_idempotency(self, idempotency_key: str) -> AssetProcessingJobModel | None:
         async with self._database.session() as session:
-            entity = await AssetProcessingJobRepository(session).get_by_idempotency(
-                idempotency_key
-            )
+            entity = await AssetProcessingJobRepository(session).get_by_idempotency(idempotency_key)
             if entity is not None:
                 session.expunge(entity)
             return entity
 
-    async def _view_for(
-        self, entity: AssetProcessingJobModel, *, created: bool
-    ) -> ProcessingView:
+    async def _view_for(self, entity: AssetProcessingJobModel, *, created: bool) -> ProcessingView:
         async with self._database.session() as session:
             asset = await AssetRepository(session).get(entity.asset_id)
             if asset is None:
                 raise NotFoundError(
                     "资产处理任务关联资产不存在", details={"asset_id": entity.asset_id}
                 )
-            steps = await AssetProcessingStepRepository(session).list_for_job(
-                entity.job_id
-            )
+            steps = await AssetProcessingStepRepository(session).list_for_job(entity.job_id)
             outputs = await self._load_outputs(session, entity.output_version_id)
             return _job_view(
                 entity,
@@ -828,20 +807,14 @@ class ProcessingPipelineService:
     ) -> list[AssetStorageObjectModel]:
         if not output_version_id:
             return []
-        objects = await AssetStorageObjectRepository(session).list_for_version(
-            output_version_id
-        )
+        objects = await AssetStorageObjectRepository(session).list_for_version(output_version_id)
         return [item for item in objects if item.storage_area == STORAGE_PROCESSED]
 
-    async def _publish(
-        self, event_type: str, payload: dict[str, Any], *, project_id: str
-    ) -> None:
+    async def _publish(self, event_type: str, payload: dict[str, Any], *, project_id: str) -> None:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不阻断已提交任务
             log_event(
                 self._logger,

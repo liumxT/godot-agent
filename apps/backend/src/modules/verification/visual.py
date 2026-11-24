@@ -107,13 +107,11 @@ def parse_resolution(value: str) -> tuple[int, int] | None:
     try:
         width, height = value.lower().split("x", 1)
         return int(width), int(height)
-    except (ValueError, AttributeError):
+    except ValueError, AttributeError:
         return None
 
 
-def validate_screenshot(
-    path: str | Path, metadata: ScreenshotMetadata
-) -> tuple[str, ...]:
+def validate_screenshot(path: str | Path, metadata: ScreenshotMetadata) -> tuple[str, ...]:
     """返回截图上下文问题；空元组表示通过校验。"""
 
     problems: list[str] = []
@@ -185,9 +183,7 @@ def compare_images(
     ratio = diff_pixels / total if total else 0.0
     reasons: list[str] = []
     if ratio > policy.max_diff_ratio:
-        reasons.append(
-            f"差异像素占比 {ratio:.4f} 超过阈值 {policy.max_diff_ratio:.4f}"
-        )
+        reasons.append(f"差异像素占比 {ratio:.4f} 超过阈值 {policy.max_diff_ratio:.4f}")
         passed: bool | None = False
     else:
         passed = True

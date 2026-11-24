@@ -70,9 +70,7 @@ async def _session_for(app, client, client_type: str) -> str:
             ),
         },
     )
-    issued = await client.post(
-        "/api/v1/sessions", headers=_bearer(verified.json()["access_token"])
-    )
+    issued = await client.post("/api/v1/sessions", headers=_bearer(verified.json()["access_token"]))
     return issued.json()["session_token"]
 
 
@@ -97,16 +95,12 @@ async def _project_prompt_task(app, client, headers, tmp_path: Path, name: str):
     task = await _service(app, "task_service", TaskService).create(
         project_id=project_id, title="2D 平台跳跃游戏"
     )
-    attempt = await _service(app, "task_attempt_service", AttemptService).create(
-        task.task_id
-    )
+    attempt = await _service(app, "task_attempt_service", AttemptService).create(task.task_id)
     return project_id, task, attempt
 
 
 async def _make_definition(app, name: str, capabilities, tools, ceiling: str = "R2"):
-    definitions = _service(
-        app, "agent_definition_registry_service", DefinitionRegistryService
-    )
+    definitions = _service(app, "agent_definition_registry_service", DefinitionRegistryService)
     definition = await definitions.create(
         name=name,
         model_policy_id="default_agent_policy",
@@ -175,9 +169,7 @@ async def test_observability_dashboards(tmp_path: Path) -> None:
         await _make_definition(app, "m6_programmer", ("gameplay_programming",), ("file.write",))
         result = await _orchestrate(app, task, attempt, _two_step_plan())
 
-        observability = _service(
-            app, "team_observability_service", TeamObservabilityService
-        )
+        observability = _service(app, "team_observability_service", TeamObservabilityService)
         dashboard = await observability.team_dashboard(result.team.team_id)
         assert dashboard["assignment_counts"] == {"READY": 1, "BLOCKED": 1}
         assert len(dashboard["graph"]["nodes"]) == 2
@@ -185,9 +177,7 @@ async def test_observability_dashboards(tmp_path: Path) -> None:
         assert dashboard["budget"] is None
 
         design_id = next(
-            item.assignment.assignment_id
-            for item in result.assignments
-            if item.key == "design"
+            item.assignment.assignment_id for item in result.assignments if item.key == "design"
         )
         detail = await observability.assignment_dashboard(design_id)
         assert detail["assignment"]["status"] == "READY"
@@ -245,9 +235,7 @@ async def test_multi_agent_api_and_handoff(tmp_path: Path) -> None:
         design = body["assignments"][0]
         assert design["assignment"]["status"] == "READY"
 
-        listed = await client.get(
-            f"/api/v1/agent-teams?project_id={project_id}", headers=headers
-        )
+        listed = await client.get(f"/api/v1/agent-teams?project_id={project_id}", headers=headers)
         assert listed.status_code == 200 and len(listed.json()["items"]) == 1
         graph = await client.get(f"/api/v1/agent-teams/{team_id}/graph", headers=headers)
         assert len(graph.json()["edges"]) == 1
@@ -316,9 +304,7 @@ async def test_multi_agent_api_and_handoff(tmp_path: Path) -> None:
 async def test_platformer_demo_orchestration(tmp_path: Path) -> None:
     async with _running(tmp_path) as (app, client):
         token = await _session_for(app, client, "admin")
-        _, task, attempt = await _project_prompt_task(
-            app, client, _bearer(token), tmp_path, "demo"
-        )
+        _, task, attempt = await _project_prompt_task(app, client, _bearer(token), tmp_path, "demo")
         await _make_definition(app, "demo_designer", ("gameplay_design",), ("file.read",), "R1")
         await _make_definition(
             app, "demo_gameplay", ("gameplay_programming",), ("file.read", "file.write")

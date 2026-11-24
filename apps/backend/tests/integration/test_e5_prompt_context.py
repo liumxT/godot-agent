@@ -166,9 +166,7 @@ async def test_context_assembly_records_layers_and_versions(tmp_path: Path) -> N
         assert loaded.project_id == project.project_id
         assert loaded.layers[0].layer == LAYER_PROJECT
 
-        second = await contexts.assemble(
-            ContextAssemblyRequest(project_id=project.project_id)
-        )
+        second = await contexts.assemble(ContextAssemblyRequest(project_id=project.project_id))
         assert second.context_version == 2
         assert len(await contexts.list_for_project(project.project_id)) == 2
 
@@ -229,9 +227,7 @@ async def test_context_accepts_caller_layers_but_not_system_ones(tmp_path: Path)
         with pytest.raises(ValidationFailed):
             await contexts.assemble(
                 ContextAssemblyRequest(project_id=project.project_id),
-                layers=(
-                    ContextLayer(layer=LAYER_PROJECT, content={"x": 1}),
-                ),
+                layers=(ContextLayer(layer=LAYER_PROJECT, content={"x": 1}),),
             )
         with pytest.raises(ValidationFailed):
             await contexts.assemble(

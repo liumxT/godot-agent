@@ -692,9 +692,7 @@ SPECIALIZED_AGENTS: tuple[SpecializedAgentSpec, ...] = (
 )
 
 _CATALOG: dict[str, SpecializedAgentSpec] = {spec.key: spec for spec in SPECIALIZED_AGENTS}
-_CATALOG_BY_NAME: dict[str, SpecializedAgentSpec] = {
-    spec.name: spec for spec in SPECIALIZED_AGENTS
-}
+_CATALOG_BY_NAME: dict[str, SpecializedAgentSpec] = {spec.name: spec for spec in SPECIALIZED_AGENTS}
 
 
 def validate_catalog() -> None:
@@ -733,9 +731,7 @@ class SpecializedAgentCatalog:
             raise NotFoundError("专用 Agent 未登记", details={"agent_key": key})
         return spec
 
-    async def ensure_definition(
-        self, key: str, *, created_by: str | None = None
-    ) -> DefinitionView:
+    async def ensure_definition(self, key: str, *, created_by: str | None = None) -> DefinitionView:
         spec = self.get(key)
         prompt_name = f"agent_{spec.key}"
         try:

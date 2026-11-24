@@ -112,7 +112,9 @@ class ToolRecoveryService:
             except Exception:  # noqa: BLE001 - 输出非法按未通过验证处理
                 output_valid = False
 
-        execution_status = adapter_result.status if adapter_result is not None else EXECUTION_UNKNOWN
+        execution_status = (
+            adapter_result.status if adapter_result is not None else EXECUTION_UNKNOWN
+        )
         verification = await self._verifications.record(
             execution_id=entity.execution_id,
             project_id=entity.project_id,
@@ -172,7 +174,9 @@ class ToolRecoveryService:
             execution_id=entity.execution_id,
             status=status,
             verification_status=verification.verification_status,
-            output=dict(adapter_result.output) if adapter_result and adapter_result.output else None,
+            output=dict(adapter_result.output)
+            if adapter_result and adapter_result.output
+            else None,
             error_code=adapter_result.error_code if adapter_result is not None else adapter_failure,
             evidence_refs=tuple(evidence),
         )

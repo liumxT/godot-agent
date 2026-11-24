@@ -136,7 +136,10 @@ class ConflictService:
                 if assignment is None or assignment.team_id != team_id:
                     raise AgentConflictInvalid(
                         "冲突参与者不属于该 Team",
-                        details={"reasons": ["UNKNOWN_PARTICIPANT"], "assignment_id": assignment_id},
+                        details={
+                            "reasons": ["UNKNOWN_PARTICIPANT"],
+                            "assignment_id": assignment_id,
+                        },
                     )
         paused: list[AssignmentView] = []
         if pause:
@@ -245,7 +248,10 @@ class ConflictService:
                 )
             if entity.resolution_status == CONFLICT_RESOLVED:
                 return _conflict_view(entity)
-            if entity.resolution_status == CONFLICT_ESCALATED and strategy != RESOLUTION_USER_DECISION:
+            if (
+                entity.resolution_status == CONFLICT_ESCALATED
+                and strategy != RESOLUTION_USER_DECISION
+            ):
                 raise AgentConflictInvalid(
                     "已升级的冲突必须由用户决策解决",
                     details={"reasons": ["USER_DECISION_REQUIRED"]},

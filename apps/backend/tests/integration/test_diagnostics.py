@@ -1,4 +1,4 @@
-﻿"""诊断接口集成测试（E1-T13-IT-001…002）。"""
+"""诊断接口集成测试（E1-T13-IT-001…002）。"""
 
 from __future__ import annotations
 

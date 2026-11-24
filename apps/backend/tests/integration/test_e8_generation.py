@@ -87,9 +87,7 @@ class FakeImageAdapter(BaseAssetGenerationAdapter):
             supports_cancel=self.state.mode == "async",
         )
 
-    async def submit_generation(
-        self, request: AssetGenerationRequest
-    ) -> AssetGenerationResult:
+    async def submit_generation(self, request: AssetGenerationRequest) -> AssetGenerationResult:
         self.state.submits += 1
         self.state.prompts.append(request.prompt)
         if self.state.mode == "unknown":
@@ -111,9 +109,7 @@ class FakeImageAdapter(BaseAssetGenerationAdapter):
                 sent=True,
             )
         if self.state.mode == "async":
-            return AssetGenerationResult(
-                status=ASSET_JOB_RUNNING, provider_job_id="job-async-1"
-            )
+            return AssetGenerationResult(status=ASSET_JOB_RUNNING, provider_job_id="job-async-1")
         return AssetGenerationResult(
             status=ASSET_JOB_SUCCEEDED,
             provider_job_id="job-sync-1",
@@ -134,13 +130,9 @@ class FakeImageAdapter(BaseAssetGenerationAdapter):
         self, request: AssetGenerationRequest, provider_job_id: str
     ) -> AssetGenerationResult:
         self.state.cancels += 1
-        return AssetGenerationResult(
-            status=ASSET_JOB_RUNNING, provider_job_id=provider_job_id
-        )
+        return AssetGenerationResult(status=ASSET_JOB_RUNNING, provider_job_id=provider_job_id)
 
-    def _outputs(
-        self, request: AssetGenerationRequest
-    ) -> tuple[AssetGenerationOutput, ...]:
+    def _outputs(self, request: AssetGenerationRequest) -> tuple[AssetGenerationOutput, ...]:
         return (
             AssetGenerationOutput(
                 data=f"generated:{request.prompt}".encode(),
@@ -228,9 +220,7 @@ async def _seed(app, tmp_path: Path, *, capability: str = CAPABILITY_IMAGE_OUTPU
     await configuration.save(
         provider.provider_id, endpoint="http://127.0.0.1:9000", timeout_seconds=5
     )
-    supported = CapabilitySetting(
-        support_status=CAPABILITY_SUPPORTED, evidence_source="test"
-    )
+    supported = CapabilitySetting(support_status=CAPABILITY_SUPPORTED, evidence_source="test")
     status = CAPABILITY_SUPPORTED if capability == CAPABILITY_IMAGE_OUTPUT else CAPABILITY_UNKNOWN
     model = await registry.register_model(
         provider_id=provider.provider_id,

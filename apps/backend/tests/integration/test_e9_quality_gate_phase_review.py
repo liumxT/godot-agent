@@ -76,9 +76,7 @@ async def test_quality_gate_evaluate_and_waive(tmp_path: Path) -> None:
         project_id = await _project(app, tmp_path)
         requirement_id = await _requirement(app, project_id)
 
-        campaign = await verification.create_campaign(
-            project_id=project_id, campaign_type="TASK"
-        )
+        campaign = await verification.create_campaign(project_id=project_id, campaign_type="TASK")
         await verification.create_plan(
             campaign.campaign_id,
             requirement_ids=(requirement_id,),
@@ -90,9 +88,7 @@ async def test_quality_gate_evaluate_and_waive(tmp_path: Path) -> None:
             test_type="FUNCTIONAL",
             execution_method="GODOT_TEST",
         )
-        await verification.link_test(
-            requirement_id=requirement_id, test_case_id=case.test_case_id
-        )
+        await verification.link_test(requirement_id=requirement_id, test_case_id=case.test_case_id)
 
         evaluation = await verification.evaluate_quality_gate(
             project_id, campaign_id=campaign.campaign_id
@@ -106,14 +102,10 @@ async def test_quality_gate_evaluate_and_waive(tmp_path: Path) -> None:
         assert by_gate["GATE-6_EVIDENCE_COMPLETENESS"].status == "UNKNOWN"
         assert by_gate["GATE-7_DEFECT_STATUS"].status == "PASSED"
 
-        latest = await verification.list_gate_results(
-            project_id, campaign_id=campaign.campaign_id
-        )
+        latest = await verification.list_gate_results(project_id, campaign_id=campaign.campaign_id)
         assert len(latest) == 10
 
-        evidence_result = next(
-            item for item in latest if item.gate_name == GATE_EVIDENCE
-        )
+        evidence_result = next(item for item in latest if item.gate_name == GATE_EVIDENCE)
         with pytest.raises(ValidationFailed):
             await verification.waive_gate_result(
                 evidence_result.gate_result_id,
@@ -134,9 +126,7 @@ async def test_quality_gate_evaluate_and_waive(tmp_path: Path) -> None:
             project_id, campaign_id=campaign.campaign_id, policy_id=policy.gate_policy_id
         )
         assert policy_eval.decision["status"] == "UNKNOWN"
-        target = next(
-            item for item in policy_eval.gates if item.gate_name == GATE_EVIDENCE
-        )
+        target = next(item for item in policy_eval.gates if item.gate_name == GATE_EVIDENCE)
         waived = await verification.waive_gate_result(
             target.gate_result_id,
             authorized_by="user:owner",
@@ -152,9 +142,7 @@ async def test_quality_gate_evaluate_and_waive(tmp_path: Path) -> None:
         after = await verification.evaluate_quality_gate(
             project_id, campaign_id=campaign.campaign_id, policy_id=policy.gate_policy_id
         )
-        waived_gate = next(
-            item for item in after.gates if item.gate_name == GATE_EVIDENCE
-        )
+        waived_gate = next(item for item in after.gates if item.gate_name == GATE_EVIDENCE)
         assert waived_gate.status == GATE_WAIVED
         assert after.decision["status"] == "PASSED"
 
@@ -168,9 +156,7 @@ async def test_phase_review_flow_and_dashboards(tmp_path: Path) -> None:
         verification = _service(app, "verification_service", VerificationService)
         project_id = await _project(app, tmp_path)
         requirement_id = await _requirement(app, project_id)
-        campaign = await verification.create_campaign(
-            project_id=project_id, campaign_type="PHASE"
-        )
+        campaign = await verification.create_campaign(project_id=project_id, campaign_type="PHASE")
         await verification.create_plan(
             campaign.campaign_id,
             requirement_ids=(requirement_id,),

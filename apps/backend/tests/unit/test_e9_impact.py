@@ -46,9 +46,7 @@ def test_normalize_path_and_kind() -> None:
 
 def test_coerce_changed_file() -> None:
     assert coerce_changed_file("scripts\\a.gd") == ChangedFile(path="scripts/a.gd")
-    coerced = coerce_changed_file(
-        {"resource_path": "ui/hud.tscn", "risk_level": "high"}
-    )
+    coerced = coerce_changed_file({"resource_path": "ui/hud.tscn", "risk_level": "high"})
     assert coerced.path == "ui/hud.tscn"
     assert coerced.risk_level == "HIGH"
 

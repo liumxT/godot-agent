@@ -100,9 +100,7 @@ async def test_agent_run_budget_blocks_repeated_execution(tmp_path: Path) -> Non
         assert run.execution_status == "RUNNING"
         await verification.complete_run(run.run_id, execution_status="COMPLETED")
 
-        budget = await verification.verification_budget(
-            campaign.campaign_id, limits=limits
-        )
+        budget = await verification.verification_budget(campaign.campaign_id, limits=limits)
         assert budget["usage"]["test_runs"] == 1
         assert budget["usage"]["retries"] == 0
         assert "test_runs" in budget["exhausted"]
@@ -152,9 +150,7 @@ async def test_retry_budget_and_evidence_usage(tmp_path: Path) -> None:
         )
         await verification.complete_run(retry.run_id, execution_status="COMPLETED")
 
-        budget = await verification.verification_budget(
-            campaign.campaign_id, limits=limits
-        )
+        budget = await verification.verification_budget(campaign.campaign_id, limits=limits)
         assert budget["usage"]["retries"] == 1
         assert budget["usage"]["screenshots"] == 1
         assert "retries" in budget["exhausted"]
@@ -174,6 +170,4 @@ async def test_unknown_risk_level_is_rejected(tmp_path: Path) -> None:
             project_id=project_id, campaign_type="TASK", actor_id="agent_gameplay"
         )
         with pytest.raises(ValidationFailed):
-            await verification.verification_budget(
-                campaign.campaign_id, risk_level="UNKNOWN"
-            )
+            await verification.verification_budget(campaign.campaign_id, risk_level="UNKNOWN")

@@ -203,9 +203,7 @@ class ContextAssemblyService:
 
     # ---- 内部 ----
 
-    async def _default_layers(
-        self, request: ContextAssemblyRequest
-    ) -> list[ContextLayer]:
+    async def _default_layers(self, request: ContextAssemblyRequest) -> list[ContextLayer]:
         layers = [await self._project_layer(request.project_id)]
         if request.task_id is not None:
             task_layer, workflow_layer = await self._task_layers(request)
@@ -322,9 +320,7 @@ class ContextAssemblyService:
             raise ValidationFailed("token_budget 必须为正整数")
         for name in request.required_sources:
             if name not in CONTEXT_LAYERS:
-                raise ValidationFailed(
-                    "required_sources 含未知层", details={"layer": name}
-                )
+                raise ValidationFailed("required_sources 含未知层", details={"layer": name})
 
     @staticmethod
     def _validate_layers(
@@ -335,9 +331,7 @@ class ContextAssemblyService:
             if item.layer not in CONTEXT_LAYERS:
                 raise ValidationFailed("Context 层名称非法", details={"layer": item.layer})
             if item.origin not in CONTEXT_ORIGINS:
-                raise ValidationFailed(
-                    "Context 层来源标记非法", details={"origin": item.origin}
-                )
+                raise ValidationFailed("Context 层来源标记非法", details={"origin": item.origin})
             if item.layer in seen:
                 raise ValidationFailed(
                     "Context 层重复，需在调用方合并", details={"layer": item.layer}

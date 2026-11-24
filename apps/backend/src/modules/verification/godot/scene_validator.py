@@ -103,7 +103,7 @@ def parse_scene(path: Path, root: Path) -> SceneDocument:
     relative = _relative(path, root)
     try:
         text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
+    except OSError, UnicodeDecodeError:
         finding = error("scene_unreadable", "场景文件无法读取", relative)
         return SceneDocument(path, relative, (), {}, (), (finding,))
 
@@ -336,17 +336,14 @@ def validate_scenes(
                 )
             )
             continue
-        root_name = (
-            inspection.document.root.name if inspection.document.root is not None else "."
-        )
+        root_name = inspection.document.root.name if inspection.document.root is not None else "."
         expected_path = _resolve_path(requirement.path, root_name)
         actual = inspection.node_paths.get(expected_path)
         if actual is None:
             findings.append(
                 error(
                     "scene_required_node_missing",
-                    requirement.description
-                    or f"缺少节点 {requirement.path}",
+                    requirement.description or f"缺少节点 {requirement.path}",
                     requirement.scene,
                 )
             )

@@ -25,9 +25,7 @@ def upgrade() -> None:
     op.add_column(
         "agent_config_snapshots", sa.Column("client_id", sa.String(length=64), nullable=True)
     )
-    op.add_column(
-        "agent_instances", sa.Column("client_id", sa.String(length=64), nullable=True)
-    )
+    op.add_column("agent_instances", sa.Column("client_id", sa.String(length=64), nullable=True))
 
 
 def downgrade() -> None:

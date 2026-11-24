@@ -211,15 +211,15 @@ def validate_audio_spec(spec: dict[str, Any]) -> dict[str, Any]:
         if (
             not isinstance(value, list)
             or len(value) != 2
-            or not all(isinstance(item, (int, float)) and not isinstance(item, bool) for item in value)
+            or not all(
+                isinstance(item, (int, float)) and not isinstance(item, bool) for item in value
+            )
             or value[0] > value[1]
         ):
             raise _invalid("音量范围必须是 [min, max]", value=value)
     if "loop_start_seconds" in spec and spec["loop_start_seconds"] < 0:
         raise _invalid("循环起点不能为负")
-    if "loop_end_seconds" in spec and spec["loop_end_seconds"] <= spec.get(
-        "loop_start_seconds", 0
-    ):
+    if "loop_end_seconds" in spec and spec["loop_end_seconds"] <= spec.get("loop_start_seconds", 0):
         raise _invalid("循环终点必须大于起点")
     for key in ("seamless_loop", "fade_in_out", "subtitles_required"):
         _optional_bool(spec, key)
@@ -462,9 +462,7 @@ class AssetBriefService:
                 raise NotFoundError("Asset Brief 不存在", details={"brief_id": brief_id})
             allowed = BRIEF_TRANSITIONS.get(entity.status, frozenset())
             if to_status not in allowed:
-                raise _invalid(
-                    "Brief 状态迁移不合法", **{"from": entity.status, "to": to_status}
-                )
+                raise _invalid("Brief 状态迁移不合法", **{"from": entity.status, "to": to_status})
             entity.status = to_status
             entity.version += 1
             entity.updated_at = utcnow()

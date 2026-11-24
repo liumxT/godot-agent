@@ -292,9 +292,7 @@ class ModelGatewayService:
                 "retryable": False,
             }
             if status == REQUEST_UNKNOWN:
-                raise ModelRequestUnknown(
-                    "模型调用结果未知，不能直接重试", details=details
-                )
+                raise ModelRequestUnknown("模型调用结果未知，不能直接重试", details=details)
             raise ModelCallFailed("模型调用失败", details=details)
 
         return await self._persist_success(
@@ -363,7 +361,11 @@ class ModelGatewayService:
             )
         except ProviderCallFailure as failure:
             status = await self._persist_failure(
-                prepared, request_id, failure, started=started, attempts=1,
+                prepared,
+                request_id,
+                failure,
+                started=started,
+                attempts=1,
                 partial=accumulator,
             )
             finalized = True
@@ -376,7 +378,11 @@ class ModelGatewayService:
         except TimeoutError:
             failure = _timeout_failure()
             await self._persist_failure(
-                prepared, request_id, failure, started=started, attempts=1,
+                prepared,
+                request_id,
+                failure,
+                started=started,
+                attempts=1,
                 partial=accumulator,
             )
             finalized = True
@@ -393,9 +399,7 @@ class ModelGatewayService:
             raise
         finally:
             if not finalized:
-                await self._persist_cancel(
-                    prepared, request_id, accumulator, started=started
-                )
+                await self._persist_cancel(prepared, request_id, accumulator, started=started)
 
     async def resolve_asset_provider(
         self,
@@ -408,9 +412,7 @@ class ModelGatewayService:
 
         validate_asset_kind(kind)
         required_capability = REQUIRED_CAPABILITIES[kind]
-        model = await self._select_asset_model(
-            kind, provider_id=provider_id, model_id=model_id
-        )
+        model = await self._select_asset_model(kind, provider_id=provider_id, model_id=model_id)
         try:
             provider = await self._registry.get_provider(model.provider_id)
         except NotFoundError as exc:
@@ -431,19 +433,13 @@ class ModelGatewayService:
                 },
             )
         async with self._database.session() as session:
-            config = await ProviderConfigurationRepository(session).get_latest(
-                provider.provider_id
-            )
+            config = await ProviderConfigurationRepository(session).get_latest(provider.provider_id)
         if config is None or not config.enabled:
             raise ProviderNotConfigured(
                 "资产生成 Provider 尚未启用配置",
                 details={"provider_id": provider.provider_id},
             )
-        api_key = (
-            self._secret_store.get(config.credential_ref)
-            if config.credential_ref
-            else None
-        )
+        api_key = self._secret_store.get(config.credential_ref) if config.credential_ref else None
         adapter = self._asset_adapters.create(
             kind,
             provider.provider_type,
@@ -454,15 +450,9 @@ class ModelGatewayService:
             transport=self._transport,
         )
         adapter.validate_configuration()
-        assert_unverified_capability(
-            model.capability_status(required_capability), kind=kind
-        )
-        assert_unverified_capability(
-            adapter.get_capabilities().capability_status, kind=kind
-        )
-        timeout_seconds = float(
-            config.timeout_seconds or self._default_timeout_seconds
-        )
+        assert_unverified_capability(model.capability_status(required_capability), kind=kind)
+        assert_unverified_capability(adapter.get_capabilities().capability_status, kind=kind)
+        timeout_seconds = float(config.timeout_seconds or self._default_timeout_seconds)
         return ResolvedAssetProvider(
             adapter=adapter,
             kind=kind,
@@ -478,9 +468,7 @@ class ModelGatewayService:
         resolved: ResolvedAssetProvider,
         request: AssetGenerationRequest,
     ) -> AssetGenerationResult:
-        timeout_seconds = float(
-            request.timeout_seconds or resolved.timeout_seconds
-        )
+        timeout_seconds = float(request.timeout_seconds or resolved.timeout_seconds)
         try:
             async with asyncio.timeout(timeout_seconds):
                 result = await resolved.adapter.submit_generation(request)
@@ -560,15 +548,12 @@ class ModelGatewayService:
                     },
                 )
             if model.status != MODEL_ACTIVE:
-                raise ModelUnavailable(
-                    "指定的资产生成模型已禁用", details={"model_id": model_id}
-                )
+                raise ModelUnavailable("指定的资产生成模型已禁用", details={"model_id": model_id})
             return model
         candidates = [
             item
             for item in await self._registry.list_models(provider_id=provider_id)
-            if item.status == MODEL_ACTIVE
-            and item.capability_status(required) == "SUPPORTED"
+            if item.status == MODEL_ACTIVE and item.capability_status(required) == "SUPPORTED"
         ]
         if len(candidates) == 1:
             return candidates[0]
@@ -682,27 +667,17 @@ class ModelGatewayService:
                 "指定的模型未登记", details={"model_id": request.model_id}
             ) from exc
         if model.status != MODEL_ACTIVE:
-            raise ModelUnavailable(
-                "模型已禁用", details={"model_id": model.model_id}
-            )
+            raise ModelUnavailable("模型已禁用", details={"model_id": model.model_id})
         provider = await self._registry.get_provider(model.provider_id)
         if provider.status != PROVIDER_ENABLED:
-            raise ModelUnavailable(
-                "Provider 已禁用", details={"provider_id": provider.provider_id}
-            )
+            raise ModelUnavailable("Provider 已禁用", details={"provider_id": provider.provider_id})
         async with self._database.session() as session:
-            config = await ProviderConfigurationRepository(session).get_latest(
-                provider.provider_id
-            )
+            config = await ProviderConfigurationRepository(session).get_latest(provider.provider_id)
         if config is None or not config.enabled:
             raise ProviderNotConfigured(
                 "Provider 尚未启用配置", details={"provider_id": provider.provider_id}
             )
-        api_key = (
-            self._secret_store.get(config.credential_ref)
-            if config.credential_ref
-            else None
-        )
+        api_key = self._secret_store.get(config.credential_ref) if config.credential_ref else None
         declarations = tuple(
             ProviderModelDeclaration(
                 model_key=item.model_key,
@@ -727,9 +702,7 @@ class ModelGatewayService:
         )
         adapter.validate_configuration()
         timeout_seconds = (
-            request.timeout_seconds
-            or config.timeout_seconds
-            or self._default_timeout_seconds
+            request.timeout_seconds or config.timeout_seconds or self._default_timeout_seconds
         )
         return _Prepared(
             request=request,
@@ -740,9 +713,7 @@ class ModelGatewayService:
             request_bytes=measure_request_bytes(request),
         )
 
-    async def _create_request(
-        self, request: ModelInvocationRequest, prepared: _Prepared
-    ) -> None:
+    async def _create_request(self, request: ModelInvocationRequest, prepared: _Prepared) -> None:
         now = self._clock()
         metadata = {
             "model_key": request.model_key,
@@ -831,9 +802,7 @@ class ModelGatewayService:
                     created_at=now,
                 )
             )
-            usage_id = await self._record_usage(
-                session, prepared, request_id, usage, now
-            )
+            usage_id = await self._record_usage(session, prepared, request_id, usage, now)
             cost_id = await self._record_cost(
                 session,
                 prepared,

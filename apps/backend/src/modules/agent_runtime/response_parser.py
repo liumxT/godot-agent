@@ -41,9 +41,7 @@ def _invalid(message: str, **details: Any) -> AgentActionInvalid:
 def _text(payload: Mapping[str, Any], key: str, action: str) -> str:
     value = payload.get(key)
     if not isinstance(value, str) or not value.strip():
-        raise _invalid(
-            f"{action} 缺少必需字段 {key}", action=action, field=key
-        )
+        raise _invalid(f"{action} 缺少必需字段 {key}", action=action, field=key)
     return value.strip()
 
 
@@ -57,9 +55,7 @@ def _normalize_steps(payload: Mapping[str, Any], action: str) -> list[dict[str, 
             raise _invalid("Step 必须是对象", action=action, index=index)
         step_type = str(item.get("type", "")).strip().upper()
         if step_type not in STEP_TYPES:
-            raise _invalid(
-                "未知的 Step 类型", action=action, index=index, step_type=step_type
-            )
+            raise _invalid("未知的 Step 类型", action=action, index=index, step_type=step_type)
         description = str(item.get("description", "")).strip()
         if not description:
             raise _invalid("Step 描述不能为空", action=action, index=index)
@@ -71,9 +67,7 @@ def _normalize_steps(payload: Mapping[str, Any], action: str) -> list[dict[str, 
             try:
                 number = int(dependency)
             except (TypeError, ValueError) as exc:
-                raise _invalid(
-                    "Step 依赖必须是 Step 序号", action=action, index=index
-                ) from exc
+                raise _invalid("Step 依赖必须是 Step 序号", action=action, index=index) from exc
             if number < 1 or number >= index:
                 raise _invalid(
                     "Step 依赖必须指向更早的 Step",
@@ -112,9 +106,7 @@ class AgentResponseParser:
                 raise _invalid("工具输入必须是对象", action=action, field="input")
             normalized["input"] = dict(tool_input)
             scope = payload.get("resource_scope", [])
-            if not isinstance(scope, list) or any(
-                not isinstance(item, str) for item in scope
-            ):
+            if not isinstance(scope, list) or any(not isinstance(item, str) for item in scope):
                 raise _invalid("resource_scope 必须是字符串数组", action=action)
             normalized["resource_scope"] = list(scope)
             approval_id = payload.get("approval_id")
@@ -159,9 +151,7 @@ class AgentResponseParser:
             return data
         if response.tool_calls:
             if len(response.tool_calls) != 1:
-                raise _invalid(
-                    "一次只允许一个 Tool Call", tool_calls=len(response.tool_calls)
-                )
+                raise _invalid("一次只允许一个 Tool Call", tool_calls=len(response.tool_calls))
             call = response.tool_calls[0]
             return {
                 "action": ACTION_EXECUTE_TOOL,

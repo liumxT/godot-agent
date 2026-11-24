@@ -184,10 +184,7 @@ async def test_static_layers_complete_campaign(tmp_path: Path) -> None:
             assert layer.evidence_ids
 
         evidence = await verification.list_evidence(prepared.campaign.project_id)
-        kinds = {
-            item.metadata.get("report", {}).get("kind")
-            for item in evidence["items"]
-        }
+        kinds = {item.metadata.get("report", {}).get("kind") for item in evidence["items"]}
         assert kinds == {"STATIC_ANALYSIS", "STRUCTURE_VALIDATION"}
 
 
@@ -199,9 +196,7 @@ async def test_structure_failure_fails_campaign_with_evidence(tmp_path: Path) ->
             LAYER_STRUCTURE,
             SceneStructureExecutor(
                 tmp_path / "broken",
-                required=(
-                    NodeRequirement(scene="player.tscn", path=".", type="Node2D"),
-                ),
+                required=(NodeRequirement(scene="player.tscn", path=".", type="Node2D"),),
             ),
         )
 

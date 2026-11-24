@@ -23,9 +23,7 @@ class ToolDefinitionRepository(BaseRepository[ToolDefinitionModel]):
 
     async def latest_version(self, name: str) -> int:
         value = await self.session.scalar(
-            select(func.max(ToolDefinitionModel.version)).where(
-                ToolDefinitionModel.name == name
-            )
+            select(func.max(ToolDefinitionModel.version)).where(ToolDefinitionModel.name == name)
         )
         return int(value or 0)
 
@@ -205,4 +203,3 @@ class ToolVerificationRepository(BaseRepository[ToolVerificationRecordModel]):
 
     def _order_columns(self):
         return (ToolVerificationRecordModel.verified_at.desc(),)
-

@@ -69,10 +69,7 @@ def test_contract_enums_match_domain_constants() -> None:
         == models.EVIDENCE_VALIDITY_STATUSES
     )
     assert _enum("verification_evidence.schema.json", "evidence_type") == models.EVIDENCE_TYPES
-    assert (
-        _enum("verification_evidence.schema.json", "source_type")
-        == models.EVIDENCE_SOURCE_TYPES
-    )
+    assert _enum("verification_evidence.schema.json", "source_type") == models.EVIDENCE_SOURCE_TYPES
     assert _enum("acceptance_criterion.schema.json", "criterion_type") == models.CRITERION_TYPES
 
 

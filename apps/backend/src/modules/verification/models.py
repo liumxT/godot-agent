@@ -134,9 +134,7 @@ RUN_STATUSES = frozenset(
 )
 RUN_TRANSITIONS: dict[str, frozenset[str]] = {
     RUN_QUEUED: frozenset({RUN_RUNNING, RUN_FAILED, RUN_UNKNOWN, RUN_SKIPPED, RUN_CANCELLED}),
-    RUN_RUNNING: frozenset(
-        {RUN_COMPLETED, RUN_FAILED, RUN_UNKNOWN, RUN_SKIPPED, RUN_CANCELLED}
-    ),
+    RUN_RUNNING: frozenset({RUN_COMPLETED, RUN_FAILED, RUN_UNKNOWN, RUN_SKIPPED, RUN_CANCELLED}),
     RUN_COMPLETED: frozenset(),
     RUN_FAILED: frozenset(),
     RUN_UNKNOWN: frozenset({RUN_COMPLETED, RUN_FAILED, RUN_CANCELLED}),
@@ -346,7 +344,9 @@ COVERAGE_DIRECT = "DIRECT"
 COVERAGE_INDIRECT = "INDIRECT"
 COVERAGE_PARTIAL = "PARTIAL"
 COVERAGE_NEGATIVE = "NEGATIVE"
-COVERAGE_TYPES = frozenset({COVERAGE_DIRECT, COVERAGE_INDIRECT, COVERAGE_PARTIAL, COVERAGE_NEGATIVE})
+COVERAGE_TYPES = frozenset(
+    {COVERAGE_DIRECT, COVERAGE_INDIRECT, COVERAGE_PARTIAL, COVERAGE_NEGATIVE}
+)
 
 METHOD_STATIC_ANALYSIS = "STATIC_ANALYSIS"
 METHOD_STRUCTURE_INSPECTION = "STRUCTURE_INSPECTION"
@@ -375,7 +375,13 @@ RUNTIME_ENV_STOPPED = "STOPPED"
 RUNTIME_ENV_FAILED = "FAILED"
 RUNTIME_ENV_UNKNOWN = "UNKNOWN"
 RUNTIME_ENVIRONMENT_STATUSES = frozenset(
-    {RUNTIME_ENV_READY, RUNTIME_ENV_BUSY, RUNTIME_ENV_STOPPED, RUNTIME_ENV_FAILED, RUNTIME_ENV_UNKNOWN}
+    {
+        RUNTIME_ENV_READY,
+        RUNTIME_ENV_BUSY,
+        RUNTIME_ENV_STOPPED,
+        RUNTIME_ENV_FAILED,
+        RUNTIME_ENV_UNKNOWN,
+    }
 )
 
 RUNTIME_NOT_STARTED = "NOT_STARTED"
@@ -645,9 +651,7 @@ class VerificationCampaignModel(Base):
     created_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("ix_verification_campaigns_project_status", "project_id", "status"),
@@ -764,15 +768,11 @@ class VerificationTestLinkModel(Base):
         ForeignKey("verification_test_cases.test_case_id", ondelete="CASCADE"),
         nullable=False,
     )
-    coverage_type: Mapped[str] = mapped_column(
-        String(16), nullable=False, default=COVERAGE_DIRECT
-    )
+    coverage_type: Mapped[str] = mapped_column(String(16), nullable=False, default=COVERAGE_DIRECT)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
-        UniqueConstraint(
-            "requirement_id", "test_case_id", name="uq_verification_test_link"
-        ),
+        UniqueConstraint("requirement_id", "test_case_id", name="uq_verification_test_link"),
         Index("ix_verification_test_links_requirement", "requirement_id"),
     )
 
@@ -799,12 +799,8 @@ class VerificationRunModel(Base):
     )
     environment_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     execution_status: Mapped[str] = mapped_column(String(24), nullable=False, default=RUN_QUEUED)
-    started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     executor_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     evidence_ids_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -847,9 +843,7 @@ class VerificationResultModel(Base):
     evidence_ids_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     confidence_level: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    verified_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     superseded_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -877,9 +871,7 @@ class VerificationEvidenceModel(Base):
         nullable=True,
     )
     captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    validity_status: Mapped[str] = mapped_column(
-        String(16), nullable=False, default=EVIDENCE_VALID
-    )
+    validity_status: Mapped[str] = mapped_column(String(16), nullable=False, default=EVIDENCE_VALID)
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -909,9 +901,7 @@ class VerificationRuntimeEnvironmentModel(Base):
     renderer: Mapped[str] = mapped_column(String(32), nullable=False, default="")
     runtime_instance_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     test_configuration_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
-    status: Mapped[str] = mapped_column(
-        String(24), nullable=False, default=RUNTIME_ENV_READY
-    )
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default=RUNTIME_ENV_READY)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -971,12 +961,8 @@ class VerificationDebuggerErrorModel(Base):
         UniqueConstraint(
             "project_id", "fingerprint", name="uq_verification_debugger_error_fingerprint"
         ),
-        Index(
-            "ix_verification_debugger_errors_project_status", "project_id", "status"
-        ),
-        Index(
-            "ix_verification_debugger_errors_project_severity", "project_id", "severity"
-        ),
+        Index("ix_verification_debugger_errors_project_status", "project_id", "status"),
+        Index("ix_verification_debugger_errors_project_severity", "project_id", "severity"),
         Index("ix_verification_debugger_errors_run", "run_id"),
     )
 
@@ -1139,9 +1125,7 @@ PHASE_REVIEW_STATUSES = frozenset(
 )
 PHASE_REVIEW_TRANSITIONS: dict[str, frozenset[str]] = {
     PHASE_REVIEW_DRAFT: frozenset({PHASE_REVIEW_SUBMITTED}),
-    PHASE_REVIEW_SUBMITTED: frozenset(
-        {PHASE_REVIEW_UNDER_REVIEW, PHASE_REVIEW_REVISION_REQUIRED}
-    ),
+    PHASE_REVIEW_SUBMITTED: frozenset({PHASE_REVIEW_UNDER_REVIEW, PHASE_REVIEW_REVISION_REQUIRED}),
     PHASE_REVIEW_UNDER_REVIEW: frozenset(
         {
             PHASE_REVIEW_ACCEPTED,
@@ -1190,9 +1174,7 @@ class QualityGatePolicyModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    __table_args__ = (
-        Index("ix_quality_gate_policies_project", "project_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_quality_gate_policies_project", "project_id", "created_at"),)
 
 
 class QualityGateResultModel(Base):
@@ -1249,9 +1231,7 @@ class QualityGateWaiverModel(Base):
     scope: Mapped[str] = mapped_column(String(256), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    revoked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("ix_quality_gate_waivers_gate_result", "gate_result_id"),
@@ -1279,19 +1259,13 @@ class PhaseReviewModel(Base):
         ForeignKey("verification_campaigns.campaign_id", ondelete="SET NULL"),
         nullable=True,
     )
-    status: Mapped[str] = mapped_column(
-        String(24), nullable=False, default=PHASE_REVIEW_DRAFT
-    )
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default=PHASE_REVIEW_DRAFT)
     summary_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     recommendation: Mapped[str] = mapped_column(String(32), nullable=False, default="")
     submitted_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    submitted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     decided_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    decided_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -1315,6 +1289,4 @@ class PhaseReviewDecisionModel(Base):
     comment: Mapped[str] = mapped_column(Text, nullable=False, default="")
     decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    __table_args__ = (
-        Index("ix_phase_review_decisions_review", "review_id", "decided_at"),
-    )
+    __table_args__ = (Index("ix_phase_review_decisions_review", "review_id", "decided_at"),)

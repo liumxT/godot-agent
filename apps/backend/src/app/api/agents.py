@@ -58,21 +58,15 @@ def _definitions(request: Request) -> DefinitionRegistryService:
 
 
 def _instances(request: Request) -> AgentInstanceService:
-    return request.app.state.services.get(
-        "agent_instance_service", AgentInstanceService
-    )
+    return request.app.state.services.get("agent_instance_service", AgentInstanceService)
 
 
 def _lifecycle(request: Request) -> AgentLifecycleService:
-    return request.app.state.services.get(
-        "agent_lifecycle_service", AgentLifecycleService
-    )
+    return request.app.state.services.get("agent_lifecycle_service", AgentLifecycleService)
 
 
 def _executions(request: Request) -> AgentExecutionService:
-    return request.app.state.services.get(
-        "agent_execution_service", AgentExecutionService
-    )
+    return request.app.state.services.get("agent_execution_service", AgentExecutionService)
 
 
 def _planning(request: Request) -> PlanningService:
@@ -88,9 +82,7 @@ def _control(request: Request) -> AgentControlService:
 
 
 def _observability(request: Request) -> AgentObservabilityService:
-    return request.app.state.services.get(
-        "agent_observability_service", AgentObservabilityService
-    )
+    return request.app.state.services.get("agent_observability_service", AgentObservabilityService)
 
 
 def _tasks(request: Request) -> TaskService:
@@ -110,9 +102,7 @@ async def _authorize_scope(request: Request, project_id: str | None, action: str
         )
 
 
-async def _authorized_instance(
-    request: Request, instance_id: str, action: str
-) -> InstanceView:
+async def _authorized_instance(request: Request, instance_id: str, action: str) -> InstanceView:
     view = await _instances(request).get(instance_id)
     await authorize_project_action(request, view.project_id, action)
     principal = getattr(request.state, "principal", None)
@@ -280,9 +270,7 @@ async def list_agent_definitions(
     offset: int = Query(default=0, ge=0),
 ) -> dict:
     await _authorize_scope(request, project_id, ACTION_E6_AGENT_READ)
-    page = await _definitions(request).list(
-        status=status_filter, limit=limit, offset=offset
-    )
+    page = await _definitions(request).list(status=status_filter, limit=limit, offset=offset)
     return {
         "items": [_format_definition(item) for item in page["items"]],
         "total": page["total"],
@@ -381,9 +369,7 @@ async def publish_agent_definition(
 ) -> dict:
     await _authorize_scope(request, project_id, ACTION_E6_AGENT_MANAGE)
     principal = request.state.principal
-    await _definitions(request).publish(
-        definition_id, published_by=principal.client_id
-    )
+    await _definitions(request).publish(definition_id, published_by=principal.client_id)
     return _format_definition(await _definitions(request).get(definition_id))
 
 
@@ -444,9 +430,7 @@ async def get_agent_instance_snapshot(instance_id: str, request: Request) -> dic
     description="从已发布 Definition 与合法 Task/Attempt 创建实例；同一 Attempt 幂等。",
     responses=_ERRORS,
 )
-async def create_agent_instance(
-    payload: AgentInstanceCreateRequest, request: Request
-) -> dict:
+async def create_agent_instance(payload: AgentInstanceCreateRequest, request: Request) -> dict:
     task = await _tasks(request).get(payload.task_id)
     await authorize_project_action(request, task.project_id, ACTION_E6_AGENT_MANAGE)
     session = getattr(request.state, "session", None)
@@ -490,9 +474,7 @@ async def pause_agent_instance(
     payload: AgentInstanceActionRequest | None = None,
 ) -> dict:
     await _authorized_instance(request, instance_id, ACTION_E6_AGENT_MANAGE)
-    view = await _control(request).pause(
-        instance_id, reason=payload.reason if payload else None
-    )
+    view = await _control(request).pause(instance_id, reason=payload.reason if payload else None)
     return _format_instance(view)
 
 
@@ -528,9 +510,7 @@ async def stop_agent_instance(
     payload: AgentInstanceActionRequest | None = None,
 ) -> dict:
     await _authorized_instance(request, instance_id, ACTION_E6_AGENT_MANAGE)
-    view = await _control(request).stop(
-        instance_id, reason=payload.reason if payload else None
-    )
+    view = await _control(request).stop(instance_id, reason=payload.reason if payload else None)
     return _format_instance(view)
 
 
@@ -556,9 +536,7 @@ async def list_agent_executions(instance_id: str, request: Request) -> dict:
     responses=_ERRORS,
 )
 async def get_agent_execution(execution_id: str, request: Request) -> dict:
-    execution, _ = await _authorized_execution(
-        request, execution_id, ACTION_E6_AGENT_READ
-    )
+    execution, _ = await _authorized_execution(request, execution_id, ACTION_E6_AGENT_READ)
     return _format_execution(execution)
 
 

@@ -158,9 +158,7 @@ class ProviderConfigurationService:
     ) -> ProviderConfigurationView:
         current = await self.get(provider_id)
         if current is None:
-            raise ValidationFailed(
-                "Provider 尚未配置", details={"provider_id": provider_id}
-            )
+            raise ValidationFailed("Provider 尚未配置", details={"provider_id": provider_id})
         return await self.save(
             provider_id,
             endpoint=current.endpoint,
@@ -171,9 +169,7 @@ class ProviderConfigurationService:
             actor_id=actor_id,
         )
 
-    async def set_credential(
-        self, provider_id: str, *, credential_ref: str, api_key: str
-    ) -> None:
+    async def set_credential(self, provider_id: str, *, credential_ref: str, api_key: str) -> None:
         if not credential_ref.strip():
             raise ValidationFailed("credential_ref 不能为空")
         if not api_key:
@@ -208,9 +204,7 @@ class ProviderConfigurationService:
                 raise NotFoundError("Provider 不存在", details={"provider_id": provider_id})
             config = await ProviderConfigurationRepository(session).get_latest(provider_id)
         if config is None:
-            raise ValidationFailed(
-                "Provider 尚未配置", details={"provider_id": provider_id}
-            )
+            raise ValidationFailed("Provider 尚未配置", details={"provider_id": provider_id})
         adapter = self._build_adapter(
             provider,
             endpoint=config.endpoint,

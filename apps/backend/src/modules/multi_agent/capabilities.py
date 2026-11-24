@@ -114,7 +114,9 @@ def _art(name: str, description: str, output_contract: str) -> CapabilitySpec:
     )
 
 
-def _qa(name: str, description: str, *, tools: tuple[str, ...], risk_profile: str = "R1") -> CapabilitySpec:
+def _qa(
+    name: str, description: str, *, tools: tuple[str, ...], risk_profile: str = "R1"
+) -> CapabilitySpec:
     return CapabilitySpec(
         name=name,
         category=CAPABILITY_CATEGORY_QA,
@@ -257,10 +259,17 @@ BUILTIN_CAPABILITIES: tuple[CapabilitySpec, ...] = (
     _art("vfx_creation", "设计视觉特效需求", "art.vfx.v1"),
     _art("asset_pipeline_management", "管理资源导入与命名规范", "art.pipeline.v1"),
     # 质量与交付
-    _qa("qa_testing", "设计并执行测试用例", tools=("godot.runtime.start", "godot.debug.get_errors")),
+    _qa(
+        "qa_testing", "设计并执行测试用例", tools=("godot.runtime.start", "godot.debug.get_errors")
+    ),
     _qa("test_automation", "自动化重复测试流程", tools=("file.read", "godot.runtime.start")),
     _qa("project_planning", "规划任务顺序、依赖与交付边界", tools=(), risk_profile="R0"),
-    _qa("build_release", "准备构建与发布检查", tools=("godot.runtime.get_status",), risk_profile="R1"),
+    _qa(
+        "build_release",
+        "准备构建与发布检查",
+        tools=("godot.runtime.get_status",),
+        risk_profile="R1",
+    ),
 )
 
 BUILTIN_CAPABILITY_NAMES = frozenset(spec.name for spec in BUILTIN_CAPABILITIES)
@@ -318,18 +327,14 @@ class MatchOutcome:
         return self.ranked[0] if self.ranked else None
 
 
-def _hard_filters(
-    requirement: CapabilityRequirement, candidate: CandidateProfile
-) -> list[str]:
+def _hard_filters(requirement: CapabilityRequirement, candidate: CandidateProfile) -> list[str]:
     reasons: list[str] = []
     if not candidate.enabled:
         reasons.append(REASON_AGENT_DISABLED)
     missing = [cap for cap in requirement.capabilities if cap not in candidate.capabilities]
     if missing:
         reasons.append(REASON_CAPABILITY_MISSING)
-    if RISK_RANK.get(candidate.permission_ceiling, -1) < RISK_RANK[
-        requirement.required_risk_level
-    ]:
+    if RISK_RANK.get(candidate.permission_ceiling, -1) < RISK_RANK[requirement.required_risk_level]:
         reasons.append(REASON_PERMISSION_INSUFFICIENT)
     if any(tool not in candidate.available_tools for tool in requirement.required_tools):
         reasons.append(REASON_TOOL_UNAVAILABLE)
@@ -367,7 +372,9 @@ def _score(
     cost_ratio = 0.0
     if cost_reference > 0:
         cost_ratio = min(max(candidate.estimated_cost, 0.0) / cost_reference, 1.0)
-    return round(50.0 * coverage + 30.0 * success + 20.0 * (1.0 - load_ratio) - 10.0 * cost_ratio, 4)
+    return round(
+        50.0 * coverage + 30.0 * success + 20.0 * (1.0 - load_ratio) - 10.0 * cost_ratio, 4
+    )
 
 
 def match_candidates(

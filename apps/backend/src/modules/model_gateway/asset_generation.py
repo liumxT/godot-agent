@@ -172,9 +172,7 @@ class AssetGenerationResult:
 
     def __post_init__(self) -> None:
         if self.status not in ASSET_JOB_STATUSES:
-            raise AssetGenerationInvalid(
-                "生成结果状态非法", details={"status": self.status}
-            )
+            raise AssetGenerationInvalid("生成结果状态非法", details={"status": self.status})
         if self.status == ASSET_JOB_SUCCEEDED and not self.outputs:
             raise AssetGenerationInvalid("生成成功的任务必须包含产物")
         if self.status in (ASSET_JOB_FAILED, ASSET_JOB_UNKNOWN) and not self.error_code:
@@ -207,9 +205,7 @@ class AssetGenerationAdapter(Protocol):
 
     def estimate_cost(self, request: AssetGenerationRequest) -> Decimal | None: ...
 
-    async def submit_generation(
-        self, request: AssetGenerationRequest
-    ) -> AssetGenerationResult: ...
+    async def submit_generation(self, request: AssetGenerationRequest) -> AssetGenerationResult: ...
 
     async def query_generation(
         self, request: AssetGenerationRequest, provider_job_id: str
@@ -324,24 +320,18 @@ class BaseAssetGenerationAdapter:
     def estimate_cost(self, request: AssetGenerationRequest) -> Decimal | None:
         return None
 
-    async def submit_generation(
-        self, request: AssetGenerationRequest
-    ) -> AssetGenerationResult:
+    async def submit_generation(self, request: AssetGenerationRequest) -> AssetGenerationResult:
         raise NotImplementedError("资产生成适配器未实现提交")
 
     async def query_generation(
         self, request: AssetGenerationRequest, provider_job_id: str
     ) -> AssetGenerationResult:
-        raise AssetGenerationInvalid(
-            "该资产生成适配器不支持异步查询", details={"kind": self.kind}
-        )
+        raise AssetGenerationInvalid("该资产生成适配器不支持异步查询", details={"kind": self.kind})
 
     async def cancel_generation(
         self, request: AssetGenerationRequest, provider_job_id: str
     ) -> AssetGenerationResult:
-        raise AssetGenerationInvalid(
-            "该资产生成适配器不支持取消", details={"kind": self.kind}
-        )
+        raise AssetGenerationInvalid("该资产生成适配器不支持取消", details={"kind": self.kind})
 
     def _headers(self) -> dict[str, str]:
         headers = {"content-type": "application/json"}
@@ -409,7 +399,8 @@ def _error_info(
     return ProviderErrorInfo(
         category=category,
         message=message,
-        retryable=category.value in {"RATE_LIMIT", "PROVIDER_UNAVAILABLE", "NETWORK_ERROR", "TIMEOUT"},
+        retryable=category.value
+        in {"RATE_LIMIT", "PROVIDER_UNAVAILABLE", "NETWORK_ERROR", "TIMEOUT"},
         http_status=http_status,
     )
 

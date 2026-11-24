@@ -88,9 +88,7 @@ async def _prepare(app, tmp_path: Path) -> dict:
         )
         return await definitions.publish(definition.definition_id)
 
-    designer = await make(
-        "e7c_designer", ("gameplay_design", "level_design"), ("file.read",), "R2"
-    )
+    designer = await make("e7c_designer", ("gameplay_design", "level_design"), ("file.read",), "R2")
     programmer = await make(
         "e7c_programmer",
         ("gameplay_programming", "game_system_programming"),
@@ -250,9 +248,9 @@ async def test_handoff_execution_creates_replacement_assignment(tmp_path: Path) 
             handoff_type="TASK_HANDOFF",
             payload=_handoff_payload(context.context_id),
         )
-        execution = await _service(app, "orchestrator_service", OrchestratorService).execute_handoff(
-            handoff.handoff_id
-        )
+        execution = await _service(
+            app, "orchestrator_service", OrchestratorService
+        ).execute_handoff(handoff.handoff_id)
 
         assert execution.handoff.status == "COMPLETED"
         assert execution.handoff.target_assignment_id == execution.assignment.assignment_id
@@ -276,9 +274,9 @@ async def test_handoff_rejects_target_without_capability(tmp_path: Path) -> None
             payload=_handoff_payload(),
         )
         with pytest.raises(AgentHandoffInvalid) as exc_info:
-            await _service(
-                app, "orchestrator_service", OrchestratorService
-            ).execute_handoff(handoff.handoff_id)
+            await _service(app, "orchestrator_service", OrchestratorService).execute_handoff(
+                handoff.handoff_id
+            )
         assert "CAPABILITY_MISMATCH" in exc_info.value.details["reasons"]
         failed = await handoffs.get(handoff.handoff_id)
         assert failed.status == "FAILED"
@@ -296,9 +294,9 @@ async def test_handoff_requires_task_system_authorization(tmp_path: Path) -> Non
             payload=_handoff_payload(),
         )
         with pytest.raises(AgentOrchestrationUnauthorized):
-            await _service(
-                app, "orchestrator_service", OrchestratorService
-            ).execute_handoff(handoff.handoff_id, authorized_by="AGENT_INSTANCE")
+            await _service(app, "orchestrator_service", OrchestratorService).execute_handoff(
+                handoff.handoff_id, authorized_by="AGENT_INSTANCE"
+            )
 
 
 async def test_shared_context_versions_and_stale_policy(tmp_path: Path) -> None:
@@ -456,9 +454,7 @@ async def test_resource_write_locks_are_exclusive_and_fenced(tmp_path: Path) -> 
         ctx = await _prepare(app, tmp_path)
         result = await _orchestrate(app, ctx, _platformer_plan())
         by_key = {item.key: item.assignment for item in result.assignments}
-        coordinator = _service(
-            app, "resource_coordinator_service", ResourceCoordinatorService
-        )
+        coordinator = _service(app, "resource_coordinator_service", ResourceCoordinatorService)
         scene = ResourceRequest(resource_type="SCENE", resource_key="res://player.tscn")
 
         first = await coordinator.acquire(
@@ -496,9 +492,7 @@ async def test_read_locks_allow_parallel_but_block_writers(tmp_path: Path) -> No
         ctx = await _prepare(app, tmp_path)
         result = await _orchestrate(app, ctx, _platformer_plan())
         by_key = {item.key: item.assignment for item in result.assignments}
-        coordinator = _service(
-            app, "resource_coordinator_service", ResourceCoordinatorService
-        )
+        coordinator = _service(app, "resource_coordinator_service", ResourceCoordinatorService)
         script = "res://scripts/player.gd"
 
         reader_one = await coordinator.acquire(
@@ -557,7 +551,9 @@ async def test_parallel_plan_respects_limit_and_resources(tmp_path: Path) -> Non
             resources_by_assignment=resource_map,
             max_parallel=4,
         )
-        assert [{item.assignment_id for item in batch.assignments} for batch in planned.batches] == [
+        assert [
+            {item.assignment_id for item in batch.assignments} for batch in planned.batches
+        ] == [
             {by_key["design"].assignment_id},
             {by_key["code"].assignment_id, by_key["hud"].assignment_id},
         ]

@@ -52,14 +52,10 @@ def upgrade() -> None:
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["project_id"], ["projects.project_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.project_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("execution_id"),
     )
-    op.create_index(
-        "ix_tool_executions_project", "tool_executions", ["project_id", "status"]
-    )
+    op.create_index("ix_tool_executions_project", "tool_executions", ["project_id", "status"])
     op.create_index(
         "ix_tool_executions_idempotency", "tool_executions", ["project_id", "idempotency_key"]
     )
@@ -77,9 +73,7 @@ def upgrade() -> None:
         sa.Column("acquired_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("status", sa.String(length=16), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["project_id"], ["projects.project_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.project_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("lock_id"),
     )
     op.create_index(
@@ -106,17 +100,11 @@ def upgrade() -> None:
         sa.Column("execution_status", sa.String(length=16), nullable=False),
         sa.Column("failure_reason", sa.String(length=128), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["project_id"], ["projects.project_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.project_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("audit_id"),
     )
-    op.create_index(
-        "ix_tool_audit_project", "tool_audit_records", ["project_id", "created_at"]
-    )
-    op.create_index(
-        "ix_tool_audit_execution", "tool_audit_records", ["execution_id"]
-    )
+    op.create_index("ix_tool_audit_project", "tool_audit_records", ["project_id", "created_at"])
+    op.create_index("ix_tool_audit_execution", "tool_audit_records", ["execution_id"])
 
     op.create_table(
         "tool_verification_results",
@@ -142,9 +130,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_tool_verification_execution", table_name="tool_verification_results"
-    )
+    op.drop_index("ix_tool_verification_execution", table_name="tool_verification_results")
     op.drop_table("tool_verification_results")
     op.drop_index("ix_tool_audit_execution", table_name="tool_audit_records")
     op.drop_index("ix_tool_audit_project", table_name="tool_audit_records")

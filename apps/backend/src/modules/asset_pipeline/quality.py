@@ -229,22 +229,14 @@ class QualityControlService:
         other_hashes = await self._other_version_hashes(asset_id, version_id)
         findings: list[QualityFinding] = []
         for item in scope.objects:
-            data = self._storage.read_bytes(
-                project_id, item.storage_area, item.relative_path
-            )
+            data = self._storage.read_bytes(project_id, item.storage_area, item.relative_path)
             reference = item.relative_path
             if scope.category == CATEGORY_IMAGE:
-                findings.extend(
-                    _check_image(data, _format_of(reference), rule_set, reference)
-                )
+                findings.extend(_check_image(data, _format_of(reference), rule_set, reference))
             elif scope.category == CATEGORY_AUDIO:
-                findings.extend(
-                    _check_audio(data, _format_of(reference), rule_set, reference)
-                )
+                findings.extend(_check_audio(data, _format_of(reference), rule_set, reference))
             elif scope.category == CATEGORY_MODEL_3D:
-                findings.extend(
-                    _check_model3d(data, _format_of(reference), rule_set, reference)
-                )
+                findings.extend(_check_model3d(data, _format_of(reference), rule_set, reference))
             else:
                 findings.append(
                     _finding(
@@ -257,8 +249,7 @@ class QualityControlService:
                 )
         findings.extend(_check_duplicates(scope.objects, other_hashes))
         failed = any(
-            item.status == STATUS_FAILED and item.severity == SEVERITY_ERROR
-            for item in findings
+            item.status == STATUS_FAILED and item.severity == SEVERITY_ERROR for item in findings
         )
         status = QUALITY_MACHINE_FAILED if failed else QUALITY_MACHINE_PASSED
         summary = {
@@ -290,9 +281,7 @@ class QualityControlService:
                     asset_id=asset_id,
                     asset_version_id=version_id,
                     review_type=REVIEW_TYPE_MACHINE,
-                    machine_result_json=_dump(
-                        {"status": status, "summary": summary}
-                    ),
+                    machine_result_json=_dump({"status": status, "summary": summary}),
                     human_result_json=None,
                     review_status=status,
                     evidence_json=_dump(evidence),
@@ -446,47 +435,31 @@ class QualityControlService:
         async with self._database.session() as session:
             review = await AssetQualityReviewRepository(session).get(review_id)
             if review is None:
-                raise NotFoundError(
-                    "质量审核记录不存在", details={"review_id": review_id}
-                )
+                raise NotFoundError("质量审核记录不存在", details={"review_id": review_id})
             asset = await AssetRepository(session).get(review.asset_id)
             if asset is None:
-                raise NotFoundError(
-                    "质量审核关联资产不存在", details={"asset_id": review.asset_id}
-                )
-            findings = await AssetQualityFindingRepository(session).list_for_review(
-                review_id
-            )
-            return _review_view(
-                review, project_id=asset.project_id, findings=findings
-            )
+                raise NotFoundError("质量审核关联资产不存在", details={"asset_id": review.asset_id})
+            findings = await AssetQualityFindingRepository(session).list_for_review(review_id)
+            return _review_view(review, project_id=asset.project_id, findings=findings)
 
     async def list_for_version(
         self, project_id: str, asset_id: str, version_id: str
     ) -> list[QualityReviewView]:
         scope = await self._load_scope(project_id, asset_id, version_id)
         async with self._database.session() as session:
-            reviews = await AssetQualityReviewRepository(session).list_for_version(
-                version_id
-            )
+            reviews = await AssetQualityReviewRepository(session).list_for_version(version_id)
             findings_repository = AssetQualityFindingRepository(session)
             views: list[QualityReviewView] = []
             for review in reviews:
                 findings = await findings_repository.list_for_review(review.review_id)
-                views.append(
-                    _review_view(
-                        review, project_id=scope.project_id, findings=findings
-                    )
-                )
+                views.append(_review_view(review, project_id=scope.project_id, findings=findings))
             return views
 
     # ------------------------------------------------------------------
     # 内部流程
     # ------------------------------------------------------------------
 
-    async def _load_scope(
-        self, project_id: str, asset_id: str, version_id: str
-    ) -> _Scope:
+    async def _load_scope(self, project_id: str, asset_id: str, version_id: str) -> _Scope:
         async with self._database.session() as session:
             asset = await AssetRepository(session).get_active(asset_id)
             if asset is None or asset.project_id != project_id:
@@ -500,9 +473,7 @@ class QualityControlService:
                     "审核版本不属于该资产",
                     details={"asset_id": asset_id, "version_id": version_id},
                 )
-            objects = await AssetStorageObjectRepository(session).list_for_version(
-                version_id
-            )
+            objects = await AssetStorageObjectRepository(session).list_for_version(version_id)
             if not objects:
                 raise AssetQualityInvalid(
                     "审核版本没有存储对象",
@@ -526,9 +497,7 @@ class QualityControlService:
                 ),
             )
 
-    async def _other_version_hashes(
-        self, asset_id: str, version_id: str
-    ) -> set[str]:
+    async def _other_version_hashes(self, asset_id: str, version_id: str) -> set[str]:
         async with self._database.session() as session:
             versions = await AssetVersionRepository(session).list_for_asset(asset_id)
             storage_repository = AssetStorageObjectRepository(session)
@@ -536,32 +505,24 @@ class QualityControlService:
             for version in versions:
                 if version.version_id == version_id:
                     continue
-                for item in await storage_repository.list_for_version(
-                    version.version_id
-                ):
+                for item in await storage_repository.list_for_version(version.version_id):
                     hashes.add(item.content_hash)
             return hashes
 
     async def _ensure_machine_reviewed(self, asset_id: str, version_id: str) -> None:
         async with self._database.session() as session:
-            reviews = await AssetQualityReviewRepository(session).list_for_version(
-                version_id
-            )
+            reviews = await AssetQualityReviewRepository(session).list_for_version(version_id)
         if not any(item.review_type == REVIEW_TYPE_MACHINE for item in reviews):
             raise AssetQualityInvalid(
                 "必须先完成机器检查才能发起人工审核",
                 details={"asset_id": asset_id, "version_id": version_id},
             )
 
-    async def _publish(
-        self, event_type: str, payload: dict[str, Any], *, project_id: str
-    ) -> None:
+    async def _publish(self, event_type: str, payload: dict[str, Any], *, project_id: str) -> None:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不阻断已提交审核
             log_event(
                 self._logger,
@@ -590,9 +551,7 @@ def _review_view(
         evidence=_load(review.evidence_json, {}),
         reviewer_id=review.reviewer_id,
         notes=review.notes,
-        findings=tuple(
-            _finding_mapping(item) for item in findings
-        ),
+        findings=tuple(_finding_mapping(item) for item in findings),
         created_at=review.created_at,
         completed_at=review.completed_at,
     )
@@ -618,7 +577,7 @@ def _check_image(
     try:
         image = Image.open(io.BytesIO(data))
         image.load()
-    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
+    except UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError:
         return [
             _finding(
                 "image.decodable",
@@ -698,9 +657,7 @@ def _check_image(
                 "image.color_mode",
                 image.mode.upper() in modes,
                 "颜色模式符合要求" if image.mode.upper() in modes else "颜色模式不符合要求",
-                evidence=_reference_evidence(
-                    reference, expected=sorted(modes), actual=image.mode
-                ),
+                evidence=_reference_evidence(reference, expected=sorted(modes), actual=image.mode),
             )
         )
     has_alpha = image.mode in ("RGBA", "LA", "PA")
@@ -747,11 +704,7 @@ def _check_image(
             _finding(
                 "image.transparent_edge",
                 partial <= max_partial,
-                (
-                    "半透明边缘比例正常"
-                    if partial <= max_partial
-                    else "半透明边缘像素过多"
-                ),
+                ("半透明边缘比例正常" if partial <= max_partial else "半透明边缘像素过多"),
                 severity=SEVERITY_WARNING,
                 evidence=_reference_evidence(
                     reference,
@@ -768,9 +721,7 @@ def _check_image(
                 "image.frame_count",
                 frames == expected_frames,
                 "帧数符合要求" if frames == expected_frames else "帧数不符合要求",
-                evidence=_reference_evidence(
-                    reference, expected=expected_frames, actual=frames
-                ),
+                evidence=_reference_evidence(reference, expected=expected_frames, actual=frames),
             )
         )
     grid = rules.get("sprite_grid")
@@ -856,9 +807,7 @@ def _check_audio(
                 "audio.sample_rate",
                 actual == expected_rate,
                 "采样率符合要求" if actual == expected_rate else "采样率不符合要求",
-                evidence=_reference_evidence(
-                    reference, expected=expected_rate, actual=actual
-                ),
+                evidence=_reference_evidence(reference, expected=expected_rate, actual=actual),
             )
         )
     expected_channels = _rule_int(rules, "expected_channels")
@@ -869,9 +818,7 @@ def _check_audio(
                 "audio.channels",
                 actual == expected_channels,
                 "声道数符合要求" if actual == expected_channels else "声道数不符合要求",
-                evidence=_reference_evidence(
-                    reference, expected=expected_channels, actual=actual
-                ),
+                evidence=_reference_evidence(reference, expected=expected_channels, actual=actual),
             )
         )
     duration = metrics.get("duration_seconds")
@@ -907,9 +854,7 @@ def _check_audio(
                 "audio.peak",
                 peak_db <= max_peak_db,
                 "峰值符合限制" if peak_db <= max_peak_db else "峰值超过限制",
-                evidence=_reference_evidence(
-                    reference, peak_db=peak_db, max_peak_db=max_peak_db
-                ),
+                evidence=_reference_evidence(reference, peak_db=peak_db, max_peak_db=max_peak_db),
             )
         )
     if bool(metrics.get("clipping")):
@@ -947,9 +892,7 @@ def _check_audio(
                     seam <= threshold,
                     "循环接缝正常" if seam <= threshold else "循环接缝跳变过大",
                     severity=SEVERITY_WARNING,
-                    evidence=_reference_evidence(
-                        reference, seam_delta=seam, threshold=threshold
-                    ),
+                    evidence=_reference_evidence(reference, seam_delta=seam, threshold=threshold),
                 )
             )
     return findings
@@ -996,11 +939,7 @@ def _check_model3d(
             _finding(
                 "model3d.triangle_budget",
                 geometry.triangle_count <= max_triangles,
-                (
-                    "面数符合限制"
-                    if geometry.triangle_count <= max_triangles
-                    else "面数超过限制"
-                ),
+                ("面数符合限制" if geometry.triangle_count <= max_triangles else "面数超过限制"),
                 evidence=_reference_evidence(
                     reference,
                     triangle_count=geometry.triangle_count,
@@ -1023,9 +962,7 @@ def _check_model3d(
                 "model3d.materials",
                 geometry.material_count > 0,
                 "材质存在" if geometry.material_count > 0 else "缺少材质",
-                evidence=_reference_evidence(
-                    reference, material_count=geometry.material_count
-                ),
+                evidence=_reference_evidence(reference, material_count=geometry.material_count),
             )
         )
     if bool(rules.get("require_skin")):

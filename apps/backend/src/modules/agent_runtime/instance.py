@@ -1,4 +1,4 @@
-﻿"""Agent Instance Manager（E6-T03 / T06）。
+"""Agent Instance Manager（E6-T03 / T06）。
 
 职责：
 
@@ -259,9 +259,7 @@ class AgentInstanceService:
                 "只有已发布且启用的 Definition 才能创建 Instance",
                 details={"definition_id": definition_id, "status": definition.status},
             )
-        version = await self._definitions.get_version(
-            definition_id, definition.current_version
-        )
+        version = await self._definitions.get_version(definition_id, definition.current_version)
 
         task = await self._tasks.get(task_id)
         attempt = await self._attempts.get(attempt_id)

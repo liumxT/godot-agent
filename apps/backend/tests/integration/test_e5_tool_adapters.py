@@ -58,9 +58,9 @@ async def _running_client(tmp_path: Path):
 def _project_root(tmp_path: Path) -> Path:
     root = tmp_path / "game"
     root.mkdir()
-    (root / "project.godot").write_text("[application]\n\nconfig/name=\"E5\"\n", encoding="utf-8")
+    (root / "project.godot").write_text('[application]\n\nconfig/name="E5"\n', encoding="utf-8")
     (root / "scenes").mkdir()
-    (root / "scenes" / "main.tscn").write_text('[gd_scene format=3]\n', encoding="utf-8")
+    (root / "scenes" / "main.tscn").write_text("[gd_scene format=3]\n", encoding="utf-8")
     (root / ".godot").mkdir()
     (root / ".godot" / "cache.bin").write_text("x", encoding="utf-8")
     return root
@@ -129,11 +129,18 @@ async def test_file_adapter_enforces_project_scope(tmp_path: Path) -> None:
             app.state.services.get("project_registry_service", ProjectRegistryService)
         )
 
-        ok = await adapter.execute(_context(project.project_id, "file.read", {"path": "res://scenes/main.tscn"}))
+        ok = await adapter.execute(
+            _context(project.project_id, "file.read", {"path": "res://scenes/main.tscn"})
+        )
         assert ok.status == "SUCCEEDED"
         assert ok.output["content"].startswith("[gd_scene")
 
-        for bad_path in ("../outside.txt", str(root / "project.godot"), "project.godot", ".godot/cache.bin"):
+        for bad_path in (
+            "../outside.txt",
+            str(root / "project.godot"),
+            "project.godot",
+            ".godot/cache.bin",
+        ):
             denied = await adapter.execute(
                 _context(project.project_id, "file.read", {"path": bad_path})
             )
@@ -176,9 +183,7 @@ async def test_file_adapter_write_verify_patch_move_delete(tmp_path: Path) -> No
 
         read = await call("file.read", {"path": "src/player.gd"})
         assert read.output["content"] == "extends CharacterBody2D\n"
-        assert read.output["sha256"] == hashlib.sha256(
-            b"extends CharacterBody2D\n"
-        ).hexdigest()
+        assert read.output["sha256"] == hashlib.sha256(b"extends CharacterBody2D\n").hexdigest()
 
         stat = await call("file.stat", {"path": "src/player.gd"})
         assert stat.output["is_file"] is True
@@ -193,9 +198,7 @@ async def test_file_adapter_write_verify_patch_move_delete(tmp_path: Path) -> No
         assert renamed.status == "SUCCEEDED"
         assert (root / "src" / "hero.gd").is_file()
 
-        moved = await call(
-            "file.move", {"path": "src/hero.gd", "destination": "scripts/hero.gd"}
-        )
+        moved = await call("file.move", {"path": "src/hero.gd", "destination": "scripts/hero.gd"})
         assert moved.status == "SUCCEEDED"
         assert (root / "scripts" / "hero.gd").is_file()
 
@@ -209,9 +212,7 @@ async def test_godot_adapter_requires_connection_and_parses_response(tmp_path: P
         project = await _register_project(app, _project_root(tmp_path))
 
         offline = GodotToolAdapter(FakeHub(None))
-        missing = await offline.execute(
-            _context(project.project_id, "godot.node.list", {})
-        )
+        missing = await offline.execute(_context(project.project_id, "godot.node.list", {}))
         assert missing.status == "FAILED"
         assert missing.error_code == "EDITOR_NOT_CONNECTED"
 
@@ -259,7 +260,10 @@ async def test_godot_adapter_requires_connection_and_parses_response(tmp_path: P
         )
         assert timeout_result.status == "UNKNOWN"
         assert timeout_result.error_code == "EDITOR_COMMAND_TIMEOUT"
-        assert await timeout_adapter.inspect(_context(project.project_id, "godot.node.list", {})) is None
+        assert (
+            await timeout_adapter.inspect(_context(project.project_id, "godot.node.list", {}))
+            is None
+        )
 
 
 def _bearer(token: str) -> dict[str, str]:
@@ -315,7 +319,9 @@ async def test_tool_api_and_execution_cancel(tmp_path: Path) -> None:
         assert unauthorized.status_code == 401
 
         listed = await client.get(
-            "/api/v1/tools", params={"project_id": project_id, "category": "FILE_SYSTEM"}, headers=headers
+            "/api/v1/tools",
+            params={"project_id": project_id, "category": "FILE_SYSTEM"},
+            headers=headers,
         )
         assert listed.status_code == 200, listed.text
         names = {item["name"] for item in listed.json()["items"]}

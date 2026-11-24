@@ -208,9 +208,7 @@ class TeamBudgetService:
             await session.flush()
             return _view(entity)
 
-    async def record_usage(
-        self, team_id: str, *, dimension: str, amount: float
-    ) -> TeamBudgetView:
+    async def record_usage(self, team_id: str, *, dimension: str, amount: float) -> TeamBudgetView:
         """累计用量；超出上限时持久化 EXHAUSTED 并失败关闭。"""
 
         if dimension not in _USAGE_LIMITS:
@@ -219,9 +217,7 @@ class TeamBudgetService:
                 details={"reasons": ["UNKNOWN_DIMENSION"], "dimension": dimension},
             )
         if amount < 0:
-            raise AgentTeamInvalid(
-                "用量不能为负数", details={"reasons": ["NEGATIVE_AMOUNT"]}
-            )
+            raise AgentTeamInvalid("用量不能为负数", details={"reasons": ["NEGATIVE_AMOUNT"]})
         now = self._clock()
         exceeded: dict[str, Any] | None = None
         async with self._database.session() as session, transaction(session):
@@ -288,15 +284,11 @@ def _normalize_budget(budget: Mapping[str, Any]) -> dict[str, Any]:
     return normalized
 
 
-def _assert_within_task_budget(
-    budget: Mapping[str, Any], task_budget: Mapping[str, Any]
-) -> None:
+def _assert_within_task_budget(budget: Mapping[str, Any], task_budget: Mapping[str, Any]) -> None:
     exceeded = [
         key
         for key, value in budget.items()
-        if key in TEAM_BUDGET_KEYS
-        and task_budget.get(key) is not None
-        and value > task_budget[key]
+        if key in TEAM_BUDGET_KEYS and task_budget.get(key) is not None and value > task_budget[key]
     ]
     if exceeded:
         raise AgentTeamInvalid(

@@ -146,9 +146,7 @@ async def test_create_rejects_invalid_binding(tmp_path: Path) -> None:
                 attempt_id=ctx["attempt"].attempt_id,
             )
 
-        other_task = await tasks.create(
-            project_id=ctx["project"].project_id, title="Other task"
-        )
+        other_task = await tasks.create(project_id=ctx["project"].project_id, title="Other task")
         other_attempt = await attempts.create(other_task.task_id)
         with pytest.raises(AgentStateInvalid) as mismatch:
             await instances.create_for_attempt(

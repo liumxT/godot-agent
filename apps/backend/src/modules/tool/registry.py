@@ -223,9 +223,7 @@ class ToolRegistryService:
         return dict(payload)
 
     @staticmethod
-    async def _require(
-        repository: ToolDefinitionRepository, tool_id: str
-    ) -> ToolDefinitionModel:
+    async def _require(repository: ToolDefinitionRepository, tool_id: str) -> ToolDefinitionModel:
         entity = await repository.get(tool_id)
         if entity is None:
             raise NotFoundError("工具不存在", details={"tool_id": tool_id})
@@ -247,9 +245,7 @@ class ToolRegistryService:
         idempotency_policy: str,
     ) -> dict[str, Any]:
         if not _NAME_PATTERN.match(name):
-            raise ValidationFailed(
-                "工具名称必须为小写点分标识符", details={"name": name}
-            )
+            raise ValidationFailed("工具名称必须为小写点分标识符", details={"name": name})
         if category not in TOOL_CATEGORIES:
             raise ValidationFailed(
                 "工具分类非法", details={"category": category, "allowed": sorted(TOOL_CATEGORIES)}
@@ -262,15 +258,11 @@ class ToolRegistryService:
             )
         unknown = sorted(set(required_capabilities) - TOOL_CAPABILITIES)
         if unknown:
-            raise ValidationFailed(
-                "工具引用了未知能力", details={"capabilities": unknown}
-            )
+            raise ValidationFailed("工具引用了未知能力", details={"capabilities": unknown})
         if any(not item.strip() for item in required_permissions):
             raise ValidationFailed("required_permissions 不能包含空字符串")
         if execution_mode not in EXECUTION_MODES:
-            raise ValidationFailed(
-                "执行模式非法", details={"execution_mode": execution_mode}
-            )
+            raise ValidationFailed("执行模式非法", details={"execution_mode": execution_mode})
         if idempotency_policy not in IDEMPOTENCY_POLICIES:
             raise ValidationFailed(
                 "幂等策略非法", details={"idempotency_policy": idempotency_policy}
@@ -316,8 +308,10 @@ def _checked_schema(schema: Mapping[str, Any], field: str) -> dict[str, Any]:
 def _schema_errors(schema: Mapping[str, Any], payload: Mapping[str, Any]) -> list[str]:
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(dict(payload)), key=lambda item: list(item.path))
-    return [f"{'/'.join(str(part) for part in error.path) or '<root>'}: {error.message}"
-            for error in errors]
+    return [
+        f"{'/'.join(str(part) for part in error.path) or '<root>'}: {error.message}"
+        for error in errors
+    ]
 
 
 def _view(entity: ToolDefinitionModel) -> ToolView:

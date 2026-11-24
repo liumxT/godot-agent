@@ -208,9 +208,7 @@ class PromptService:
         async with self._database.session() as session:
             entity = await PromptDefinitionRepository(session).get_by_name_version(name, version)
             if entity is None:
-                raise NotFoundError(
-                    "Prompt 版本不存在", details={"name": name, "version": version}
-                )
+                raise NotFoundError("Prompt 版本不存在", details={"name": name, "version": version})
             return _view(entity)
 
     async def get_active(self, name: str) -> PromptView:

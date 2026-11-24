@@ -46,9 +46,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("capability_id"),
         sa.UniqueConstraint("name", name="uq_agent_capabilities_name"),
     )
-    op.create_index(
-        "ix_agent_capabilities_category", "agent_capabilities", ["category", "enabled"]
-    )
+    op.create_index("ix_agent_capabilities_category", "agent_capabilities", ["category", "enabled"])
 
     op.create_table(
         "agent_teams",
@@ -65,9 +63,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["task_id"], ["tasks.task_id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(
-            ["attempt_id"], ["task_attempts.attempt_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["attempt_id"], ["task_attempts.attempt_id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["project_id"], ["projects.project_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("team_id"),
     )
@@ -108,17 +104,11 @@ def upgrade() -> None:
             ["agent_definition_id"], ["agent_definitions.definition_id"], ondelete="RESTRICT"
         ),
         sa.ForeignKeyConstraint(["task_id"], ["tasks.task_id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(
-            ["attempt_id"], ["task_attempts.attempt_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["attempt_id"], ["task_attempts.attempt_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("assignment_id"),
     )
-    op.create_index(
-        "ix_agent_assignments_team_status", "agent_assignments", ["team_id", "status"]
-    )
-    op.create_index(
-        "ix_agent_assignments_task_status", "agent_assignments", ["task_id", "status"]
-    )
+    op.create_index("ix_agent_assignments_team_status", "agent_assignments", ["team_id", "status"])
+    op.create_index("ix_agent_assignments_task_status", "agent_assignments", ["task_id", "status"])
     op.create_index("ix_agent_assignments_instance", "agent_assignments", ["agent_instance_id"])
 
     op.create_table(
@@ -184,7 +174,9 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("handoff_id"),
     )
-    op.create_index("ix_agent_handoffs_source", "agent_handoffs", ["source_assignment_id", "status"])
+    op.create_index(
+        "ix_agent_handoffs_source", "agent_handoffs", ["source_assignment_id", "status"]
+    )
 
     op.create_table(
         "agent_collaborations",
@@ -200,9 +192,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["team_id"], ["agent_teams.team_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("collaboration_id"),
     )
-    op.create_index(
-        "ix_agent_collaborations_team", "agent_collaborations", ["team_id", "status"]
-    )
+    op.create_index("ix_agent_collaborations_team", "agent_collaborations", ["team_id", "status"])
 
     op.create_table(
         "agent_messages",
@@ -240,9 +230,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["team_id"], ["agent_teams.team_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("conflict_id"),
     )
-    op.create_index(
-        "ix_agent_conflicts_team", "agent_conflicts", ["team_id", "resolution_status"]
-    )
+    op.create_index("ix_agent_conflicts_team", "agent_conflicts", ["team_id", "resolution_status"])
 
     op.create_table(
         "agent_integrations",
@@ -282,9 +270,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("review_id"),
     )
-    op.create_index(
-        "ix_agent_reviews_target", "agent_reviews", ["target_assignment_id", "status"]
-    )
+    op.create_index("ix_agent_reviews_target", "agent_reviews", ["target_assignment_id", "status"])
 
     op.create_table(
         "agent_team_budgets",
@@ -315,13 +301,9 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["team_id"], ["agent_teams.team_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("context_id"),
-        sa.UniqueConstraint(
-            "team_id", "context_version", name="uq_agent_shared_context_version"
-        ),
+        sa.UniqueConstraint("team_id", "context_version", name="uq_agent_shared_context_version"),
     )
-    op.create_index(
-        "ix_agent_shared_context_team", "agent_shared_context", ["team_id", "status"]
-    )
+    op.create_index("ix_agent_shared_context_team", "agent_shared_context", ["team_id", "status"])
 
 
 def downgrade() -> None:

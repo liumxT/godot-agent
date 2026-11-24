@@ -231,9 +231,7 @@ class RecoveryCoordinator:
             except AppError:
                 pass
         try:
-            marked = await self._lifecycle.mark_unknown(
-                instance.instance_id, reason=reasons[0]
-            )
+            marked = await self._lifecycle.mark_unknown(instance.instance_id, reason=reasons[0])
         except AppError:
             marked = await self._instances.get(instance.instance_id)
         await self._events.append(
@@ -259,9 +257,7 @@ class RecoveryCoordinator:
             execution_id=execution.execution_id if execution else None,
         )
         try:
-            stopped = await self._lifecycle.stop(
-                instance.instance_id, reason="RECOVERED_STOPPING"
-            )
+            stopped = await self._lifecycle.stop(instance.instance_id, reason="RECOVERED_STOPPING")
         except AppError:
             stopped = await self._instances.get(instance.instance_id)
         await self._events.append(

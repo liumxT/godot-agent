@@ -118,9 +118,7 @@ async def test_capability_registry_seeds_builtins_and_matches(tmp_path: Path) ->
         assert await registry.ensure_builtin_capabilities() == 0
 
         with pytest.raises(AgentCapabilityUnsupported):
-            await registry.match(
-                CapabilityRequirement(capabilities=("not_a_capability",)), []
-            )
+            await registry.match(CapabilityRequirement(capabilities=("not_a_capability",)), [])
 
 
 async def test_team_assignment_handoff_and_collaboration_persist(tmp_path: Path) -> None:
@@ -146,9 +144,7 @@ async def test_team_assignment_handoff_and_collaboration_persist(tmp_path: Path)
         assert handoff.status == "REQUESTED"
         assert handoff.target_assignment_id is None
 
-        collaboration = await _service(
-            app, "collaboration_service", CollaborationService
-        ).create(
+        collaboration = await _service(app, "collaboration_service", CollaborationService).create(
             team_id=team_id,
             objective="联调移动与 HUD",
             participant_assignments=(first, second),
@@ -212,9 +208,7 @@ async def test_assignment_dependency_cycle_is_rejected(tmp_path: Path) -> None:
             dependencies=(first,),
         )
         third = await _assignment(app, ctx, team_id, "第三项")
-        updated = await service.add_dependency(
-            first, third, expected_version=1
-        )
+        updated = await service.add_dependency(first, third, expected_version=1)
         assert third in updated.dependencies
         with pytest.raises(AgentAssignmentInvalid):
             await service.add_dependency(third, first, expected_version=1)

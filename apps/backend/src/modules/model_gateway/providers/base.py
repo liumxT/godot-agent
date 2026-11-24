@@ -121,9 +121,7 @@ class ModelProviderAdapter(Protocol):
 
     async def generate(self, request: ModelInvocationRequest) -> ProviderGenerationResult: ...
 
-    def generate_stream(
-        self, request: ModelInvocationRequest
-    ) -> AsyncIterator[StreamEvent]: ...
+    def generate_stream(self, request: ModelInvocationRequest) -> AsyncIterator[StreamEvent]: ...
 
 
 class BaseProviderAdapter:
@@ -175,8 +173,7 @@ class BaseProviderAdapter:
             )
         explicit = declaration.capabilities
         return {
-            capability: explicit.get(capability, CAPABILITY_UNKNOWN)
-            for capability in CAPABILITIES
+            capability: explicit.get(capability, CAPABILITY_UNKNOWN) for capability in CAPABILITIES
         }
 
     def validate_configuration(self) -> None:
@@ -235,9 +232,7 @@ class BaseProviderAdapter:
     async def generate(self, request: ModelInvocationRequest) -> ProviderGenerationResult:
         raise NotImplementedError("Provider 适配器未实现非流式生成")
 
-    async def generate_stream(
-        self, request: ModelInvocationRequest
-    ) -> AsyncIterator[StreamEvent]:
+    async def generate_stream(self, request: ModelInvocationRequest) -> AsyncIterator[StreamEvent]:
         raise NotImplementedError("Provider 适配器未实现流式生成")
         yield  # pragma: no cover - 使函数成为异步生成器
 

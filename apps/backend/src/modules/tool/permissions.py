@@ -173,9 +173,7 @@ class ToolPermissionEngine:
             reasons.append("TOOL_OPERATION_UNSUPPORTED")
         return tool
 
-    async def _check_access(
-        self, request: ToolPermissionRequest, reasons: list[str]
-    ) -> str | None:
+    async def _check_access(self, request: ToolPermissionRequest, reasons: list[str]) -> str | None:
         if not request.session_id or not request.client_id:
             reasons.append("SESSION_REQUIRED")
             return None
@@ -224,9 +222,7 @@ class ToolPermissionEngine:
             reasons.append("AGENT_RISK_EXCEEDED")
 
     @staticmethod
-    def _check_permissions(
-        tool: ToolView, access_level: str, reasons: list[str]
-    ) -> None:
+    def _check_permissions(tool: ToolView, access_level: str, reasons: list[str]) -> None:
         granted = ACCESS_LEVEL_PERMISSIONS.get(access_level, frozenset())
         if set(tool.required_permissions) - granted:
             reasons.append("MISSING_TOOL_PERMISSION")

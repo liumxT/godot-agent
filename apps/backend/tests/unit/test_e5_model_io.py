@@ -96,9 +96,7 @@ def test_usage_rejects_negative_tokens() -> None:
 
 
 def test_cost_is_estimated_from_price_version() -> None:
-    usage = ModelUsage(
-        input_tokens=1_000_000, output_tokens=500_000, total_tokens=1_500_000
-    )
+    usage = ModelUsage(input_tokens=1_000_000, output_tokens=500_000, total_tokens=1_500_000)
     cost = calculate_cost(usage, _price())
 
     assert cost.calculation_status == CALCULATION_ESTIMATED

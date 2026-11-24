@@ -104,7 +104,9 @@ def _view(entity: ToolVerificationRecordModel) -> ToolVerificationResult:
 
 
 class ToolVerificationService:
-    def __init__(self, database: DatabaseService, *, clock: Callable[[], datetime] = utcnow) -> None:
+    def __init__(
+        self, database: DatabaseService, *, clock: Callable[[], datetime] = utcnow
+    ) -> None:
         self._database = database
         self._clock = clock
 

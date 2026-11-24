@@ -61,9 +61,7 @@ def _database(app) -> DatabaseService:
 
 
 def _pipeline(app) -> ProcessingPipelineService:
-    return app.state.services.get(
-        "asset_processing_pipeline", ProcessingPipelineService
-    )
+    return app.state.services.get("asset_processing_pipeline", ProcessingPipelineService)
 
 
 def _quality(app) -> QualityControlService:
@@ -94,9 +92,7 @@ async def _project(app, tmp_path: Path):
     root = tmp_path / "game"
     root.mkdir(exist_ok=True)
     (root / "project.godot").write_text("[application]\n", encoding="utf-8")
-    projects = app.state.services.get(
-        "project_registry_service", ProjectRegistryService
-    )
+    projects = app.state.services.get("project_registry_service", ProjectRegistryService)
     return await projects.register(project_root=str(root), name="E8 Processing")
 
 
@@ -111,13 +107,9 @@ async def _seed_version(
     mime_type: str,
 ):
     storage = app.state.services.get("asset_storage", AssetStorage)
-    versions = app.state.services.get(
-        "asset_version_service", AssetVersionService
-    )
+    versions = app.state.services.get("asset_version_service", AssetVersionService)
     relative_path = f"{asset_id}/{filename}"
-    written = storage.write_bytes(
-        project_id, STORAGE_GENERATED, relative_path, data
-    )
+    written = storage.write_bytes(project_id, STORAGE_GENERATED, relative_path, data)
     version = await versions.create_version(
         asset_id,
         content_hash=str(written["content_hash"]),
@@ -224,9 +216,7 @@ async def test_processing_pipeline_creates_new_version_and_step_records(
         assert len(view.outputs) == 1
 
         output = view.outputs[0]
-        data = storage.read_bytes(
-            project.project_id, output.storage_area, output.reference
-        )
+        data = storage.read_bytes(project.project_id, output.storage_area, output.reference)
         image = Image.open(io.BytesIO(data))
         assert image.size == (16, 16)
         assert image.getpixel((0, 0))[3] == 0
@@ -234,9 +224,7 @@ async def test_processing_pipeline_creates_new_version_and_step_records(
         current = await assets.get(asset.asset_id)
         assert current.current_version_id == view.output_version_id
 
-        listing = await pipeline.list_for_asset(
-            project.project_id, asset.asset_id
-        )
+        listing = await pipeline.list_for_asset(project.project_id, asset.asset_id)
         assert [item.job_id for item in listing] == [view.job_id]
 
 
@@ -305,9 +293,7 @@ async def test_processing_failure_marks_job_failed_and_keeps_version(
                 )
             )
 
-        listing = await pipeline.list_for_asset(
-            project.project_id, asset.asset_id
-        )
+        listing = await pipeline.list_for_asset(project.project_id, asset.asset_id)
         assert len(listing) == 1
         failed = listing[0]
         assert failed.status == PROCESSING_FAILED
@@ -333,16 +319,10 @@ async def test_processing_rejects_unregistered_processor_before_job(
                     project_id=project.project_id,
                     asset_id=asset.asset_id,
                     input_version_id=version.version_id,
-                    graph={
-                        "nodes": [
-                            {"id": "convert", "processor": "model3d.format_convert"}
-                        ]
-                    },
+                    graph={"nodes": [{"id": "convert", "processor": "model3d.format_convert"}]},
                 )
             )
-        assert await pipeline.list_for_asset(
-            project.project_id, asset.asset_id
-        ) == []
+        assert await pipeline.list_for_asset(project.project_id, asset.asset_id) == []
 
 
 @pytest.mark.asyncio
@@ -452,9 +432,7 @@ async def test_human_review_requires_machine_review_and_is_immutable(
                 project.project_id, asset.asset_id, version.version_id
             )
 
-        await quality.run_machine_review(
-            project.project_id, asset.asset_id, version.version_id
-        )
+        await quality.run_machine_review(project.project_id, asset.asset_id, version.version_id)
         requested = await quality.request_human_review(
             project.project_id,
             asset.asset_id,
@@ -493,20 +471,14 @@ async def test_quality_reviews_are_isolated_per_version(tmp_path: Path) -> None:
     async with _running(tmp_path) as app:
         project, asset, version = await _seed_image_asset(app, tmp_path)
         quality = _quality(app)
-        versions = app.state.services.get(
-            "asset_version_service", AssetVersionService
-        )
+        versions = app.state.services.get("asset_version_service", AssetVersionService)
         storage = app.state.services.get("asset_storage", AssetStorage)
 
-        await quality.run_machine_review(
-            project.project_id, asset.asset_id, version.version_id
-        )
+        await quality.run_machine_review(project.project_id, asset.asset_id, version.version_id)
 
         payload = _png(4, 4)
         relative_path = f"{asset.asset_id}/hero_v2.png"
-        written = storage.write_bytes(
-            project.project_id, STORAGE_GENERATED, relative_path, payload
-        )
+        written = storage.write_bytes(project.project_id, STORAGE_GENERATED, relative_path, payload)
         second = await versions.create_version(
             asset.asset_id,
             content_hash=hashlib.sha256(payload).hexdigest(),

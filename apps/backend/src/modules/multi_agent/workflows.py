@@ -204,9 +204,7 @@ class GameWorkflowService:
             document=build_document(spec),
         )
 
-    async def instantiate(
-        self, key: str, *, project_id: str, task_id: str
-    ) -> InstanceView:
+    async def instantiate(self, key: str, *, project_id: str, task_id: str) -> InstanceView:
         definition = await self.ensure_definition(key)
         return await self._instances.create(
             project_id=project_id,

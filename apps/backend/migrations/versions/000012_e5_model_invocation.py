@@ -22,9 +22,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "model_requests", sa.Column("workflow_id", sa.String(length=64), nullable=True)
-    )
+    op.add_column("model_requests", sa.Column("workflow_id", sa.String(length=64), nullable=True))
 
     op.create_table(
         "model_usage_records",
@@ -44,9 +42,7 @@ def upgrade() -> None:
         sa.Column("usage_source", sa.String(length=16), nullable=False),
         sa.Column("recorded_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("usage_id"),
-        sa.ForeignKeyConstraint(
-            ["request_id"], ["model_requests.request_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["request_id"], ["model_requests.request_id"], ondelete="CASCADE"),
         sa.UniqueConstraint("request_id", name="uq_model_usage_records_request"),
     )
     op.create_index(
@@ -76,9 +72,7 @@ def upgrade() -> None:
         sa.Column("calculation_status", sa.String(length=16), nullable=False),
         sa.Column("calculated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("cost_id"),
-        sa.ForeignKeyConstraint(
-            ["request_id"], ["model_requests.request_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["request_id"], ["model_requests.request_id"], ondelete="CASCADE"),
         sa.UniqueConstraint("request_id", name="uq_model_cost_records_request"),
     )
     op.create_index(
@@ -111,17 +105,13 @@ def upgrade() -> None:
         sa.Column("metadata_json", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("audit_id"),
-        sa.ForeignKeyConstraint(
-            ["request_id"], ["model_requests.request_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["request_id"], ["model_requests.request_id"], ondelete="CASCADE"),
         sa.UniqueConstraint("request_id", name="uq_model_call_audits_request"),
     )
     op.create_index(
         "ix_model_call_audits_project", "model_call_audits", ["project_id", "requested_at"]
     )
-    op.create_index(
-        "ix_model_call_audits_model", "model_call_audits", ["model_id", "requested_at"]
-    )
+    op.create_index("ix_model_call_audits_model", "model_call_audits", ["model_id", "requested_at"])
 
 
 def downgrade() -> None:

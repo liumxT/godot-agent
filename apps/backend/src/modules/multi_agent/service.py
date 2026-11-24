@@ -537,9 +537,7 @@ class AgentTeamService:
             "offset": page.offset,
         }
 
-    async def transition(
-        self, team_id: str, to_status: str, *, expected_version: int
-    ) -> TeamView:
+    async def transition(self, team_id: str, to_status: str, *, expected_version: int) -> TeamView:
         if to_status not in TEAM_STATUSES:
             raise AgentTeamInvalid(
                 "Team 状态非法", details={"reasons": ["UNKNOWN_STATUS"], "status": to_status}
@@ -651,8 +649,10 @@ class AgentTeamService:
                     details={"reasons": ["MEMBER_NOT_FOUND"], "assignment_id": assignment_id},
                 )
             for existing in await members.list_for_team(team_id):
-                existing.role = TEAM_MEMBER_LEAD if existing.member_id == member.member_id else (
-                    TEAM_MEMBER_WORKER
+                existing.role = (
+                    TEAM_MEMBER_LEAD
+                    if existing.member_id == member.member_id
+                    else (TEAM_MEMBER_WORKER)
                 )
             assignment = await AgentAssignmentRepository(session).get(assignment_id)
             team.lead_agent_instance_id = (
@@ -879,9 +879,7 @@ class AssignmentService:
                 raise AgentAssignmentInvalid(
                     "依赖已存在", details={"reasons": ["DUPLICATE_DEPENDENCY"]}
                 )
-            if await self._has_path(
-                session, depends_on_assignment_id, assignment_id, depth=0
-            ):
+            if await self._has_path(session, depends_on_assignment_id, assignment_id, depth=0):
                 raise AgentAssignmentInvalid(
                     "依赖关系存在循环", details={"reasons": ["DEPENDENCY_CYCLE"]}
                 )
@@ -900,9 +898,7 @@ class AssignmentService:
             await session.flush()
             return _assignment_view(assignment)
 
-    async def _has_path(
-        self, session, start: str, target: str, *, depth: int
-    ) -> bool:
+    async def _has_path(self, session, start: str, target: str, *, depth: int) -> bool:
         if depth > _MAX_DEPENDENCY_DEPTH:
             return True
         current = await AgentAssignmentRepository(session).get(start)
@@ -1020,9 +1016,7 @@ class AssignmentService:
                     "Assignment 版本已变化",
                     details={"expected": expected_version, "actual": entity.version},
                 )
-            if ASSIGNMENT_COMPLETED not in ASSIGNMENT_TRANSITIONS.get(
-                entity.status, frozenset()
-            ):
+            if ASSIGNMENT_COMPLETED not in ASSIGNMENT_TRANSITIONS.get(entity.status, frozenset()):
                 raise AgentAssignmentInvalid(
                     "Assignment 当前状态不可完成",
                     details={"reasons": ["INVALID_TRANSITION"], "status": entity.status},
@@ -1091,9 +1085,7 @@ class AssignmentService:
         replacement = await self.transition(
             replacement.assignment_id, target_status, expected_version=replacement.version
         )
-        await self.transition(
-            assignment_id, ASSIGNMENT_FAILED, expected_version=old.version
-        )
+        await self.transition(assignment_id, ASSIGNMENT_FAILED, expected_version=old.version)
         return replacement
 
 
@@ -1372,7 +1364,10 @@ class CollaborationService:
                 if assignment is None or assignment.team_id != team_id:
                     raise AgentCollaborationInvalid(
                         "参与者不属于该 Team",
-                        details={"reasons": ["UNKNOWN_PARTICIPANT"], "assignment_id": assignment_id},
+                        details={
+                            "reasons": ["UNKNOWN_PARTICIPANT"],
+                            "assignment_id": assignment_id,
+                        },
                     )
             entity = AgentCollaborationModel(
                 collaboration_id=_new_id("col_"),
@@ -1392,7 +1387,9 @@ class CollaborationService:
         async with self._database.session() as session:
             entity = await AgentCollaborationRepository(session).get(collaboration_id)
         if entity is None:
-            raise NotFoundError("Collaboration 不存在", details={"collaboration_id": collaboration_id})
+            raise NotFoundError(
+                "Collaboration 不存在", details={"collaboration_id": collaboration_id}
+            )
         return _collaboration_view(entity)
 
 

@@ -88,9 +88,7 @@ def _service(request: Request) -> VerificationService:
 
 
 def _orchestrator(request: Request) -> VerificationOrchestrator:
-    return request.app.state.services.get(
-        "verification_orchestrator", VerificationOrchestrator
-    )
+    return request.app.state.services.get("verification_orchestrator", VerificationOrchestrator)
 
 
 def _proposal_payload(proposal: PlanProposal) -> dict:
@@ -437,9 +435,7 @@ async def invalidate_requirement(
     request: Request = ...,
 ) -> dict:
     await authorize_project_action(request, project_id, ACTION_E9_VERIFICATION_REVIEW)
-    counts = await _service(request).invalidate_requirement(
-        requirement_id, reason=payload.reason
-    )
+    counts = await _service(request).invalidate_requirement(requirement_id, reason=payload.reason)
     return {"requirement_id": requirement_id, **counts}
 
 
@@ -1110,9 +1106,7 @@ async def list_regression_plans(
     request: Request = ...,
 ) -> dict:
     await authorize_project_action(request, project_id, ACTION_E9_VERIFICATION_READ)
-    page = await _service(request).list_regression_plans(
-        project_id, limit=limit, offset=offset
-    )
+    page = await _service(request).list_regression_plans(project_id, limit=limit, offset=offset)
     page["items"] = [asdict(item) for item in page["items"]]
     return page
 
@@ -1204,9 +1198,7 @@ async def list_gate_results(
     request: Request = ...,
 ) -> dict:
     await authorize_project_action(request, project_id, ACTION_E9_QUALITY_GATE_READ)
-    items = await _service(request).list_gate_results(
-        project_id, campaign_id=campaign_id
-    )
+    items = await _service(request).list_gate_results(project_id, campaign_id=campaign_id)
     return {"items": [asdict(item) for item in items], "total": len(items)}
 
 
@@ -1222,9 +1214,7 @@ async def waive_gate_result(
     request: Request = ...,
 ) -> dict:
     current = await _service(request).get_gate_result(gate_result_id)
-    await authorize_project_action(
-        request, current.project_id, ACTION_E9_VERIFICATION_WAIVE
-    )
+    await authorize_project_action(request, current.project_id, ACTION_E9_VERIFICATION_WAIVE)
     view = await _service(request).waive_gate_result(
         gate_result_id,
         authorized_by=payload.authorized_by,
@@ -1251,9 +1241,7 @@ async def create_phase_review(
     payload: PhaseReviewCreateRequest = ...,
     request: Request = ...,
 ) -> dict:
-    await authorize_project_action(
-        request, project_id, ACTION_E9_PHASE_REVIEW_SUBMIT
-    )
+    await authorize_project_action(request, project_id, ACTION_E9_PHASE_REVIEW_SUBMIT)
     view = await _service(request).create_phase_review(
         project_id,
         workflow_id=payload.workflow_id,
@@ -1319,9 +1307,7 @@ async def submit_verification_phase_review(
     request: Request = ...,
 ) -> dict:
     view = await _service(request).get_phase_review(review_id)
-    await authorize_project_action(
-        request, view.project_id, ACTION_E9_PHASE_REVIEW_SUBMIT
-    )
+    await authorize_project_action(request, view.project_id, ACTION_E9_PHASE_REVIEW_SUBMIT)
     submitted = await _service(request).submit_phase_review(
         review_id, submitted_by=payload.submitted_by
     )
@@ -1340,9 +1326,7 @@ async def decide_phase_review(
     request: Request = ...,
 ) -> dict:
     view = await _service(request).get_phase_review(review_id)
-    await authorize_project_action(
-        request, view.project_id, ACTION_E9_PHASE_REVIEW_DECIDE
-    )
+    await authorize_project_action(request, view.project_id, ACTION_E9_PHASE_REVIEW_DECIDE)
     decided = await _service(request).decide_phase_review(
         review_id,
         decision=payload.decision,
@@ -1437,9 +1421,7 @@ async def verification_budget(
     request: Request = ...,
 ) -> dict:
     await _campaign_project(request, campaign_id, ACTION_E9_VERIFICATION_READ)
-    return await _service(request).verification_budget(
-        campaign_id, risk_level=risk_level
-    )
+    return await _service(request).verification_budget(campaign_id, risk_level=risk_level)
 
 
 @router.post(

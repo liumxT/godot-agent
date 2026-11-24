@@ -24,9 +24,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.add_column(
         "agent_executions",
-        sa.Column(
-            "budget_usage_json", sa.Text(), nullable=False, server_default="{}"
-        ),
+        sa.Column("budget_usage_json", sa.Text(), nullable=False, server_default="{}"),
     )
 
 

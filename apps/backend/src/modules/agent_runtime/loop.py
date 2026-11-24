@@ -163,9 +163,7 @@ class AgentExecutionLoop:
         execution = await self._executions.start_execution(instance)
         try:
             bundle = await self._context.build(instance, snapshot)
-            bound = await self._models.resolve(
-                snapshot, context_size=bundle.token_estimate
-            )
+            bound = await self._models.resolve(snapshot, context_size=bundle.token_estimate)
             tool_definitions = await self._tools.definitions(snapshot)
         except AppError as exc:
             return await self._fail(instance, execution, exc.code, 0)
@@ -227,9 +225,7 @@ class AgentExecutionLoop:
                     payload={"status": REQUEST_UNKNOWN, "iteration": iterations},
                     execution_id=execution.execution_id,
                 )
-                return await self._unknown(
-                    instance, execution, "MODEL_REQUEST_UNKNOWN", iterations
-                )
+                return await self._unknown(instance, execution, "MODEL_REQUEST_UNKNOWN", iterations)
             except ModelCallFailed as exc:
                 await self._events.append(
                     instance_id,
@@ -270,13 +266,9 @@ class AgentExecutionLoop:
                         instance, execution, tracker, exceeded, iterations
                     )
             if response.status == REQUEST_UNKNOWN:
-                return await self._unknown(
-                    instance, execution, "MODEL_REQUEST_UNKNOWN", iterations
-                )
+                return await self._unknown(instance, execution, "MODEL_REQUEST_UNKNOWN", iterations)
             if response.status != REQUEST_SUCCEEDED:
-                return await self._fail(
-                    instance, execution, f"MODEL_{response.status}", iterations
-                )
+                return await self._fail(instance, execution, f"MODEL_{response.status}", iterations)
 
             try:
                 action = self._parser.parse(response)
@@ -337,14 +329,10 @@ class AgentExecutionLoop:
                     supersedes_plan_id=supersedes,
                 )
             except AppError as exc:
-                return pending_approval, await self._fail(
-                    instance, execution, exc.code, iterations
-                )
+                return pending_approval, await self._fail(instance, execution, exc.code, iterations)
             return pending_approval, None
         if kind == ACTION_COMPLETE_EXECUTION:
-            return pending_approval, await self._complete(
-                instance, execution, action, iterations
-            )
+            return pending_approval, await self._complete(instance, execution, action, iterations)
         if kind == ACTION_FAIL_EXECUTION:
             return pending_approval, await self._fail(
                 instance, execution, str(action.payload["reason"]), iterations
@@ -487,14 +475,10 @@ class AgentExecutionLoop:
         if result.status == EXECUTION_UNKNOWN:
             if step is not None:
                 await self._planning.fail_step(step.step_id, reason="TOOL_EXECUTION_UNKNOWN")
-            return await self._unknown(
-                instance, execution, "TOOL_EXECUTION_UNKNOWN", iterations
-            )
+            return await self._unknown(instance, execution, "TOOL_EXECUTION_UNKNOWN", iterations)
         if result.status != EXECUTION_SUCCEEDED:
             if step is not None:
-                await self._planning.fail_step(
-                    step.step_id, reason=f"TOOL_{result.status}"
-                )
+                await self._planning.fail_step(step.step_id, reason=f"TOOL_{result.status}")
             return await self._fail(instance, execution, f"TOOL_{result.status}", iterations)
         if step is not None:
             await self._planning.complete_step(
@@ -542,9 +526,7 @@ class AgentExecutionLoop:
         pending_action: dict | None,
     ) -> None:
         await self._executions.wait_for_approval(execution.execution_id)
-        await self._lifecycle.transition(
-            instance.instance_id, INSTANCE_WAITING_APPROVAL
-        )
+        await self._lifecycle.transition(instance.instance_id, INSTANCE_WAITING_APPROVAL)
         await self._checkpoint(
             instance.instance_id,
             execution.execution_id,
@@ -552,9 +534,7 @@ class AgentExecutionLoop:
             pending_action=pending_action,
         )
 
-    async def _wait_for_input(
-        self, instance: InstanceView, execution: ExecutionView
-    ) -> None:
+    async def _wait_for_input(self, instance: InstanceView, execution: ExecutionView) -> None:
         await self._executions.wait_for_input(execution.execution_id)
         await self._lifecycle.transition(instance.instance_id, INSTANCE_WAITING_INPUT)
         await self._checkpoint(instance.instance_id, execution.execution_id, "WAITING_INPUT")
@@ -611,9 +591,7 @@ class AgentExecutionLoop:
             execution_id=execution.execution_id,
         )
         if tracker.on_exceed == BUDGET_EXCEED_PAUSE:
-            await self._checkpoint(
-                instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED"
-            )
+            await self._checkpoint(instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED")
             await self._safe(
                 self._executions.transition(
                     execution.execution_id, EXECUTION_PAUSED, reason="BUDGET_EXCEEDED"
@@ -628,9 +606,7 @@ class AgentExecutionLoop:
                 "BUDGET_EXCEEDED",
             )
         if tracker.on_exceed == BUDGET_EXCEED_WAITING_INPUT:
-            await self._checkpoint(
-                instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED"
-            )
+            await self._checkpoint(instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED")
             await self._safe(self._executions.wait_for_input(execution.execution_id))
             await self._safe(
                 self._lifecycle.transition(instance.instance_id, INSTANCE_WAITING_INPUT)
@@ -644,13 +620,9 @@ class AgentExecutionLoop:
             )
         if tracker.on_exceed == BUDGET_EXCEED_STOP:
             await self._safe(
-                self._planning.abandon_plan(
-                    execution.execution_id, reason="BUDGET_EXCEEDED"
-                )
+                self._planning.abandon_plan(execution.execution_id, reason="BUDGET_EXCEEDED")
             )
-            await self._checkpoint(
-                instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED"
-            )
+            await self._checkpoint(instance.instance_id, execution.execution_id, "BUDGET_EXCEEDED")
             await self._safe(
                 self._executions.transition(
                     execution.execution_id, EXECUTION_STOPPED, reason="BUDGET_EXCEEDED"

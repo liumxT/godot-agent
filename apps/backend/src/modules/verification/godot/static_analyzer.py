@@ -97,9 +97,7 @@ def analyze_gdscript(path: Path, root: Path) -> list[Finding]:
 
     line, char = _scan_delimiters(text)
     if line is not None:
-        findings.append(
-            error("gd_unbalanced_delimiters", f"存在未闭合的 {char}", relative, line)
-        )
+        findings.append(error("gd_unbalanced_delimiters", f"存在未闭合的 {char}", relative, line))
 
     indent_styles: set[str] = set()
     for number, content in enumerate(text.splitlines(), start=1):

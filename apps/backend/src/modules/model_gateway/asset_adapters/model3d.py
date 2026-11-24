@@ -102,9 +102,7 @@ class LocalModel3DAdapter(BaseAssetGenerationAdapter):
             if parsed <= 0:
                 raise _invalid("polygon_budget", "必须是正整数")
 
-    async def submit_generation(
-        self, request: AssetGenerationRequest
-    ) -> AssetGenerationResult:
+    async def submit_generation(self, request: AssetGenerationRequest) -> AssetGenerationResult:
         self.validate_configuration()
         output_format = request.format(self.default_format)
         payload = {
@@ -341,6 +339,4 @@ def _accessor_count(reference: Any, accessors: list[Any]) -> int | None:
 
 
 def _invalid(name: str, reason: str):
-    return AssetGenerationInvalid(
-        "3D 生成参数非法", details={"parameter": name, "reason": reason}
-    )
+    return AssetGenerationInvalid("3D 生成参数非法", details={"parameter": name, "reason": reason})

@@ -201,7 +201,9 @@ async def test_execution_success_records_verification_audit_and_event(tmp_path: 
             "tool.execution.completed", capture, consumer_id="test.capture"
         )
 
-        result = await _executor(app).execute(_request(project.project_id, tool, session_id, client_id))
+        result = await _executor(app).execute(
+            _request(project.project_id, tool, session_id, client_id)
+        )
 
         assert result.status == EXECUTION_SUCCEEDED
         assert result.verification_status == "VERIFIED"
@@ -300,9 +302,7 @@ async def test_idempotent_replay_reuses_completed_execution(tmp_path: Path) -> N
         assert second.status == EXECUTION_SUCCEEDED
 
         with pytest.raises(ValidationFailed):
-            await _executor(app).execute(
-                _request(project.project_id, tool, session_id, client_id)
-            )
+            await _executor(app).execute(_request(project.project_id, tool, session_id, client_id))
 
 
 async def test_unknown_execution_is_recovered_by_inspection(tmp_path: Path) -> None:

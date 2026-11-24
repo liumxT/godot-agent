@@ -48,18 +48,21 @@ DEFINITION_STATUSES = frozenset(
     {DEFINITION_DRAFT, DEFINITION_ACTIVE, DEFINITION_DEPRECATED, DEFINITION_DISABLED}
 )
 
-AGENT_CAPABILITIES = frozenset(
-    {
-        "task_analysis",
-        "planning",
-        "tool_execution",
-        "result_summary",
-        "verification",
-        "approval_request",
-        "user_interaction",
-        "recovery",
-    }
-) | BUILTIN_CAPABILITY_NAMES
+AGENT_CAPABILITIES = (
+    frozenset(
+        {
+            "task_analysis",
+            "planning",
+            "tool_execution",
+            "result_summary",
+            "verification",
+            "approval_request",
+            "user_interaction",
+            "recovery",
+        }
+    )
+    | BUILTIN_CAPABILITY_NAMES
+)
 
 MODEL_POLICY_DEFAULT = "default_agent_policy"
 PERMISSION_CEILINGS = frozenset(TOOL_RISK_LEVELS)
@@ -137,9 +140,7 @@ INSTANCE_STATUSES = frozenset(
         INSTANCE_UNKNOWN,
     }
 )
-INSTANCE_TERMINAL_STATUSES = frozenset(
-    {INSTANCE_STOPPED, INSTANCE_COMPLETED, INSTANCE_FAILED}
-)
+INSTANCE_TERMINAL_STATUSES = frozenset({INSTANCE_STOPPED, INSTANCE_COMPLETED, INSTANCE_FAILED})
 # UNKNOWN 不能直接回到 RUNNING，必须先经过恢复检查（RESUMING）。
 INSTANCE_TRANSITIONS: dict[str, frozenset[str]] = {
     INSTANCE_CREATED: frozenset({INSTANCE_INITIALIZING, INSTANCE_FAILED, INSTANCE_STOPPED}),
@@ -219,10 +220,22 @@ EXECUTION_TRANSITIONS: dict[str, frozenset[str]] = {
         }
     ),
     EXECUTION_WAITING_APPROVAL: frozenset(
-        {EXECUTION_RUNNING, EXECUTION_PAUSED, EXECUTION_FAILED, EXECUTION_STOPPED, EXECUTION_UNKNOWN}
+        {
+            EXECUTION_RUNNING,
+            EXECUTION_PAUSED,
+            EXECUTION_FAILED,
+            EXECUTION_STOPPED,
+            EXECUTION_UNKNOWN,
+        }
     ),
     EXECUTION_WAITING_INPUT: frozenset(
-        {EXECUTION_RUNNING, EXECUTION_PAUSED, EXECUTION_FAILED, EXECUTION_STOPPED, EXECUTION_UNKNOWN}
+        {
+            EXECUTION_RUNNING,
+            EXECUTION_PAUSED,
+            EXECUTION_FAILED,
+            EXECUTION_STOPPED,
+            EXECUTION_UNKNOWN,
+        }
     ),
     EXECUTION_PAUSED: frozenset({EXECUTION_RUNNING, EXECUTION_STOPPED}),
     EXECUTION_STOPPED: frozenset(),
@@ -240,7 +253,9 @@ PLAN_ACTIVE = "ACTIVE"
 PLAN_SUPERSEDED = "SUPERSEDED"
 PLAN_COMPLETED = "COMPLETED"
 PLAN_ABANDONED = "ABANDONED"
-PLAN_STATUSES = frozenset({PLAN_DRAFT, PLAN_ACTIVE, PLAN_SUPERSEDED, PLAN_COMPLETED, PLAN_ABANDONED})
+PLAN_STATUSES = frozenset(
+    {PLAN_DRAFT, PLAN_ACTIVE, PLAN_SUPERSEDED, PLAN_COMPLETED, PLAN_ABANDONED}
+)
 
 STEP_PENDING = "PENDING"
 STEP_READY = "READY"
@@ -276,9 +291,7 @@ STEP_TRANSITIONS: dict[str, frozenset[str]] = {
     STEP_WAITING_TOOL: frozenset(
         {STEP_RUNNING, STEP_COMPLETED, STEP_FAILED, STEP_UNKNOWN, STEP_WAITING_APPROVAL}
     ),
-    STEP_WAITING_APPROVAL: frozenset(
-        {STEP_RUNNING, STEP_COMPLETED, STEP_FAILED, STEP_SKIPPED}
-    ),
+    STEP_WAITING_APPROVAL: frozenset({STEP_RUNNING, STEP_COMPLETED, STEP_FAILED, STEP_SKIPPED}),
     STEP_COMPLETED: frozenset(),
     STEP_FAILED: frozenset(),
     STEP_SKIPPED: frozenset(),

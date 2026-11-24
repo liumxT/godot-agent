@@ -148,7 +148,11 @@ class FileToolAdapter:
                     return AdapterResult(
                         status=EXECUTION_SUCCEEDED,
                         output={"path": guard.relative(destination), "moved": True},
-                        checks=(VerificationCheck("destination_exists", True, guard.relative(destination)),),
+                        checks=(
+                            VerificationCheck(
+                                "destination_exists", True, guard.relative(destination)
+                            ),
+                        ),
                     )
         except PathViolation:
             return None
@@ -158,7 +162,9 @@ class FileToolAdapter:
 # --- 读操作 ---
 
 
-async def _read(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _read(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     target = guard.resolve(str(context.input.get("path", "")))
     if not target.is_file():
         return _failed(FILE_NOT_FOUND, guard.relative(target))
@@ -180,7 +186,9 @@ async def _read(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispat
     )
 
 
-async def _list(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _list(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     target = guard.resolve(str(context.input.get("path", "")))
     if not target.is_dir():
         return _failed(FILE_NOT_FOUND, guard.relative(target))
@@ -199,10 +207,14 @@ async def _list(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispat
         )
         if len(entries) >= 1000:
             break
-    return AdapterResult(status=EXECUTION_SUCCEEDED, output={"path": guard.relative(target), "entries": entries})
+    return AdapterResult(
+        status=EXECUTION_SUCCEEDED, output={"path": guard.relative(target), "entries": entries}
+    )
 
 
-async def _search(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _search(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     base = guard.resolve(str(context.input.get("path", "")))
     pattern = str(context.input.get("pattern", ""))
     if not pattern:
@@ -224,7 +236,7 @@ async def _search(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDisp
             continue
         try:
             text = path.read_bytes().decode("utf-8")
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError, OSError:
             continue
         for number, line in enumerate(text.splitlines(), start=1):
             hit = regex.search(line) if regex is not None else (pattern in line)
@@ -236,10 +248,14 @@ async def _search(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDisp
                     status=EXECUTION_SUCCEEDED,
                     output={"matches": matches, "truncated": True},
                 )
-    return AdapterResult(status=EXECUTION_SUCCEEDED, output={"matches": matches, "truncated": False})
+    return AdapterResult(
+        status=EXECUTION_SUCCEEDED, output={"matches": matches, "truncated": False}
+    )
 
 
-async def _hash(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _hash(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     target = guard.resolve(str(context.input.get("path", "")))
     if not target.is_file():
         return _failed(FILE_NOT_FOUND, guard.relative(target))
@@ -251,7 +267,9 @@ async def _hash(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispat
     )
 
 
-async def _stat(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _stat(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     target = guard.resolve(str(context.input.get("path", "")))
     if not target.exists():
         return _failed(FILE_NOT_FOUND, guard.relative(target))
@@ -270,7 +288,9 @@ async def _stat(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispat
 # --- 写操作 ---
 
 
-async def _create(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _create(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     target = guard.resolve(str(context.input.get("path", "")))
     if target.exists():
         return _failed(FILE_ALREADY_EXISTS, guard.relative(target))
@@ -280,7 +300,9 @@ async def _create(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDisp
     return await _finish_write(adapter, guard, context, target, content, created=True)
 
 
-async def _write(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _write(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     target = guard.resolve(str(context.input.get("path", "")))
     content = _content(context)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -288,7 +310,9 @@ async def _write(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispa
     return await _finish_write(adapter, guard, context, target, content, created=False)
 
 
-async def _patch(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _patch(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     target = guard.resolve(str(context.input.get("path", "")))
     if not target.is_file():
         return _failed(FILE_NOT_FOUND, guard.relative(target))
@@ -316,7 +340,9 @@ async def _patch(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispa
     )
 
 
-async def _move(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _move(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     source = guard.resolve(str(context.input.get("path", "")))
     destination = guard.resolve(str(context.input.get("destination", "")))
     if not source.exists():
@@ -330,7 +356,9 @@ async def _move(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispat
     )
 
 
-async def _rename(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _rename(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     source = guard.resolve(str(context.input.get("path", "")))
     new_name = str(context.input.get("new_name", "")).strip()
     if not new_name or "/" in new_name or "\\" in new_name or new_name in (".", ".."):
@@ -348,7 +376,9 @@ async def _rename(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDisp
     )
 
 
-async def _delete(adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext) -> AdapterResult:
+async def _delete(
+    adapter: FileToolAdapter, guard: _PathGuard, context: ToolDispatchContext
+) -> AdapterResult:
     target = guard.resolve(str(context.input.get("path", "")))
     if not target.is_file():
         return _failed(FILE_NOT_FOUND, guard.relative(target))
@@ -383,9 +413,7 @@ async def _finish_write(
         VerificationCheck("content_verified", re_read_ok, rel),
     ]
     if target.suffix.lower() in IMPORT_SUFFIXES:
-        checks.append(
-            VerificationCheck("import_pending", None, "资源导入由编辑器完成，尚未确认")
-        )
+        checks.append(VerificationCheck("import_pending", None, "资源导入由编辑器完成，尚未确认"))
     refresh = await _notify_editor(adapter, context, [rel])
     checks.append(refresh)
     status = EXECUTION_SUCCEEDED if target.is_file() and re_read_ok else EXECUTION_FAILED

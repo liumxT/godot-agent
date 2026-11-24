@@ -367,7 +367,10 @@ class DefinitionRegistryService:
             if entity.current_version is not None:
                 raise AgentVersionImmutable(
                     "已发布的 Definition 不可修改，请发布新版本",
-                    details={"definition_id": definition_id, "current_version": entity.current_version},
+                    details={
+                        "definition_id": definition_id,
+                        "current_version": entity.current_version,
+                    },
                 )
             if expected_version is not None and entity.version != expected_version:
                 from core.errors import VersionConflict

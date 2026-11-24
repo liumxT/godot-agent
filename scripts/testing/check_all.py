@@ -167,7 +167,7 @@ def stage_contracts() -> str:
 
 
 def stage_backend_tests() -> str:
-    code, output = _run([*PYTEST, "-q", "--ignore=tests/contract"], BACKEND)
+    code, output = _run([*PYTEST, "-q", "--ignore=tests/contract"], BACKEND, timeout=1800)
     if code != 0:
         raise AssertionError(output[-2000:])
     return output.splitlines()[-1] if output else "Backend 测试通过"

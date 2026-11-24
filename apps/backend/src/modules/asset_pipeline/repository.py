@@ -171,8 +171,7 @@ class AssetRepository(BaseRepository[AssetModel]):
         )
         rows = (await self.session.execute(statement)).all()
         return [
-            {"content_hash": row.content_hash, "asset_count": int(row.asset_count)}
-            for row in rows
+            {"content_hash": row.content_hash, "asset_count": int(row.asset_count)} for row in rows
         ]
 
     async def orphan_asset_ids(self, project_id: str) -> list[str]:
@@ -197,9 +196,7 @@ class AssetRepository(BaseRepository[AssetModel]):
             await self.session.scalar(
                 select(func.count())
                 .select_from(AssetModel)
-                .where(
-                    AssetModel.project_id == project_id, AssetModel.deleted_at.is_(None)
-                )
+                .where(AssetModel.project_id == project_id, AssetModel.deleted_at.is_(None))
             )
             or 0
         )
@@ -227,9 +224,7 @@ class AssetVersionRepository(BaseRepository[AssetVersionModel]):
         )
         return list(rows)
 
-    async def get_by_number(
-        self, asset_id: str, version_number: int
-    ) -> AssetVersionModel | None:
+    async def get_by_number(self, asset_id: str, version_number: int) -> AssetVersionModel | None:
         return await self.session.scalar(
             select(AssetVersionModel).where(
                 AssetVersionModel.asset_id == asset_id,
@@ -347,9 +342,7 @@ class AssetGenerationRepository(BaseRepository[AssetGenerationModel]):
 class AssetGenerationOutputRepository(BaseRepository[AssetGenerationOutputModel]):
     model = AssetGenerationOutputModel
 
-    async def list_for_generation(
-        self, generation_id: str
-    ) -> list[AssetGenerationOutputModel]:
+    async def list_for_generation(self, generation_id: str) -> list[AssetGenerationOutputModel]:
         rows = await self.session.scalars(
             select(AssetGenerationOutputModel)
             .where(AssetGenerationOutputModel.generation_id == generation_id)
@@ -371,9 +364,7 @@ class AssetProcessingJobRepository(BaseRepository[AssetProcessingJobModel]):
 
     async def get_by_idempotency(self, key: str) -> AssetProcessingJobModel | None:
         return await self.session.scalar(
-            select(AssetProcessingJobModel).where(
-                AssetProcessingJobModel.idempotency_key == key
-            )
+            select(AssetProcessingJobModel).where(AssetProcessingJobModel.idempotency_key == key)
         )
 
     async def list_by_status(self, status: str) -> list[AssetProcessingJobModel]:
@@ -408,9 +399,7 @@ class AssetImportJobRepository(BaseRepository[AssetImportJobModel]):
         )
         return list(rows)
 
-    async def get_by_idempotency(
-        self, idempotency_key: str
-    ) -> AssetImportJobModel | None:
+    async def get_by_idempotency(self, idempotency_key: str) -> AssetImportJobModel | None:
         return await self.session.scalar(
             select(AssetImportJobModel).where(
                 AssetImportJobModel.idempotency_key == idempotency_key

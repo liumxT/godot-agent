@@ -107,9 +107,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("price_version_id"),
         sa.ForeignKeyConstraint(["model_id"], ["models.model_id"], ondelete="CASCADE"),
-        sa.UniqueConstraint(
-            "model_id", "effective_at", name="uq_model_price_versions_effective"
-        ),
+        sa.UniqueConstraint("model_id", "effective_at", name="uq_model_price_versions_effective"),
     )
     op.create_index(
         "ix_model_price_versions_lookup", "model_price_versions", ["model_id", "effective_at"]
@@ -134,9 +132,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["provider_id"], ["model_providers.provider_id"]),
         sa.ForeignKeyConstraint(["model_id"], ["models.model_id"]),
     )
-    op.create_index(
-        "ix_model_requests_project_status", "model_requests", ["project_id", "status"]
-    )
+    op.create_index("ix_model_requests_project_status", "model_requests", ["project_id", "status"])
     op.create_index("ix_model_requests_model", "model_requests", ["model_id", "created_at"])
 
     op.create_table(
@@ -151,9 +147,7 @@ def upgrade() -> None:
         sa.Column("latency_ms", sa.Integer(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("response_id"),
-        sa.ForeignKeyConstraint(
-            ["request_id"], ["model_requests.request_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["request_id"], ["model_requests.request_id"], ondelete="CASCADE"),
         sa.UniqueConstraint("request_id", name="uq_model_responses_request"),
     )
 

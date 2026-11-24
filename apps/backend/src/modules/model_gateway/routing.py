@@ -258,6 +258,4 @@ class ModelRoutingService:
             raise ValidationFailed("output_limit 必须为正数")
         for capability in request.required_capabilities:
             if capability not in CAPABILITIES:
-                raise ValidationFailed(
-                    "未登记的能力", details={"capability": capability}
-                )
+                raise ValidationFailed("未登记的能力", details={"capability": capability})

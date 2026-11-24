@@ -376,9 +376,7 @@ class GodotImportService:
             "resource_scope": [f"file:{job.target_path}"],
         }
         try:
-            response = await connection.send_command(
-                EDITOR_COMMAND_ACTION, payload, timeout=5.0
-            )
+            response = await connection.send_command(EDITOR_COMMAND_ACTION, payload, timeout=5.0)
         except (EditorCommandTimeout, EditorNotConnected) as error:
             await self._mark_unknown(import_job_id, error.code)
             return await self.get(import_job_id)
@@ -394,14 +392,10 @@ class GodotImportService:
         job = await self._get_entity(import_job_id)
         return await self._view_for(job, created=False)
 
-    async def list_for_version(
-        self, project_id: str, asset_version_id: str
-    ) -> list[ImportJobView]:
+    async def list_for_version(self, project_id: str, asset_version_id: str) -> list[ImportJobView]:
         await self._load_version(project_id, asset_version_id)
         async with self._database.session() as session:
-            entities = await AssetImportJobRepository(session).list_for_version(
-                asset_version_id
-            )
+            entities = await AssetImportJobRepository(session).list_for_version(asset_version_id)
             evidence = AssetImportEvidenceRepository(session)
             views: list[ImportJobView] = []
             for entity in entities:
@@ -439,9 +433,7 @@ class GodotImportService:
 
     async def _version_hashes(self, asset_version_id: str) -> set[str]:
         async with self._database.session() as session:
-            objects = await AssetStorageObjectRepository(session).list_for_version(
-                asset_version_id
-            )
+            objects = await AssetStorageObjectRepository(session).list_for_version(asset_version_id)
             hashes = {item.content_hash for item in objects}
         if not hashes:
             raise AssetImportInvalid(
@@ -459,9 +451,7 @@ class GodotImportService:
             )
         return digest
 
-    def _project_file_hash_or_none(
-        self, project_root: str, target_path: str
-    ) -> str | None:
+    def _project_file_hash_or_none(self, project_root: str, target_path: str) -> str | None:
         relative = target_path[len("res://") :]
         base = Path(project_root).resolve()
         candidate = (base / relative).resolve()
@@ -493,9 +483,7 @@ class GodotImportService:
                 if entity.binding_status == BINDING_CONNECTED:
                     session.expunge(entity)
                     return entity
-        raise EditorNotConnected(
-            "项目没有已连接的编辑器会话", details={"project_id": project_id}
-        )
+        raise EditorNotConnected("项目没有已连接的编辑器会话", details={"project_id": project_id})
 
     async def _create_job(
         self,
@@ -604,9 +592,7 @@ class GodotImportService:
                     uid=None,
                     resource_type=None,
                 )
-                await self._publish_failed(
-                    import_job_id, job.project_id, "IMPORT_UID_MISSING"
-                )
+                await self._publish_failed(import_job_id, job.project_id, "IMPORT_UID_MISSING")
                 raise AssetImportInvalid(
                     "Godot 未返回真实资源 UID，不能标记导入成功",
                     details={"import_job_id": import_job_id},
@@ -660,9 +646,7 @@ class GodotImportService:
                 resource_type=None,
             )
             if raise_on_failure:
-                await self._publish_failed(
-                    import_job_id, job.project_id, "IMPORT_FAILED"
-                )
+                await self._publish_failed(import_job_id, job.project_id, "IMPORT_FAILED")
                 raise AssetImportInvalid(
                     "Godot 文件系统未完成资源导入",
                     details={"import_job_id": import_job_id},
@@ -693,9 +677,7 @@ class GodotImportService:
         async with self._database.session() as session, transaction(session):
             entity = await AssetImportJobRepository(session).get(import_job_id)
             if entity is None:
-                raise NotFoundError(
-                    "资产导入任务不存在", details={"import_job_id": import_job_id}
-                )
+                raise NotFoundError("资产导入任务不存在", details={"import_job_id": import_job_id})
             if status != entity.import_status and status not in IMPORT_TRANSITIONS.get(
                 entity.import_status, frozenset()
             ):
@@ -726,9 +708,7 @@ class GodotImportService:
         async with self._database.session() as session, transaction(session):
             job = await AssetImportJobRepository(session).get(import_job_id)
             if job is None:
-                raise NotFoundError(
-                    "资产导入任务不存在", details={"import_job_id": import_job_id}
-                )
+                raise NotFoundError("资产导入任务不存在", details={"import_job_id": import_job_id})
             if status != job.import_status and status not in IMPORT_TRANSITIONS.get(
                 job.import_status, frozenset()
             ):
@@ -781,9 +761,7 @@ class GodotImportService:
         source_hash = ""
         try:
             project = await self._projects.get(entity.project_id)
-            current = self._project_file_hash_or_none(
-                project.project_root, entity.target_path
-            )
+            current = self._project_file_hash_or_none(project.project_root, entity.target_path)
             source_hash = current or ""
         except Exception:  # noqa: BLE001 - 无法读取项目时保留空 Hash，不阻断 UNKNOWN 记录
             source_hash = ""
@@ -804,22 +782,16 @@ class GodotImportService:
             project_id=request.project_id,
         )
 
-    async def _publish_failed(
-        self, import_job_id: str, project_id: str, code: str
-    ) -> None:
+    async def _publish_failed(self, import_job_id: str, project_id: str, code: str) -> None:
         await self._publish(
             "asset.import.failed",
             {"import_job_id": import_job_id, "error_code": code},
             project_id=project_id,
         )
 
-    async def _find_by_idempotency(
-        self, idempotency_key: str
-    ) -> AssetImportJobModel | None:
+    async def _find_by_idempotency(self, idempotency_key: str) -> AssetImportJobModel | None:
         async with self._database.session() as session:
-            entity = await AssetImportJobRepository(session).get_by_idempotency(
-                idempotency_key
-            )
+            entity = await AssetImportJobRepository(session).get_by_idempotency(idempotency_key)
             if entity is not None:
                 session.expunge(entity)
             return entity
@@ -828,15 +800,11 @@ class GodotImportService:
         async with self._database.session() as session:
             entity = await AssetImportJobRepository(session).get(import_job_id)
             if entity is None:
-                raise NotFoundError(
-                    "资产导入任务不存在", details={"import_job_id": import_job_id}
-                )
+                raise NotFoundError("资产导入任务不存在", details={"import_job_id": import_job_id})
             session.expunge(entity)
             return entity
 
-    async def _view_for(
-        self, entity: AssetImportJobModel, *, created: bool
-    ) -> ImportJobView:
+    async def _view_for(self, entity: AssetImportJobModel, *, created: bool) -> ImportJobView:
         async with self._database.session() as session:
             evidence = await AssetImportEvidenceRepository(session).get_for_job(
                 entity.import_job_id
@@ -849,9 +817,7 @@ class GodotImportService:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不阻断导入结果
             log_event(
                 self._logger,

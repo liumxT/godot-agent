@@ -97,9 +97,7 @@ class DeliveryRequest:
                 details={"target_path": self.target_path},
             ) from error
         if self.risk_level not in RISK_LEVELS:
-            raise AssetDeliveryBlocked(
-                "风险等级非法", details={"risk_level": self.risk_level}
-            )
+            raise AssetDeliveryBlocked("风险等级非法", details={"risk_level": self.risk_level})
         if self.approval_ttl_seconds <= 0:
             raise AssetDeliveryBlocked("审批有效期必须大于 0")
 
@@ -166,9 +164,7 @@ class AssetDeliveryService:
         version = await self._load_version(
             request.project_id, request.asset_id, request.asset_version_id
         )
-        await self._provenance.assert_complete(
-            request.project_id, request.asset_version_id
-        )
+        await self._provenance.assert_complete(request.project_id, request.asset_version_id)
         await self._assert_quality(request)
         await self._licenses.check_deliverable(
             request.project_id,
@@ -239,9 +235,7 @@ class AssetDeliveryService:
         entity = await self._get_entity(delivery_id)
         self._assert_transition(entity.delivery_status, DELIVERY_WAITING_APPROVAL)
         if not entity.changeset_id:
-            raise AssetStateInvalid(
-                "交付缺少 ChangeSet", details={"delivery_id": delivery_id}
-            )
+            raise AssetStateInvalid("交付缺少 ChangeSet", details={"delivery_id": delivery_id})
         approval = await self._changesets.submit_for_approval(
             entity.changeset_id,
             requested_by=requested_by,
@@ -274,16 +268,12 @@ class AssetDeliveryService:
                 details={"delivery_id": delivery_id, "status": entity.delivery_status},
             )
         if not entity.changeset_id:
-            raise AssetStateInvalid(
-                "交付缺少 ChangeSet", details={"delivery_id": delivery_id}
-            )
+            raise AssetStateInvalid("交付缺少 ChangeSet", details={"delivery_id": delivery_id})
         self._assert_transition(entity.delivery_status, DELIVERY_APPROVED)
         await self._changesets.approve(
             entity.changeset_id, approval_id, actor_id=actor_id, reason=reason
         )
-        await self._update(
-            delivery_id, status=DELIVERY_APPROVED, approval_id=approval_id
-        )
+        await self._update(delivery_id, status=DELIVERY_APPROVED, approval_id=approval_id)
         await self._publish(
             "asset.delivery.approved",
             {"delivery_id": delivery_id, "approval_id": approval_id},
@@ -301,12 +291,8 @@ class AssetDeliveryService:
                 details={"delivery_id": delivery_id, "status": entity.delivery_status},
             )
         if not entity.changeset_id:
-            raise AssetStateInvalid(
-                "交付缺少 ChangeSet", details={"delivery_id": delivery_id}
-            )
-        await self._changesets.start_apply(
-            entity.changeset_id, approval_id, actor_id=actor_id
-        )
+            raise AssetStateInvalid("交付缺少 ChangeSet", details={"delivery_id": delivery_id})
+        await self._changesets.start_apply(entity.changeset_id, approval_id, actor_id=actor_id)
         await self._update(delivery_id, status=DELIVERY_APPLYING)
         await self._publish(
             "asset.delivery.applying",
@@ -315,9 +301,7 @@ class AssetDeliveryService:
         )
         return await self.get(delivery_id)
 
-    async def mark_importing(
-        self, delivery_id: str, import_job_id: str
-    ) -> DeliveryView:
+    async def mark_importing(self, delivery_id: str, import_job_id: str) -> DeliveryView:
         entity = await self._get_entity(delivery_id)
         self._assert_transition(entity.delivery_status, DELIVERY_IMPORTING)
         async with self._database.session() as session:
@@ -332,9 +316,7 @@ class AssetDeliveryService:
                     "导入任务与交付版本不一致",
                     details={"import_job_id": import_job_id},
                 )
-        await self._update(
-            delivery_id, status=DELIVERY_IMPORTING, import_job_id=import_job_id
-        )
+        await self._update(delivery_id, status=DELIVERY_IMPORTING, import_job_id=import_job_id)
         await self._publish(
             "asset.delivery.importing",
             {"delivery_id": delivery_id, "import_job_id": import_job_id},
@@ -360,9 +342,7 @@ class AssetDeliveryService:
             or job.project_id != entity.project_id
             or job.asset_version_id != entity.asset_version_id
         ):
-            raise NotFoundError(
-                "导入记录与交付不匹配", details={"import_job_id": job_id}
-            )
+            raise NotFoundError("导入记录与交付不匹配", details={"import_job_id": job_id})
         if job.import_status != IMPORT_IMPORTED or not job.godot_uid:
             raise AssetDeliveryBlocked(
                 "Godot 导入尚未成功，不能交付",
@@ -391,9 +371,7 @@ class AssetDeliveryService:
     async def mark_failed(self, delivery_id: str, *, reason: str) -> DeliveryView:
         entity = await self._get_entity(delivery_id)
         if entity.delivery_status in _TERMINAL_STATUSES:
-            raise AssetStateInvalid(
-                "交付已结束", details={"delivery_id": delivery_id}
-            )
+            raise AssetStateInvalid("交付已结束", details={"delivery_id": delivery_id})
         self._assert_transition(entity.delivery_status, DELIVERY_FAILED)
         await self._update(delivery_id, status=DELIVERY_FAILED)
         await self._publish(
@@ -444,9 +422,7 @@ class AssetDeliveryService:
     async def check_approval(self, delivery_id: str) -> dict[str, Any]:
         entity = await self._get_entity(delivery_id)
         if not entity.changeset_id:
-            raise AssetStateInvalid(
-                "交付缺少 ChangeSet", details={"delivery_id": delivery_id}
-            )
+            raise AssetStateInvalid("交付缺少 ChangeSet", details={"delivery_id": delivery_id})
         result = await self._changesets.verify_hash(entity.changeset_id)
         valid = bool(result["valid"])
         if not entity.approval_id or self._approvals is None:
@@ -468,9 +444,7 @@ class AssetDeliveryService:
         entity = await self._get_entity(delivery_id)
         return _view(entity, target_path=await self._target_path(entity))
 
-    async def list_for_asset(
-        self, project_id: str, asset_id: str
-    ) -> list[DeliveryView]:
+    async def list_for_asset(self, project_id: str, asset_id: str) -> list[DeliveryView]:
         async with self._database.session() as session:
             asset = await AssetRepository(session).get_active(asset_id)
             if asset is None or asset.project_id != project_id:
@@ -512,9 +486,7 @@ class AssetDeliveryService:
             },
         )
 
-    async def _load_version(
-        self, project_id: str, asset_id: str, asset_version_id: str
-    ):
+    async def _load_version(self, project_id: str, asset_id: str, asset_version_id: str):
         async with self._database.session() as session:
             version = await AssetVersionRepository(session).get(asset_version_id)
             if version is None or version.asset_id != asset_id:
@@ -535,9 +507,7 @@ class AssetDeliveryService:
         async with self._database.session() as session:
             entity = await AssetDeliveryRepository(session).get(delivery_id)
             if entity is None:
-                raise NotFoundError(
-                    "交付记录不存在", details={"delivery_id": delivery_id}
-                )
+                raise NotFoundError("交付记录不存在", details={"delivery_id": delivery_id})
             session.expunge(entity)
             return entity
 
@@ -553,9 +523,7 @@ class AssetDeliveryService:
         async with self._database.session() as session, transaction(session):
             entity = await AssetDeliveryRepository(session).get(delivery_id)
             if entity is None:
-                raise NotFoundError(
-                    "交付记录不存在", details={"delivery_id": delivery_id}
-                )
+                raise NotFoundError("交付记录不存在", details={"delivery_id": delivery_id})
             self._assert_transition(entity.delivery_status, status)
             entity.delivery_status = status
             if approval_id is not None:
@@ -582,9 +550,7 @@ class AssetDeliveryService:
         if current == target:
             return
         if target not in DELIVERY_TRANSITIONS.get(current, frozenset()):
-            raise AssetStateInvalid(
-                "交付状态迁移非法", details={"from": current, "to": target}
-            )
+            raise AssetStateInvalid("交付状态迁移非法", details={"from": current, "to": target})
 
     @staticmethod
     def _path_to(current: str, target: str) -> list[str]:
@@ -603,23 +569,17 @@ class AssetDeliveryService:
                 if nxt not in visited:
                     visited.add(nxt)
                     queue.append([*path, nxt])
-        raise AssetStateInvalid(
-            "交付状态无法到达目标状态", details={"from": current, "to": target}
-        )
+        raise AssetStateInvalid("交付状态无法到达目标状态", details={"from": current, "to": target})
 
     @staticmethod
     def _resource_path(target_path: str) -> str:
         return normalize_res_path(target_path)[len("res://") :]
 
-    async def _publish(
-        self, event_type: str, payload: dict[str, Any], *, project_id: str
-    ) -> None:
+    async def _publish(self, event_type: str, payload: dict[str, Any], *, project_id: str) -> None:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不阻断交付流程
             log_event(
                 self._logger,

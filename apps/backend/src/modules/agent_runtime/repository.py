@@ -257,9 +257,7 @@ class AgentStepRepository(BaseRepository[AgentStepModel]):
 
     async def next_number(self, plan_id: str) -> int:
         current = await self.session.scalar(
-            select(func.max(AgentStepModel.step_number)).where(
-                AgentStepModel.plan_id == plan_id
-            )
+            select(func.max(AgentStepModel.step_number)).where(AgentStepModel.plan_id == plan_id)
         )
         return int(current or 0) + 1
 

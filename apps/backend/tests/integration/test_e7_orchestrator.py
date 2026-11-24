@@ -75,9 +75,7 @@ async def _prepare(app, tmp_path: Path) -> dict:
         )
         return await definitions.publish(definition.definition_id)
 
-    designer = await make(
-        "e7_designer", ("gameplay_design", "level_design"), ("file.read",), "R2"
-    )
+    designer = await make("e7_designer", ("gameplay_design", "level_design"), ("file.read",), "R2")
     programmer = await make(
         "e7_programmer",
         ("gameplay_programming", "game_system_programming"),

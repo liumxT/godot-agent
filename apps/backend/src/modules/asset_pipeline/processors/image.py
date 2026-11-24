@@ -95,9 +95,7 @@ def _number_param(
     return number
 
 
-def _bool_param(
-    parameters: Mapping[str, Any], name: str, *, default: bool = False
-) -> bool:
+def _bool_param(parameters: Mapping[str, Any], name: str, *, default: bool = False) -> bool:
     value = parameters.get(name, default)
     if not isinstance(value, bool):
         raise _invalid(f"参数 {name} 必须是布尔值", parameter=name)
@@ -295,7 +293,9 @@ class ImageCropProcessor:
                 width=image.width,
                 height=image.height,
             )
-        return ProcessingPayload((_encode(image.crop((left, top, right, bottom)), artifact.format),))
+        return ProcessingPayload(
+            (_encode(image.crop((left, top, right, bottom)), artifact.format),)
+        )
 
 
 class ImagePadProcessor:
@@ -364,12 +364,8 @@ class ImageAlphaValidateProcessor:
 
     def validate(self, parameters: Mapping[str, Any]) -> None:
         _bool_param(parameters, "require_alpha", default=True)
-        _number_param(
-            parameters, "min_opaque_ratio", default=0.0, minimum=0.0, maximum=1.0
-        )
-        _number_param(
-            parameters, "max_transparent_ratio", default=1.0, minimum=0.0, maximum=1.0
-        )
+        _number_param(parameters, "min_opaque_ratio", default=0.0, minimum=0.0, maximum=1.0)
+        _number_param(parameters, "max_transparent_ratio", default=1.0, minimum=0.0, maximum=1.0)
 
     def process(
         self,
@@ -477,7 +473,9 @@ class ImageColorConvertProcessor:
         self.validate(parameters)
         artifact = _single(payload)
         image = _open(artifact, context)
-        return ProcessingPayload((_encode(image.convert(parameters["mode"].upper()), artifact.format),))
+        return ProcessingPayload(
+            (_encode(image.convert(parameters["mode"].upper()), artifact.format),)
+        )
 
 
 class ImageSpriteSheetSliceProcessor:
@@ -593,7 +591,9 @@ class ImagePixelArtScaleProcessor:
         height = image.height * scale
         context.check_pixels(width, height)
         if scale == 1:
-            return ProcessingPayload((_replace(artifact, metadata=_image_metadata(image, artifact.format)),))
+            return ProcessingPayload(
+                (_replace(artifact, metadata=_image_metadata(image, artifact.format)),)
+            )
         scaled = image.resize((width, height), Image.Resampling.NEAREST)
         return ProcessingPayload((_encode(scaled, artifact.format),))
 

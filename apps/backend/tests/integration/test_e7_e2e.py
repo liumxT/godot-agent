@@ -75,9 +75,7 @@ async def _setup_fixture(app, tmp_path: Path, name: str = "project"):
     await _service(app, "prompt_service", PromptService).create(
         name="e7e2e_prompt", category="AGENT", content="You are a game development agent."
     )
-    definitions = _service(
-        app, "agent_definition_registry_service", DefinitionRegistryService
-    )
+    definitions = _service(app, "agent_definition_registry_service", DefinitionRegistryService)
 
     async def make(name: str, capabilities, tools, ceiling: str = "R2"):
         definition = await definitions.create(
@@ -108,9 +106,7 @@ async def _setup_fixture(app, tmp_path: Path, name: str = "project"):
         title="2D 平台跳跃游戏",
         description="移动、跳跃、敌人、关卡、生命与 HUD",
     )
-    attempt = await _service(app, "task_attempt_service", AttemptService).create(
-        task.task_id
-    )
+    attempt = await _service(app, "task_attempt_service", AttemptService).create(task.task_id)
     return project, task, attempt, programmer
 
 
@@ -207,9 +203,7 @@ async def test_platformer_multi_agent_end_to_end(tmp_path: Path) -> None:
         assert design.status == level.status == "RUNNING"
 
         # 9. 资源冲突：同一资源写入被拒绝，冲突可解决
-        resources = _service(
-            app, "resource_coordinator_service", ResourceCoordinatorService
-        )
+        resources = _service(app, "resource_coordinator_service", ResourceCoordinatorService)
         await resources.acquire(
             team_id=result.team.team_id,
             assignment_id=design.assignment_id,
@@ -263,9 +257,7 @@ async def test_platformer_multi_agent_end_to_end(tmp_path: Path) -> None:
 
         design = await _finish(app, design, "context://result/design")
         level = await _finish(app, level, "context://result/level")
-        handoff_target = await _finish(
-            app, execution.assignment, "context://result/handoff-player"
-        )
+        handoff_target = await _finish(app, execution.assignment, "context://result/handoff-player")
         player = await _finish(app, by_key["player"], "context://result/player")
         integration_assignment = await _finish(
             app, by_key["integration"], "context://result/integration"
@@ -321,9 +313,7 @@ async def test_platformer_multi_agent_end_to_end(tmp_path: Path) -> None:
         assert level.assignment_id != handoff_target.assignment_id
         assert player.status == "COMPLETED"
 
-        observability = _service(
-            app, "team_observability_service", TeamObservabilityService
-        )
+        observability = _service(app, "team_observability_service", TeamObservabilityService)
         dashboard = await observability.team_dashboard(result.team.team_id)
         assert dashboard["assignment_counts"]["COMPLETED"] == 5
 
@@ -344,9 +334,7 @@ async def test_team_recovers_after_restart_and_rejects_duplicates(tmp_path: Path
             )
         assert exc_info.value.details["reasons"] == ["TEAM_ALREADY_EXISTS"]
 
-        design = next(
-            item.assignment for item in result.assignments if item.key == "design"
-        )
+        design = next(item.assignment for item in result.assignments if item.key == "design")
         assignments = _service(app, "assignment_service", AssignmentService)
         claimed = await assignments.claim(
             design.assignment_id, "instance_a", expected_version=design.version

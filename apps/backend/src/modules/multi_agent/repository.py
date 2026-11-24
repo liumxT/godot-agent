@@ -125,9 +125,7 @@ class AgentTeamMemberRepository(BaseRepository[AgentTeamMemberModel]):
 
     async def get_by_assignment(self, assignment_id: str) -> AgentTeamMemberModel | None:
         return await self.session.scalar(
-            select(AgentTeamMemberModel).where(
-                AgentTeamMemberModel.assignment_id == assignment_id
-            )
+            select(AgentTeamMemberModel).where(AgentTeamMemberModel.assignment_id == assignment_id)
         )
 
 
@@ -235,8 +233,7 @@ class AgentAssignmentDependencyRepository(BaseRepository[AgentAssignmentDependen
     ) -> list[AgentAssignmentDependencyModel]:
         rows = await self.session.scalars(
             select(AgentAssignmentDependencyModel).where(
-                AgentAssignmentDependencyModel.depends_on_assignment_id
-                == depends_on_assignment_id
+                AgentAssignmentDependencyModel.depends_on_assignment_id == depends_on_assignment_id
             )
         )
         return list(rows)

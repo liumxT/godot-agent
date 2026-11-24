@@ -102,9 +102,7 @@ class AgentModelBindingService:
             system_instructions=bundle.system_prompt,
             tools=tuple(tools),
             response_format=ResponseFormat(kind=RESPONSE_FORMAT_JSON_OBJECT),
-            max_output_tokens=(
-                int(max_output_tokens) if max_output_tokens is not None else None
-            ),
+            max_output_tokens=(int(max_output_tokens) if max_output_tokens is not None else None),
             metadata={
                 "agent_instance_id": instance.instance_id,
                 "context_id": bundle.context_id,

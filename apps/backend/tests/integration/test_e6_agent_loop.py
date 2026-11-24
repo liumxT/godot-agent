@@ -87,9 +87,7 @@ async def _register_model(app) -> None:
         context_window=16000,
         max_output_tokens=1024,
         capabilities={
-            name: CapabilitySetting(
-                support_status="SUPPORTED", evidence_source="test-fixture"
-            )
+            name: CapabilitySetting(support_status="SUPPORTED", evidence_source="test-fixture")
             for name in MODEL_CAPABILITIES
         },
     )
@@ -98,9 +96,7 @@ async def _register_model(app) -> None:
 async def _session(app) -> tuple[str, str]:
     clients = _service(app, "client_service", ClientService)
     registered = await clients.register(client_type="godot_editor", client_name="Editor")
-    issued = await _service(app, "session_service", SessionService).create(
-        registered.client_id
-    )
+    issued = await _service(app, "session_service", SessionService).create(registered.client_id)
     return issued.session.session_id, registered.client_id
 
 
@@ -115,9 +111,7 @@ async def _prepare(
 ):
     projects = _service(app, "project_registry_service", ProjectRegistryService)
     prompts = _service(app, "prompt_service", PromptService)
-    definitions = _service(
-        app, "agent_definition_registry_service", DefinitionRegistryService
-    )
+    definitions = _service(app, "agent_definition_registry_service", DefinitionRegistryService)
     tasks = _service(app, "task_service", TaskService)
     attempts = _service(app, "task_attempt_service", AttemptService)
     instances = _service(app, "agent_instance_service", AgentInstanceService)
@@ -179,9 +173,7 @@ def _loop(app, gateway) -> AgentExecutionLoop:
         executions=services.get("agent_execution_service", AgentExecutionService),
         events=services.get("agent_event_service", AgentEventService),
         planning=services.get("agent_planning_service", PlanningService),
-        context=services.get(
-            "agent_context_binding_service", AgentContextBindingService
-        ),
+        context=services.get("agent_context_binding_service", AgentContextBindingService),
         models=AgentModelBindingService(
             definitions=services.get(
                 "agent_definition_registry_service", DefinitionRegistryService
@@ -189,9 +181,7 @@ def _loop(app, gateway) -> AgentExecutionLoop:
             routing=services.get("model_routing_service", ModelRoutingService),
             gateway=gateway,
         ),
-        tools=services.get(
-            "agent_tool_binding_service", AgentToolBindingService
-        ),
+        tools=services.get("agent_tool_binding_service", AgentToolBindingService),
         budget=services.get("agent_budget_manager", BudgetManager),
         checkpoints=services.get("agent_checkpoint_service", CheckpointService),
     )

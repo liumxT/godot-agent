@@ -36,9 +36,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("prompt_id"),
         sa.UniqueConstraint("name", "version", name="uq_prompt_definitions_name_version"),
     )
-    op.create_index(
-        "ix_prompt_definitions_name", "prompt_definitions", ["name", "version"]
-    )
+    op.create_index("ix_prompt_definitions_name", "prompt_definitions", ["name", "version"])
 
     op.create_table(
         "prompt_test_results",
@@ -80,12 +78,8 @@ def upgrade() -> None:
         sa.Column("fixed_refs_json", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("context_id"),
-        sa.ForeignKeyConstraint(
-            ["project_id"], ["projects.project_id"], ondelete="CASCADE"
-        ),
-        sa.UniqueConstraint(
-            "project_id", "context_version", name="uq_context_assemblies_version"
-        ),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.project_id"], ondelete="CASCADE"),
+        sa.UniqueConstraint("project_id", "context_version", name="uq_context_assemblies_version"),
     )
     op.create_index(
         "ix_context_assemblies_project",

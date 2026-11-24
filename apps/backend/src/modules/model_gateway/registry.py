@@ -202,9 +202,7 @@ class ModelRegistryService:
         if not name.strip():
             raise ValidationFailed("Provider 名称不能为空")
         if provider_type not in PROVIDER_TYPES:
-            raise ValidationFailed(
-                "Provider 类型非法", details={"provider_type": provider_type}
-            )
+            raise ValidationFailed("Provider 类型非法", details={"provider_type": provider_type})
         if status not in PROVIDER_STATUSES:
             raise ValidationFailed("Provider 状态非法", details={"status": status})
         now = self._clock()

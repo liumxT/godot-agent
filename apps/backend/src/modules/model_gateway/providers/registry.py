@@ -33,13 +33,9 @@ class AdapterRegistry:
 
     def register(self, provider_type: str, factory: AdapterFactory) -> None:
         if provider_type not in PROVIDER_TYPES:
-            raise StartupError(
-                "未登记的 Provider 类型", details={"provider_type": provider_type}
-            )
+            raise StartupError("未登记的 Provider 类型", details={"provider_type": provider_type})
         if provider_type in self._factories:
-            raise StartupError(
-                "Provider 适配器重复注册", details={"provider_type": provider_type}
-            )
+            raise StartupError("Provider 适配器重复注册", details={"provider_type": provider_type})
         self._factories[provider_type] = factory
 
     def types(self) -> tuple[str, ...]:

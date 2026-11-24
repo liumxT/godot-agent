@@ -112,12 +112,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_quality_gate_waivers_campaign_gate", table_name="quality_gate_waivers"
-    )
-    op.drop_index(
-        "ix_quality_gate_waivers_gate_result", table_name="quality_gate_waivers"
-    )
+    op.drop_index("ix_quality_gate_waivers_campaign_gate", table_name="quality_gate_waivers")
+    op.drop_index("ix_quality_gate_waivers_gate_result", table_name="quality_gate_waivers")
     op.drop_table("quality_gate_waivers")
 
     op.drop_index("ix_quality_gate_results_project", table_name="quality_gate_results")

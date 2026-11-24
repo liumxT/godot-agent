@@ -95,9 +95,7 @@ class OpenAICompatibleAdapter(BaseProviderAdapter):
             provider_request_id=_provider_request_id(data, response),
         )
 
-    async def generate_stream(
-        self, request: ModelInvocationRequest
-    ) -> AsyncIterator[StreamEvent]:
+    async def generate_stream(self, request: ModelInvocationRequest) -> AsyncIterator[StreamEvent]:
         payload = self._payload(request, stream=True)
         accumulator = ToolCallAccumulator()
         usage: ModelUsage | None = None

@@ -95,9 +95,7 @@ class AnthropicAdapter(BaseProviderAdapter):
             provider_request_id=_provider_request_id(data, response),
         )
 
-    async def generate_stream(
-        self, request: ModelInvocationRequest
-    ) -> AsyncIterator[StreamEvent]:
+    async def generate_stream(self, request: ModelInvocationRequest) -> AsyncIterator[StreamEvent]:
         payload = self._payload(request)
         payload["stream"] = True
         accumulator = ToolCallAccumulator()
@@ -170,9 +168,7 @@ class AnthropicAdapter(BaseProviderAdapter):
                             if delta.get("type") == "input_json_delta" and isinstance(
                                 delta.get("partial_json"), str
                             ):
-                                accumulator.add(
-                                    index, arguments_delta=delta["partial_json"]
-                                )
+                                accumulator.add(index, arguments_delta=delta["partial_json"])
                                 yield StreamEvent(
                                     type=STREAM_TOOL_CALL_DELTA,
                                     request_id=request_id,

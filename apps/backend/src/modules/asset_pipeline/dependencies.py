@@ -200,9 +200,7 @@ class AssetDependencyService:
     ) -> list[DependencyView]:
         await self._validate_version(project_id, asset_version_id)
         async with self._database.session() as session:
-            entities = await AssetDependencyRepository(session).list_for_version(
-                asset_version_id
-            )
+            entities = await AssetDependencyRepository(session).list_for_version(asset_version_id)
         return [_view(item) for item in entities]
 
     async def list_referencing(
@@ -227,20 +225,14 @@ class AssetDependencyService:
 
         known = {item for item in known_references if item}
         async with self._database.session() as session:
-            entities = await AssetDependencyRepository(session).list_for_project(
-                project_id
-            )
-        return [
-            _view(item) for item in entities if item.target_reference not in known
-        ]
+            entities = await AssetDependencyRepository(session).list_for_project(project_id)
+        return [_view(item) for item in entities if item.target_reference not in known]
 
     async def detect_cycles(self, project_id: str) -> list[list[str]]:
         """检测引用图中的循环依赖，返回去重后的环列表。"""
 
         async with self._database.session() as session:
-            entities = await AssetDependencyRepository(session).list_for_project(
-                project_id
-            )
+            entities = await AssetDependencyRepository(session).list_for_project(project_id)
         graph: dict[str, list[str]] = {}
         for item in entities:
             graph.setdefault(item.source_reference, []).append(item.target_reference)
@@ -250,9 +242,7 @@ class AssetDependencyService:
         def _canonical(cycle: list[str]) -> tuple[str, ...]:
             if not cycle:
                 return ()
-            rotations = [
-                tuple(cycle[index:] + cycle[:index]) for index in range(len(cycle))
-            ]
+            rotations = [tuple(cycle[index:] + cycle[:index]) for index in range(len(cycle))]
             return min(rotations)
 
         def _walk(node: str, stack: list[str], visited: set[str]) -> None:
@@ -276,9 +266,7 @@ class AssetDependencyService:
             _walk(root, [], set())
         return cycles
 
-    async def replacement_impact(
-        self, project_id: str, asset_version_id: str
-    ) -> ReplacementImpact:
+    async def replacement_impact(self, project_id: str, asset_version_id: str) -> ReplacementImpact:
         """分析替换版本会影响的引用；实际更新必须走 ChangeSet。"""
 
         references = await self._references_for_version(project_id, asset_version_id)
@@ -288,9 +276,7 @@ class AssetDependencyService:
             requires_changeset=True,
         )
 
-    async def deletion_risk(
-        self, project_id: str, asset_version_id: str
-    ) -> ReplacementImpact:
+    async def deletion_risk(self, project_id: str, asset_version_id: str) -> ReplacementImpact:
         await self._validate_version(project_id, asset_version_id)
         references = await self._references_for_version(project_id, asset_version_id)
         return ReplacementImpact(
@@ -308,9 +294,7 @@ class AssetDependencyService:
     ) -> list[DependencyView]:
         await self._validate_version(project_id, asset_version_id)
         async with self._database.session() as session:
-            objects = await AssetStorageObjectRepository(session).list_for_version(
-                asset_version_id
-            )
+            objects = await AssetStorageObjectRepository(session).list_for_version(asset_version_id)
             candidates = {item.relative_path for item in objects}
             candidates.add(f"asset://{asset_version_id}")
             references: list[DependencyView] = []
@@ -318,9 +302,7 @@ class AssetDependencyService:
             for reference in sorted(candidates):
                 rows = await repository.list_referencing(project_id, reference)
                 references.extend(_view(item) for item in rows)
-        unique: dict[str, DependencyView] = {
-            item.dependency_id: item for item in references
-        }
+        unique: dict[str, DependencyView] = {item.dependency_id: item for item in references}
         return list(unique.values())
 
     async def _validate_version(self, project_id: str, asset_version_id: str) -> None:
@@ -340,15 +322,11 @@ class AssetDependencyService:
                     },
                 )
 
-    async def _publish(
-        self, event_type: str, payload: dict[str, Any], *, project_id: str
-    ) -> None:
+    async def _publish(self, event_type: str, payload: dict[str, Any], *, project_id: str) -> None:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不阻断依赖记录
             log_event(
                 self._logger,

@@ -178,11 +178,7 @@ def _glb_bytes(document: dict) -> bytes:
     raw = json.dumps(document).encode("utf-8")
     raw += b" " * ((4 - len(raw) % 4) % 4)
     total = 12 + 8 + len(raw)
-    return (
-        struct.pack("<4sII", b"glTF", 2, total)
-        + struct.pack("<II", len(raw), 0x4E4F534A)
-        + raw
-    )
+    return struct.pack("<4sII", b"glTF", 2, total) + struct.pack("<II", len(raw), 0x4E4F534A) + raw
 
 
 def test_model3d_inspector_reads_glb_geometry_and_materials() -> None:
@@ -224,10 +220,7 @@ def test_model3d_inspector_reads_glb_geometry_and_materials() -> None:
 
 
 def test_model3d_inspector_reads_obj_and_detects_empty_geometry() -> None:
-    obj = (
-        "v 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\n"
-        "vt 0 0\nusemtl stone\nf 1 2 3\nf 1 3 4"
-    )
+    obj = "v 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nvt 0 0\nusemtl stone\nf 1 2 3\nf 1 3 4"
     geometry = inspect_geometry(obj.encode(), "obj")
     materials = inspect_materials(obj.encode(), "obj")
 

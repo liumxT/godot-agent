@@ -336,9 +336,7 @@ async def reconcile_generation(
 ) -> dict:
     view = await _generations(request).get(generation_id)
     await authorize_project_action(request, view.project_id, ACTION_E8_ASSET_GENERATE)
-    recovery = _services(request).get(
-        "asset_recovery_service", AssetRecoveryService
-    )
+    recovery = _services(request).get("asset_recovery_service", AssetRecoveryService)
     result = await recovery.resolve_generation(view.project_id, generation_id)
     return asdict(result)
 
@@ -368,9 +366,7 @@ async def create_processing_job(
     return asdict(view)
 
 
-@router.get(
-    "/processing-jobs/{job_id}", summary="读取处理任务", responses=_ERRORS
-)
+@router.get("/processing-jobs/{job_id}", summary="读取处理任务", responses=_ERRORS)
 async def get_processing_job(
     job_id: str = Path(min_length=1, max_length=64), request: Request = ...
 ) -> dict:
@@ -407,9 +403,7 @@ async def request_human_review(
     request: Request = ...,
 ) -> dict:
     view = await _quality(request).get_review(review_id)
-    project_id = await _asset_project(
-        request, view.asset_id, ACTION_E8_ASSET_REVIEW_QUALITY
-    )
+    project_id = await _asset_project(request, view.asset_id, ACTION_E8_ASSET_REVIEW_QUALITY)
     result = await _quality(request).request_human_review(
         project_id,
         view.asset_id,
@@ -430,9 +424,7 @@ async def decide_quality_review(
     payload: QualityDecisionRequest = ...,
     request: Request = ...,
 ) -> dict:
-    project_id = await _asset_project(
-        request, payload.asset_id, ACTION_E8_ASSET_REVIEW_QUALITY
-    )
+    project_id = await _asset_project(request, payload.asset_id, ACTION_E8_ASSET_REVIEW_QUALITY)
     view = await _quality(request).record_human_decision(
         project_id,
         payload.asset_id,
@@ -494,9 +486,7 @@ async def get_asset_license(
     asset = await _assets(request).get(asset_id)
     if not asset.current_version_id:
         raise NotFoundError("资产没有可用版本", details={"asset_id": asset_id})
-    view = await _licenses(request).latest_for_version(
-        project_id, asset.current_version_id
-    )
+    view = await _licenses(request).latest_for_version(project_id, asset.current_version_id)
     return asdict(view)
 
 
@@ -510,9 +500,7 @@ async def decide_license(
     payload: LicenseDecisionRequest = ...,
     request: Request = ...,
 ) -> dict:
-    project_id = await _asset_project(
-        request, payload.asset_id, ACTION_E8_ASSET_REVIEW_LICENSE
-    )
+    project_id = await _asset_project(request, payload.asset_id, ACTION_E8_ASSET_REVIEW_LICENSE)
     view = await _licenses(request).verify(
         project_id,
         license_id,
@@ -577,9 +565,7 @@ async def reconcile_import_job(
 ) -> dict:
     view = await _imports(request).get(import_job_id)
     await authorize_project_action(request, view.project_id, ACTION_E8_ASSET_IMPORT)
-    recovery = _services(request).get(
-        "asset_recovery_service", AssetRecoveryService
-    )
+    recovery = _services(request).get("asset_recovery_service", AssetRecoveryService)
     result = await recovery.resolve_import(view.project_id, import_job_id)
     return asdict(result)
 
@@ -589,8 +575,7 @@ async def reconcile_import_job(
     status_code=status.HTTP_201_CREATED,
     summary="创建资产交付计划",
     description=(
-        "校验来源完整性、质量审核与 License 后生成 ChangeSet；"
-        "交付本身仍需审批与 Tool System 写入。"
+        "校验来源完整性、质量审核与 License 后生成 ChangeSet；交付本身仍需审批与 Tool System 写入。"
     ),
     responses=_ERRORS,
 )
@@ -621,9 +606,7 @@ async def create_delivery_plan(
     return asdict(view)
 
 
-@router.get(
-    "/deliveries/{delivery_id}", summary="读取交付状态", responses=_ERRORS
-)
+@router.get("/deliveries/{delivery_id}", summary="读取交付状态", responses=_ERRORS)
 async def get_delivery(
     delivery_id: str = Path(min_length=1, max_length=64), request: Request = ...
 ) -> dict:

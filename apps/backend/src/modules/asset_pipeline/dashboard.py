@@ -83,28 +83,20 @@ class AssetDashboardService:
         godot_uid = None
         dependency_count = 0
         if current_version_id:
-            quality_status = await self._quality_status(
-                project_id, asset_id, current_version_id
-            )
+            quality_status = await self._quality_status(project_id, asset_id, current_version_id)
             try:
                 license_view = await self._licenses.latest_for_version(
                     project_id, current_version_id
                 )
             except NotFoundError:
                 license_view = None
-            license_status = (
-                license_view.verification_status if license_view is not None else None
-            )
-            imports = await self._imports.list_for_version(
-                project_id, current_version_id
-            )
+            license_status = license_view.verification_status if license_view is not None else None
+            imports = await self._imports.list_for_version(project_id, current_version_id)
             latest_import = _latest(imports)
             if latest_import is not None:
                 import_status = latest_import.import_status
                 godot_uid = latest_import.godot_uid
-            dependencies = await self._dependencies.list_for_version(
-                project_id, current_version_id
-            )
+            dependencies = await self._dependencies.list_for_version(project_id, current_version_id)
             dependency_count = len(dependencies)
         generations = await self._generations.list_for_asset(project_id, asset_id)
         processing_jobs = await self._processing.list_for_asset(project_id, asset_id)
@@ -138,11 +130,7 @@ class AssetDashboardService:
             "updated_at": view.updated_at,
         }
 
-    async def _quality_status(
-        self, project_id: str, asset_id: str, version_id: str
-    ) -> str | None:
-        reviews = await self._quality.list_for_version(
-            project_id, asset_id, version_id
-        )
+    async def _quality_status(self, project_id: str, asset_id: str, version_id: str) -> str | None:
+        reviews = await self._quality.list_for_version(project_id, asset_id, version_id)
         latest = _latest(reviews)
         return latest.review_status if latest is not None else None

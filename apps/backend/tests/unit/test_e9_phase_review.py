@@ -39,9 +39,7 @@ def test_recommendation_follows_gate_and_campaign_status() -> None:
         == RECOMMENDATION_REVISION
     )
     assert (
-        recommendation_for(
-            campaign_status=None, gate_status=None, blocking_defects=0
-        )
+        recommendation_for(campaign_status=None, gate_status=None, blocking_defects=0)
         == RECOMMENDATION_PENDING
     )
     assert (

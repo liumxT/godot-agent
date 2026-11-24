@@ -73,9 +73,7 @@ def _handoffs(request: Request) -> HandoffService:
 
 
 def _capabilities(request: Request) -> CapabilityRegistryService:
-    return request.app.state.services.get(
-        "capability_registry_service", CapabilityRegistryService
-    )
+    return request.app.state.services.get("capability_registry_service", CapabilityRegistryService)
 
 
 def _conflicts(request: Request) -> ConflictService:
@@ -83,9 +81,7 @@ def _conflicts(request: Request) -> ConflictService:
 
 
 def _observability(request: Request) -> TeamObservabilityService:
-    return request.app.state.services.get(
-        "team_observability_service", TeamObservabilityService
-    )
+    return request.app.state.services.get("team_observability_service", TeamObservabilityService)
 
 
 def _orchestrator(request: Request) -> OrchestratorService:
@@ -152,9 +148,7 @@ async def list_agent_teams(
     status_code=201,
     responses=_ERRORS,
 )
-async def create_agent_team(
-    request: Request, payload: AgentTeamCreateRequest
-) -> dict[str, Any]:
+async def create_agent_team(request: Request, payload: AgentTeamCreateRequest) -> dict[str, Any]:
     task = await _tasks(request).get(payload.task_id)
     await authorize_project_action(request, task.project_id, ACTION_E7_MULTI_AGENT_MANAGE)
     plan = DecompositionPlan(
@@ -250,12 +244,8 @@ async def get_agent_assignment(request: Request, assignment_id: str) -> dict[str
     description="仅已完成的 Assignment 有可读取结果；未完成返回 409。",
     responses=_ERRORS,
 )
-async def get_agent_assignment_result(
-    request: Request, assignment_id: str
-) -> dict[str, Any]:
-    assignment, _ = await _authorize_assignment(
-        request, assignment_id, ACTION_E7_MULTI_AGENT_READ
-    )
+async def get_agent_assignment_result(request: Request, assignment_id: str) -> dict[str, Any]:
+    assignment, _ = await _authorize_assignment(request, assignment_id, ACTION_E7_MULTI_AGENT_READ)
     if assignment.status != ASSIGNMENT_COMPLETED or not assignment.output_reference:
         raise InvalidStateTransition(
             "Assignment 尚未产出可读取结果",
@@ -311,9 +301,7 @@ async def list_agent_handoffs(
     responses=_ERRORS,
 )
 async def get_agent_handoff(request: Request, handoff_id: str) -> dict[str, Any]:
-    handoff, _ = await _authorize_handoff(
-        request, handoff_id, ACTION_E7_MULTI_AGENT_READ
-    )
+    handoff, _ = await _authorize_handoff(request, handoff_id, ACTION_E7_MULTI_AGENT_READ)
     return to_jsonable(handoff)
 
 
@@ -326,9 +314,7 @@ async def get_agent_handoff(request: Request, handoff_id: str) -> dict[str, Any]
 async def accept_agent_handoff(
     request: Request, handoff_id: str, payload: HandoffAcceptRequest
 ) -> dict[str, Any]:
-    handoff, _ = await _authorize_handoff(
-        request, handoff_id, ACTION_E7_MULTI_AGENT_MANAGE
-    )
+    handoff, _ = await _authorize_handoff(request, handoff_id, ACTION_E7_MULTI_AGENT_MANAGE)
     if handoff.status == HANDOFF_COMPLETED:
         return {"handoff": to_jsonable(handoff)}
     if handoff.version != payload.expected_version:
@@ -352,9 +338,7 @@ async def accept_agent_handoff(
 async def reject_agent_handoff(
     request: Request, handoff_id: str, payload: HandoffRejectRequest
 ) -> dict[str, Any]:
-    handoff, _ = await _authorize_handoff(
-        request, handoff_id, ACTION_E7_MULTI_AGENT_MANAGE
-    )
+    handoff, _ = await _authorize_handoff(request, handoff_id, ACTION_E7_MULTI_AGENT_MANAGE)
     if handoff.status == HANDOFF_REJECTED:
         return to_jsonable(handoff)
     rejected = await _handoffs(request).transition(

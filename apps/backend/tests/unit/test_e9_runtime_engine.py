@@ -160,9 +160,7 @@ def test_runtime_execution_hash_is_stable() -> None:
     execution = RuntimeExecution(
         status=RUNTIME_COMPLETED,
         logs=("a",),
-        errors=(
-            RuntimeErrorRecord(category="RUNTIME_ERROR", severity="ERROR", message="x"),
-        ),
+        errors=(RuntimeErrorRecord(category="RUNTIME_ERROR", severity="ERROR", message="x"),),
     )
     assert execution.content_hash() == execution.content_hash()
     assert len(execution.content_hash()) == 64

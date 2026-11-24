@@ -160,17 +160,11 @@ class AgentObservabilityService:
 
     async def metrics(self, *, project_id: str | None = None) -> AgentMetrics:
         async with self._database.session() as session:
-            instance_rows = list(
-                (await session.scalars(select(AgentInstanceModel))).all()
-            )
-            execution_rows = list(
-                (await session.scalars(select(AgentExecutionModel))).all()
-            )
+            instance_rows = list((await session.scalars(select(AgentInstanceModel))).all())
+            execution_rows = list((await session.scalars(select(AgentExecutionModel))).all())
             steps = list((await session.scalars(select(AgentStepModel))).all())
         if project_id is not None:
-            instance_rows = [
-                row for row in instance_rows if row.project_id == project_id
-            ]
+            instance_rows = [row for row in instance_rows if row.project_id == project_id]
         instance_ids = {row.instance_id for row in instance_rows}
         execution_rows = [
             row
@@ -185,22 +179,17 @@ class AgentObservabilityService:
         tool_calls = int(sum(_usage_value(usage, "tool_calls") for usage in usage_list))
         input_tokens = int(sum(_usage_value(usage, "input_tokens") for usage in usage_list))
         output_tokens = int(sum(_usage_value(usage, "output_tokens") for usage in usage_list))
-        cost_total = sum(
-            _usage_value(usage, "cost_usage", "cost_total") for usage in usage_list
-        )
+        cost_total = sum(_usage_value(usage, "cost_usage", "cost_total") for usage in usage_list)
 
         terminal = [row for row in execution_rows if row.status in _TERMINAL_EXECUTIONS]
         failed = [row for row in terminal if row.status == EXECUTION_FAILED]
         failure_rate = (len(failed) / len(terminal)) if terminal else 0.0
 
         queue_waits = [
-            max(
-                (row.created_at - instance.started_at).total_seconds(), 0.0
-            )
+            max((row.created_at - instance.started_at).total_seconds(), 0.0)
             for row in execution_rows
             for instance in instance_rows
-            if row.agent_instance_id == instance.instance_id
-            and instance.started_at is not None
+            if row.agent_instance_id == instance.instance_id and instance.started_at is not None
         ]
         durations = [
             (row.completed_at - row.started_at).total_seconds()
@@ -216,21 +205,16 @@ class AgentObservabilityService:
             events = [
                 event
                 for event in events
-                if event.agent_instance_id in instance_ids
-                or event.execution_id in execution_id_set
+                if event.agent_instance_id in instance_ids or event.execution_id in execution_id_set
             ]
-        recovery_started = sum(
-            1 for event in events if event.event_type == EVENT_RECOVERY_STARTED
-        )
+        recovery_started = sum(1 for event in events if event.event_type == EVENT_RECOVERY_STARTED)
         recovery_succeeded = sum(
             1
             for event in events
             if event.event_type == EVENT_RECOVERY_COMPLETED
             and event.payload.get("decision") == "PAUSED"
         )
-        recovery_rate = (
-            recovery_succeeded / recovery_started if recovery_started else 0.0
-        )
+        recovery_rate = recovery_succeeded / recovery_started if recovery_started else 0.0
 
         retry_count = sum(row.retry_count for row in steps)
 
@@ -240,15 +224,9 @@ class AgentObservabilityService:
             running_execution_count=sum(
                 1 for row in execution_rows if row.status == EXECUTION_RUNNING
             ),
-            queue_waiting_seconds=(
-                sum(queue_waits) / len(queue_waits) if queue_waits else 0.0
-            ),
-            execution_duration_seconds=(
-                sum(durations) / len(durations) if durations else 0.0
-            ),
-            average_iterations=(
-                sum(iterations) / len(iterations) if iterations else 0.0
-            ),
+            queue_waiting_seconds=(sum(queue_waits) / len(queue_waits) if queue_waits else 0.0),
+            execution_duration_seconds=(sum(durations) / len(durations) if durations else 0.0),
+            average_iterations=(sum(iterations) / len(iterations) if iterations else 0.0),
             model_call_count=model_calls,
             tool_call_count=tool_calls,
             input_tokens=input_tokens,
@@ -326,9 +304,7 @@ class AgentObservabilityService:
                 "execution_id": execution.execution_id,
                 "status": execution.status,
                 "iteration_count": int(_usage_value(execution.budget_usage, "iterations")),
-                "model_call_count": int(
-                    _usage_value(execution.budget_usage, "model_calls")
-                ),
+                "model_call_count": int(_usage_value(execution.budget_usage, "model_calls")),
                 "tool_call_count": int(_usage_value(execution.budget_usage, "tool_calls")),
                 "budget_usage": sanitize(execution.budget_usage),
                 "termination_reason": execution.termination_reason,

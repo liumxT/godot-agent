@@ -108,9 +108,7 @@ class ModelCapabilityRepository(BaseRepository[ModelCapabilityModel]):
 class ModelPriceVersionRepository(BaseRepository[ModelPriceVersionModel]):
     model = ModelPriceVersionModel
 
-    async def get_effective(
-        self, model_id: str, at: datetime
-    ) -> ModelPriceVersionModel | None:
+    async def get_effective(self, model_id: str, at: datetime) -> ModelPriceVersionModel | None:
         """取 ``effective_at <= at`` 的最新价格版本。"""
 
         return await self.session.scalar(
@@ -123,9 +121,7 @@ class ModelPriceVersionRepository(BaseRepository[ModelPriceVersionModel]):
             .limit(1)
         )
 
-    async def get_at(
-        self, model_id: str, effective_at: datetime
-    ) -> ModelPriceVersionModel | None:
+    async def get_at(self, model_id: str, effective_at: datetime) -> ModelPriceVersionModel | None:
         return await self.session.scalar(
             select(ModelPriceVersionModel).where(
                 ModelPriceVersionModel.model_id == model_id,
@@ -149,9 +145,7 @@ class ModelUsageRecordRepository(BaseRepository[ModelUsageRecordModel]):
 
     async def get_by_request(self, request_id: str) -> ModelUsageRecordModel | None:
         return await self.session.scalar(
-            select(ModelUsageRecordModel).where(
-                ModelUsageRecordModel.request_id == request_id
-            )
+            select(ModelUsageRecordModel).where(ModelUsageRecordModel.request_id == request_id)
         )
 
     async def totals(self, project_id: str) -> tuple[int, int, int]:
@@ -166,9 +160,7 @@ class ModelUsageRecordRepository(BaseRepository[ModelUsageRecordModel]):
         ).one()
         return int(row[0]), int(row[1]), int(row[2])
 
-    async def totals_by_model(
-        self, project_id: str
-    ) -> list[tuple[str, int, int, int]]:
+    async def totals_by_model(self, project_id: str) -> list[tuple[str, int, int, int]]:
         rows = await self.session.execute(
             select(
                 ModelUsageRecordModel.model_id,

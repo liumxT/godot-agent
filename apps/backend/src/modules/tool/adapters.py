@@ -21,7 +21,13 @@ from modules.tool.models import (
 from modules.tool.registry import ToolView
 
 ADAPTER_RESULT_STATUSES = frozenset(
-    {EXECUTION_SUCCEEDED, EXECUTION_FAILED, EXECUTION_CANCELLED, EXECUTION_TIMEOUT, EXECUTION_UNKNOWN}
+    {
+        EXECUTION_SUCCEEDED,
+        EXECUTION_FAILED,
+        EXECUTION_CANCELLED,
+        EXECUTION_TIMEOUT,
+        EXECUTION_UNKNOWN,
+    }
 )
 
 
@@ -80,7 +86,9 @@ class ToolAdapter(Protocol):
     async def execute(self, context: ToolDispatchContext) -> AdapterResult:  # pragma: no cover
         ...
 
-    async def inspect(self, context: ToolDispatchContext) -> AdapterResult | None:  # pragma: no cover
+    async def inspect(
+        self, context: ToolDispatchContext
+    ) -> AdapterResult | None:  # pragma: no cover
         ...
 
 

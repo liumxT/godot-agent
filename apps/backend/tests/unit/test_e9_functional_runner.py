@@ -150,9 +150,7 @@ async def test_cleanup_failure_is_recorded_without_flipping_result() -> None:
 
 @pytest.mark.asyncio
 async def test_empty_test_cannot_be_reported_passed() -> None:
-    execution = await FunctionalTestRunner().run(
-        _spec(steps=(), expected_result=""), FakeHandler()
-    )
+    execution = await FunctionalTestRunner().run(_spec(steps=(), expected_result=""), FakeHandler())
     assert execution.status == FUNCTIONAL_SKIPPED
 
 

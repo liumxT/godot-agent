@@ -60,9 +60,7 @@ class OpenAIImageAdapter(BaseAssetGenerationAdapter):
         if transparent and request.format(self.default_format) not in {"png", "webp"}:
             raise _invalid_parameter("transparent_background", "透明背景仅支持 PNG / WebP")
 
-    async def submit_generation(
-        self, request: AssetGenerationRequest
-    ) -> AssetGenerationResult:
+    async def submit_generation(self, request: AssetGenerationRequest) -> AssetGenerationResult:
         self.validate_configuration()
         width = _positive_int(request.parameter("width", 512), "width")
         height = _positive_int(request.parameter("height", 512), "height")
@@ -129,13 +127,9 @@ class OpenAIImageAdapter(BaseAssetGenerationAdapter):
     ) -> tuple[AssetGenerationOutput, ...]:
         items = payload.get("data")
         if not isinstance(items, list) or not items:
-            raise ProviderCallFailure(
-                _invalid_error("图像 Provider 未返回生成结果"), sent=True
-            )
+            raise ProviderCallFailure(_invalid_error("图像 Provider 未返回生成结果"), sent=True)
         if len(items) < len_hint:
-            raise ProviderCallFailure(
-                _invalid_error("图像 Provider 返回结果数量不足"), sent=True
-            )
+            raise ProviderCallFailure(_invalid_error("图像 Provider 返回结果数量不足"), sent=True)
         outputs: list[AssetGenerationOutput] = []
         for item in items[:len_hint]:
             if not isinstance(item, Mapping):
@@ -160,9 +154,7 @@ class OpenAIImageAdapter(BaseAssetGenerationAdapter):
                         raise self._failure_from_response(response)
                     raw = response.content
             if not raw:
-                raise ProviderCallFailure(
-                    _invalid_error("图像结果缺少数据"), sent=True
-                )
+                raise ProviderCallFailure(_invalid_error("图像结果缺少数据"), sent=True)
             outputs.append(
                 AssetGenerationOutput(
                     data=raw,
@@ -206,9 +198,7 @@ def _optional_positive_int(value: Any, name: str) -> int | None:
 def _invalid_parameter(name: str, reason: str):
     from core.errors import AssetGenerationInvalid
 
-    return AssetGenerationInvalid(
-        "图像生成参数非法", details={"parameter": name, "reason": reason}
-    )
+    return AssetGenerationInvalid("图像生成参数非法", details={"parameter": name, "reason": reason})
 
 
 def _invalid_size(width: int, height: int):

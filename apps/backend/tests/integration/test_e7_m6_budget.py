@@ -39,15 +39,13 @@ async def _service(tmp_path: Path) -> tuple[TeamBudgetService, str, object]:
     root = tmp_path / "budget_project"
     root.mkdir(parents=True, exist_ok=True)
     (root / "project.godot").write_text("[application]\n", encoding="utf-8")
-    project = await services.get(
-        "project_registry_service", ProjectRegistryService
-    ).register(project_root=str(root), name="budget")
+    project = await services.get("project_registry_service", ProjectRegistryService).register(
+        project_root=str(root), name="budget"
+    )
     task = await services.get("task_service", TaskService).create(
         project_id=project.project_id, title="预算测试任务"
     )
-    attempt = await services.get("task_attempt_service", AttemptService).create(
-        task.task_id
-    )
+    attempt = await services.get("task_attempt_service", AttemptService).create(task.task_id)
     team = await services.get("agent_team_service", AgentTeamService).create(
         task_id=task.task_id,
         attempt_id=attempt.attempt_id,
@@ -113,9 +111,7 @@ async def test_budget_must_stay_within_task_and_orchestrator(tmp_path: Path) -> 
         assert exc_info.value.details["reasons"] == ["TASK_BUDGET_EXCEEDED"]
 
         with pytest.raises(AgentTeamInvalid) as exc_info:
-            await service.allocate(
-                team_id=team_id, budget=BUDGET, authorized_by="AGENT"
-            )
+            await service.allocate(team_id=team_id, budget=BUDGET, authorized_by="AGENT")
         assert exc_info.value.details["reasons"] == ["UNAUTHORIZED_BUDGET_CHANGE"]
 
         with pytest.raises(AgentTeamInvalid) as exc_info:

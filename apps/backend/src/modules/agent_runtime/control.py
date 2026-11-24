@@ -278,10 +278,7 @@ class AgentControlService:
                 payload={"reason": reason, "actor": actor},
                 execution_id=execution_id,
             )
-        if (
-            execution is not None
-            and execution.status in _ACTIVE_EXECUTION_STATUSES
-        ):
+        if execution is not None and execution.status in _ACTIVE_EXECUTION_STATUSES:
             await self._planning.abandon_plan(execution.execution_id, reason=reason)
             await self._checkpoints.create(
                 instance_id=instance_id,

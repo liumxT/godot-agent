@@ -132,9 +132,7 @@ async def test_version_validation_and_cross_asset_isolation(tmp_path: Path) -> N
                 first.asset_id, content_hash="not-a-hash", source_type="AI_GENERATED"
             )
         with pytest.raises(AssetStateInvalid):
-            await versions.create_version(
-                first.asset_id, content_hash=HASH_A, source_type="MAGIC"
-            )
+            await versions.create_version(first.asset_id, content_hash=HASH_A, source_type="MAGIC")
 
         first_version = await versions.create_version(
             first.asset_id, content_hash=HASH_A, source_type="AI_GENERATED"

@@ -97,9 +97,7 @@ class AssetRecoveryService:
     def idempotency_key(operation: str, identifier: str) -> str:
         prefix = _IDEMPOTENCY_PREFIXES.get(operation)
         if prefix is None:
-            raise AssetRecoveryRequired(
-                "未知幂等操作类型", details={"operation": operation}
-            )
+            raise AssetRecoveryRequired("未知幂等操作类型", details={"operation": operation})
         if not identifier.strip():
             raise AssetRecoveryRequired("幂等键缺少标识")
         return f"{prefix}:{identifier.strip()}"
@@ -108,9 +106,7 @@ class AssetRecoveryService:
         async with self._database.session() as session:
             asset_projects = {
                 asset.asset_id: asset.project_id
-                for asset in await AssetRepository(session).list_all_for_project(
-                    project_id
-                )
+                for asset in await AssetRepository(session).list_all_for_project(project_id)
             }
             generation_ids = [
                 item.generation_id
@@ -128,16 +124,12 @@ class AssetRecoveryService:
             ]
             import_ids = [
                 item.import_job_id
-                for item in await AssetImportJobRepository(session).list_by_status(
-                    IMPORT_UNKNOWN
-                )
+                for item in await AssetImportJobRepository(session).list_by_status(IMPORT_UNKNOWN)
                 if item.project_id == project_id
             ]
             delivery_ids = [
                 item.delivery_id
-                for item in await AssetDeliveryRepository(session).list_by_status(
-                    DELIVERY_UNKNOWN
-                )
+                for item in await AssetDeliveryRepository(session).list_by_status(DELIVERY_UNKNOWN)
                 if item.project_id == project_id
             ]
         return RecoveryInventory(
@@ -147,9 +139,7 @@ class AssetRecoveryService:
             delivery_ids=tuple(delivery_ids),
         )
 
-    async def resolve_generation(
-        self, project_id: str, generation_id: str
-    ) -> GenerationView:
+    async def resolve_generation(self, project_id: str, generation_id: str) -> GenerationView:
         await self._assert_generation_owner(project_id, generation_id)
         try:
             view = await self._generations.refresh(generation_id)
@@ -170,9 +160,7 @@ class AssetRecoveryService:
         )
         return view
 
-    async def resolve_processing(
-        self, project_id: str, job_id: str
-    ) -> str:
+    async def resolve_processing(self, project_id: str, job_id: str) -> str:
         view = await self._processing.get(job_id)
         if view.project_id != project_id:
             raise NotFoundError(
@@ -199,9 +187,7 @@ class AssetRecoveryService:
         )
         return PROCESSING_SUCCEEDED
 
-    async def resolve_import(
-        self, project_id: str, import_job_id: str
-    ) -> ImportJobView:
+    async def resolve_import(self, project_id: str, import_job_id: str) -> ImportJobView:
         view = await self._imports.refresh(import_job_id)
         if view.project_id != project_id:
             raise NotFoundError(
@@ -290,15 +276,11 @@ class AssetRecoveryService:
     # 内部方法
     # ------------------------------------------------------------------
 
-    async def _assert_generation_owner(
-        self, project_id: str, generation_id: str
-    ) -> None:
+    async def _assert_generation_owner(self, project_id: str, generation_id: str) -> None:
         async with self._database.session() as session:
             entity = await AssetGenerationRepository(session).get(generation_id)
             if entity is None:
-                raise NotFoundError(
-                    "生成任务不存在", details={"generation_id": generation_id}
-                )
+                raise NotFoundError("生成任务不存在", details={"generation_id": generation_id})
             asset = await AssetRepository(session).get_active(entity.asset_id)
             if asset is None or asset.project_id != project_id:
                 raise NotFoundError(
@@ -306,15 +288,11 @@ class AssetRecoveryService:
                     details={"project_id": project_id, "generation_id": generation_id},
                 )
 
-    async def _publish(
-        self, event_type: str, payload: dict[str, Any], *, project_id: str
-    ) -> None:
+    async def _publish(self, event_type: str, payload: dict[str, Any], *, project_id: str) -> None:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不阻断恢复
             log_event(
                 self._logger,

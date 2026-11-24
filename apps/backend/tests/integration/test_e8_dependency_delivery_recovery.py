@@ -86,9 +86,7 @@ async def _project(app, tmp_path: Path):
     root = tmp_path / "game"
     root.mkdir(exist_ok=True)
     (root / "project.godot").write_text("[application]\n", encoding="utf-8")
-    projects = app.state.services.get(
-        "project_registry_service", ProjectRegistryService
-    )
+    projects = app.state.services.get("project_registry_service", ProjectRegistryService)
     return await projects.register(project_root=str(root), name="E8 M6")
 
 
@@ -106,9 +104,7 @@ async def _seed_version(
     app, project_id: str, asset_id: str, data: bytes, *, filename: str = "hero.png"
 ):
     storage = app.state.services.get("asset_storage", AssetStorage)
-    versions = app.state.services.get(
-        "asset_version_service", AssetVersionService
-    )
+    versions = app.state.services.get("asset_version_service", AssetVersionService)
     relative_path = f"{asset_id}/{filename}"
     written = storage.write_bytes(project_id, STORAGE_GENERATED, relative_path, data)
     version = await versions.create_version(
@@ -177,9 +173,7 @@ async def _verify_license(app, project_id: str, asset_id: str, version_id: str):
 
 
 async def _record_provenance(app, project_id: str, asset_id: str, version):
-    provenance = app.state.services.get(
-        "asset_provenance_service", ProvenanceService
-    )
+    provenance = app.state.services.get("asset_provenance_service", ProvenanceService)
     return await provenance.record(
         ProvenanceRequest(
             project_id=project_id,
@@ -206,21 +200,13 @@ async def _deliverable_version(
     asset = await _asset(app, project.project_id)
     version = await _seed_version(app, project.project_id, asset.asset_id, _png())
     quality = app.state.services.get("asset_quality_control", QualityControlService)
-    await quality.run_machine_review(
-        project.project_id, asset.asset_id, version.version_id
-    )
+    await quality.run_machine_review(project.project_id, asset.asset_id, version.version_id)
     if human_review:
-        await _approve_quality(
-            app, project.project_id, asset.asset_id, version.version_id
-        )
+        await _approve_quality(app, project.project_id, asset.asset_id, version.version_id)
     if license_ready:
-        await _verify_license(
-            app, project.project_id, asset.asset_id, version.version_id
-        )
+        await _verify_license(app, project.project_id, asset.asset_id, version.version_id)
     if provenance_ready:
-        await _record_provenance(
-            app, project.project_id, asset.asset_id, version
-        )
+        await _record_provenance(app, project.project_id, asset.asset_id, version)
     return project, asset, version
 
 
@@ -284,9 +270,7 @@ async def test_dependency_record_is_idempotent_and_reports_impact(
         project = await _project(app, tmp_path)
         asset = await _asset(app, project.project_id)
         version = await _seed_version(app, project.project_id, asset.asset_id, _png())
-        service = app.state.services.get(
-            "asset_dependency_service", AssetDependencyService
-        )
+        service = app.state.services.get("asset_dependency_service", AssetDependencyService)
         entry = DependencyEntry(
             source_type="SCRIPT",
             source_reference="res://scripts/player.gd",
@@ -295,15 +279,11 @@ async def test_dependency_record_is_idempotent_and_reports_impact(
             dependency_type="SCRIPT_REFERENCE",
         )
 
-        created = await service.record(
-            project.project_id, version.version_id, [entry]
-        )
+        created = await service.record(project.project_id, version.version_id, [entry])
         assert len(created) == 1
         assert created[0].dependency_type == "SCRIPT_REFERENCE"
 
-        again = await service.record(
-            project.project_id, version.version_id, [entry]
-        )
+        again = await service.record(project.project_id, version.version_id, [entry])
         assert again == []
 
         references = await service.list_referencing(
@@ -311,18 +291,12 @@ async def test_dependency_record_is_idempotent_and_reports_impact(
         )
         assert len(references) == 1
 
-        impact = await service.replacement_impact(
-            project.project_id, version.version_id
-        )
+        impact = await service.replacement_impact(project.project_id, version.version_id)
         assert impact.referenced is True
         assert impact.requires_changeset is True
 
-        missing = await service.missing_references(
-            project.project_id, ["res://scripts/player.gd"]
-        )
-        assert [item.target_reference for item in missing] == [
-            f"{asset.asset_id}/hero.png"
-        ]
+        missing = await service.missing_references(project.project_id, ["res://scripts/player.gd"])
+        assert [item.target_reference for item in missing] == [f"{asset.asset_id}/hero.png"]
 
 
 @pytest.mark.asyncio
@@ -333,9 +307,7 @@ async def test_dependency_cycle_and_orphan_detection(tmp_path: Path) -> None:
         version = await _seed_version(app, project.project_id, asset.asset_id, _png())
         orphan_asset = await _asset(app, project.project_id, name="orphan")
         await _seed_version(app, project.project_id, orphan_asset.asset_id, _png())
-        service = app.state.services.get(
-            "asset_dependency_service", AssetDependencyService
-        )
+        service = app.state.services.get("asset_dependency_service", AssetDependencyService)
         await service.record(
             project.project_id,
             version.version_id,
@@ -375,16 +347,12 @@ async def test_delivery_requires_human_review_and_verified_license(
     tmp_path: Path,
 ) -> None:
     async with _running(tmp_path) as app:
-        project, asset, version = await _deliverable_version(
-            app, tmp_path, human_review=False
-        )
+        project, asset, version = await _deliverable_version(app, tmp_path, human_review=False)
         service = _delivery_service(app)
 
         with pytest.raises(AssetDeliveryBlocked):
             await service.prepare(
-                _delivery_request(
-                    project.project_id, asset.asset_id, version.version_id
-                )
+                _delivery_request(project.project_id, asset.asset_id, version.version_id)
             )
 
         relaxed = DeliveryRequest(
@@ -425,9 +393,7 @@ async def test_delivery_full_flow_with_import_evidence(tmp_path: Path) -> None:
         )
         assert applied.delivery_status == "APPLYING"
 
-        job_id = await _insert_import(
-            app, project.project_id, version.version_id
-        )
+        job_id = await _insert_import(app, project.project_id, version.version_id)
         importing = await service.mark_importing(delivery.delivery_id, job_id)
         assert importing.delivery_status == "IMPORTING"
 
@@ -464,9 +430,7 @@ async def test_delivery_hash_change_invalidates_approval(tmp_path: Path) -> None
         assert check["valid"] is False
 
         with pytest.raises((InvalidStateTransition, AssetDeliveryBlocked)):
-            await service.approve(
-                delivery.delivery_id, "apr_missing", actor_id="lead"
-            )
+            await service.approve(delivery.delivery_id, "apr_missing", actor_id="lead")
 
 
 @pytest.mark.asyncio
@@ -478,12 +442,8 @@ async def test_delivery_blocks_without_real_import(tmp_path: Path) -> None:
             _delivery_request(project.project_id, asset.asset_id, version.version_id)
         )
         approval = await service.submit_for_approval(delivery.delivery_id)
-        await service.approve(
-            delivery.delivery_id, approval.approval_id, actor_id="lead"
-        )
-        await service.begin_apply(
-            delivery.delivery_id, approval.approval_id, actor_id="lead"
-        )
+        await service.approve(delivery.delivery_id, approval.approval_id, actor_id="lead")
+        await service.begin_apply(delivery.delivery_id, approval.approval_id, actor_id="lead")
         job_id = await _insert_import(
             app,
             project.project_id,
@@ -582,9 +542,7 @@ async def test_recovery_lists_unknown_and_resolves_with_evidence(
                     created_at=now,
                 )
             )
-        recovery = app.state.services.get(
-            "asset_recovery_service", AssetRecoveryService
-        )
+        recovery = app.state.services.get("asset_recovery_service", AssetRecoveryService)
 
         inventory = await recovery.list_unknown(project.project_id)
         assert inventory.generation_ids == ("agn_m6_unknown",)
@@ -599,9 +557,7 @@ async def test_recovery_lists_unknown_and_resolves_with_evidence(
         with pytest.raises(AssetRecoveryRequired):
             AssetRecoveryService.idempotency_key("unknown", "x")
 
-        resolved = await recovery.resolve_processing(
-            project.project_id, "apj_m6_unknown"
-        )
+        resolved = await recovery.resolve_processing(project.project_id, "apj_m6_unknown")
         assert resolved == PROCESSING_SUCCEEDED
 
         with pytest.raises(AssetRecoveryRequired):
@@ -640,13 +596,9 @@ async def test_recovery_reconciles_unknown_delivery_with_import(
                     created_at=now,
                 )
             )
-        recovery = app.state.services.get(
-            "asset_recovery_service", AssetRecoveryService
-        )
+        recovery = app.state.services.get("asset_recovery_service", AssetRecoveryService)
 
-        view = await recovery.resolve_delivery(
-            project.project_id, "adl_m6_recover"
-        )
+        view = await recovery.resolve_delivery(project.project_id, "adl_m6_recover")
         assert view.delivery_status == DELIVERY_DELIVERED
 
         summary = await recovery.recover(project.project_id)

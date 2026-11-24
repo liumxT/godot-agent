@@ -107,9 +107,7 @@ async def _actor(app) -> tuple[str, str]:
     return issued.session.session_id, registered.client_id
 
 
-async def _grant(
-    app, project_id: str, level: str, session_id: str, client_id: str
-) -> None:
+async def _grant(app, project_id: str, level: str, session_id: str, client_id: str) -> None:
     access = app.state.services.get("project_access_service", ProjectAccessService)
     await access.grant(
         project_id=project_id,
@@ -225,14 +223,10 @@ async def test_permission_engine_enforces_project_access_and_tool_permissions(
         assert editor.allowed is True
         assert editor.risk is not None and editor.risk.changeset_required is True
 
-        no_session = await engine.check(
-            _request(project.project_id, tool, "", client_id)
-        )
+        no_session = await engine.check(_request(project.project_id, tool, "", client_id))
         assert "SESSION_REQUIRED" in no_session.reasons
 
-        wrong_client = await engine.check(
-            _request(project.project_id, tool, session_id, "cli_x")
-        )
+        wrong_client = await engine.check(_request(project.project_id, tool, session_id, "cli_x"))
         assert "PROJECT_ACCESS_DENIED" in wrong_client.reasons
 
         no_scope = await engine.check(

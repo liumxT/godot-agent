@@ -117,9 +117,7 @@ class LicenseRequest:
         if not self.license_name.strip():
             raise AssetLicenseInvalid("缺少授权名称")
         if self.source_type not in SOURCE_TYPES:
-            raise AssetLicenseInvalid(
-                "未知资产来源类型", details={"source_type": self.source_type}
-            )
+            raise AssetLicenseInvalid("未知资产来源类型", details={"source_type": self.source_type})
         if not all(isinstance(item, LicenseEvidenceInput) for item in self.evidence):
             raise AssetLicenseInvalid("授权证据必须是 LicenseEvidenceInput")
 
@@ -327,9 +325,7 @@ class LicenseService:
             ("redistribution_allowed", redistribution_allowed),
         ):
             if not isinstance(value, bool):
-                raise AssetLicenseInvalid(
-                    "授权核验必须明确权限字段", details={"field": name}
-                )
+                raise AssetLicenseInvalid("授权核验必须明确权限字段", details={"field": name})
         if attribution_required and not (attribution_text or "").strip():
             raise AssetLicenseInvalid("要求署名时必须提供署名文本")
         entity = await self._load_license(project_id, license_id)
@@ -408,9 +404,7 @@ class LicenseService:
     async def get(self, project_id: str, license_id: str) -> LicenseView:
         entity = await self._load_license(project_id, license_id)
         async with self._database.session() as session:
-            evidence = await AssetLicenseEvidenceRepository(session).list_for_license(
-                license_id
-            )
+            evidence = await AssetLicenseEvidenceRepository(session).list_for_license(license_id)
             return _license_view(entity, [item for item in evidence], created=False)
 
     async def latest_for_version(
@@ -418,9 +412,7 @@ class LicenseService:
     ) -> LicenseView | None:
         await self._validate_ownership(project_id, None, asset_version_id)
         async with self._database.session() as session:
-            entity = await AssetLicenseRepository(session).latest_for_version(
-                asset_version_id
-            )
+            entity = await AssetLicenseRepository(session).latest_for_version(asset_version_id)
             if entity is None:
                 return None
             evidence = await AssetLicenseEvidenceRepository(session).list_for_license(
@@ -429,14 +421,10 @@ class LicenseService:
             session.expunge(entity)
         return _license_view(entity, evidence, created=False)
 
-    async def list_for_version(
-        self, project_id: str, asset_version_id: str
-    ) -> list[LicenseView]:
+    async def list_for_version(self, project_id: str, asset_version_id: str) -> list[LicenseView]:
         await self._validate_ownership(project_id, None, asset_version_id)
         async with self._database.session() as session:
-            entities = await AssetLicenseRepository(session).list_for_version(
-                asset_version_id
-            )
+            entities = await AssetLicenseRepository(session).list_for_version(asset_version_id)
             evidence_repository = AssetLicenseEvidenceRepository(session)
             views: list[LicenseView] = []
             for entity in entities:
@@ -523,15 +511,11 @@ class LicenseService:
                     },
                 )
 
-    async def _load_license(
-        self, project_id: str, license_id: str
-    ) -> AssetLicenseModel:
+    async def _load_license(self, project_id: str, license_id: str) -> AssetLicenseModel:
         async with self._database.session() as session:
             entity = await AssetLicenseRepository(session).get(license_id)
             if entity is None:
-                raise NotFoundError(
-                    "授权记录不存在", details={"license_id": license_id}
-                )
+                raise NotFoundError("授权记录不存在", details={"license_id": license_id})
             asset = await AssetRepository(session).get(entity.asset_id)
             if asset is None or asset.project_id != project_id:
                 raise NotFoundError(
@@ -568,9 +552,7 @@ class LicenseService:
                 entity.license_id
             )
         if not evidence and not entity.evidence_reference:
-            raise AssetLicenseInvalid(
-                "授权缺少审核证据", details={"license_id": entity.license_id}
-            )
+            raise AssetLicenseInvalid("授权缺少审核证据", details={"license_id": entity.license_id})
 
     def _assert_transition(self, entity: AssetLicenseModel, target: str) -> None:
         self._assert_transition_from(entity.verification_status, target)
@@ -579,19 +561,13 @@ class LicenseService:
         if target == current:
             return
         if target not in LICENSE_TRANSITIONS.get(current, frozenset()):
-            raise AssetLicenseInvalid(
-                "授权状态迁移非法", details={"from": current, "to": target}
-            )
+            raise AssetLicenseInvalid("授权状态迁移非法", details={"from": current, "to": target})
 
-    async def _publish(
-        self, event_type: str, payload: dict[str, Any], *, project_id: str
-    ) -> None:
+    async def _publish(self, event_type: str, payload: dict[str, Any], *, project_id: str) -> None:
         if self._events is None:
             return
         try:
-            await self._events.publish(
-                Event.create(event_type, payload, project_id=project_id)
-            )
+            await self._events.publish(Event.create(event_type, payload, project_id=project_id))
         except Exception:  # noqa: BLE001 - 事件失败不阻断授权记录
             log_event(
                 self._logger,

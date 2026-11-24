@@ -129,9 +129,7 @@ class RuntimeTestEngine:
         self._driver = driver
         self._leased: set[str] = set()
 
-    async def run(
-        self, environment: RuntimeEnvironment, spec: RuntimeTestSpec
-    ) -> RuntimeExecution:
+    async def run(self, environment: RuntimeEnvironment, spec: RuntimeTestSpec) -> RuntimeExecution:
         instance_id = environment.runtime_instance_id
         try:
             if instance_id is None:
@@ -140,9 +138,7 @@ class RuntimeTestEngine:
             return self._unknown(spec, None, f"启动 Runtime 失败: {_reason(exc)}")
 
         if instance_id in self._leased:
-            return self._unknown(
-                spec, instance_id, "Runtime 实例正在被其他测试占用，禁止共享"
-            )
+            return self._unknown(spec, instance_id, "Runtime 实例正在被其他测试占用，禁止共享")
         self._leased.add(instance_id)
         try:
             execution = await self._driver.run(instance_id, spec)

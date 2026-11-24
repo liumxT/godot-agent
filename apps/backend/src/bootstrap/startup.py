@@ -578,9 +578,7 @@ def register_startup_steps(
         services.register("prompt_service", prompt_service)
         services.register("context_assembly_service", context_assembly_service)
         services.register("tool_registry_service", tool_registry_service)
-        services.register(
-            "agent_definition_registry_service", agent_definition_registry_service
-        )
+        services.register("agent_definition_registry_service", agent_definition_registry_service)
         services.register("capability_registry_service", capability_registry_service)
         services.register("agent_team_service", agent_team_service)
         services.register("assignment_service", assignment_service)
@@ -696,24 +694,14 @@ def register_startup_steps(
             AgentExecutionLoop(
                 instances=services.get("agent_instance_service", AgentInstanceService),
                 lifecycle=services.get("agent_lifecycle_service", AgentLifecycleService),
-                executions=services.get(
-                    "agent_execution_service", AgentExecutionService
-                ),
+                executions=services.get("agent_execution_service", AgentExecutionService),
                 events=services.get("agent_event_service", AgentEventService),
                 planning=services.get("agent_planning_service", PlanningService),
-                context=services.get(
-                    "agent_context_binding_service", AgentContextBindingService
-                ),
-                models=services.get(
-                    "agent_model_binding_service", AgentModelBindingService
-                ),
-                tools=services.get(
-                    "agent_tool_binding_service", AgentToolBindingService
-                ),
+                context=services.get("agent_context_binding_service", AgentContextBindingService),
+                models=services.get("agent_model_binding_service", AgentModelBindingService),
+                tools=services.get("agent_tool_binding_service", AgentToolBindingService),
                 budget=services.get("agent_budget_manager", BudgetManager),
-                checkpoints=services.get(
-                    "agent_checkpoint_service", AgentCheckpointService
-                ),
+                checkpoints=services.get("agent_checkpoint_service", AgentCheckpointService),
             ),
         )
         services.register(
@@ -721,23 +709,13 @@ def register_startup_steps(
             AgentControlService(
                 instances=services.get("agent_instance_service", AgentInstanceService),
                 lifecycle=services.get("agent_lifecycle_service", AgentLifecycleService),
-                executions=services.get(
-                    "agent_execution_service", AgentExecutionService
-                ),
+                executions=services.get("agent_execution_service", AgentExecutionService),
                 events=services.get("agent_event_service", AgentEventService),
-                checkpoints=services.get(
-                    "agent_checkpoint_service", AgentCheckpointService
-                ),
+                checkpoints=services.get("agent_checkpoint_service", AgentCheckpointService),
                 planning=services.get("agent_planning_service", PlanningService),
-                models=services.get(
-                    "agent_model_binding_service", AgentModelBindingService
-                ),
-                tools=services.get(
-                    "agent_tool_binding_service", AgentToolBindingService
-                ),
-                contexts=services.get(
-                    "agent_context_binding_service", AgentContextBindingService
-                ),
+                models=services.get("agent_model_binding_service", AgentModelBindingService),
+                tools=services.get("agent_tool_binding_service", AgentToolBindingService),
+                contexts=services.get("agent_context_binding_service", AgentContextBindingService),
                 budget=services.get("agent_budget_manager", BudgetManager),
                 access=services.get("project_access_service", ProjectAccessService),
                 approvals=services.try_get("tool_approval_gate"),
@@ -749,13 +727,9 @@ def register_startup_steps(
                 database,
                 instances=services.get("agent_instance_service", AgentInstanceService),
                 lifecycle=services.get("agent_lifecycle_service", AgentLifecycleService),
-                executions=services.get(
-                    "agent_execution_service", AgentExecutionService
-                ),
+                executions=services.get("agent_execution_service", AgentExecutionService),
                 events=services.get("agent_event_service", AgentEventService),
-                checkpoints=services.get(
-                    "agent_checkpoint_service", AgentCheckpointService
-                ),
+                checkpoints=services.get("agent_checkpoint_service", AgentCheckpointService),
             ),
         )
         services.register(
@@ -763,27 +737,19 @@ def register_startup_steps(
             AgentObservabilityService(
                 database,
                 instances=services.get("agent_instance_service", AgentInstanceService),
-                executions=services.get(
-                    "agent_execution_service", AgentExecutionService
-                ),
+                executions=services.get("agent_execution_service", AgentExecutionService),
                 events=services.get("agent_event_service", AgentEventService),
                 planning=services.get("agent_planning_service", PlanningService),
-                checkpoints=services.get(
-                    "agent_checkpoint_service", AgentCheckpointService
-                ),
+                checkpoints=services.get("agent_checkpoint_service", AgentCheckpointService),
                 tasks=services.get("task_service", TaskService),
                 attempts=services.get("task_attempt_service", AttemptService),
             ),
         )
         if settings.environment != "test":
             await services.get("generic_agent_service", GenericAgentService).ensure()
-        services.register(
-            "asset_storage", AssetStorage(Path(settings.data_dir) / "assets")
-        )
+        services.register("asset_storage", AssetStorage(Path(settings.data_dir) / "assets"))
         services.register("asset_service", AssetService(database, events=bus))
-        services.register(
-            "asset_version_service", AssetVersionService(database, events=bus)
-        )
+        services.register("asset_version_service", AssetVersionService(database, events=bus))
         services.register("asset_brief_service", AssetBriefService(database))
         services.register(
             "asset_generation_orchestrator",
@@ -791,9 +757,7 @@ def register_startup_steps(
                 database,
                 gateway=services.get("model_gateway_service", ModelGatewayService),
                 storage=services.get("asset_storage", AssetStorage),
-                versions=services.get(
-                    "asset_version_service", AssetVersionService
-                ),
+                versions=services.get("asset_version_service", AssetVersionService),
                 briefs=services.get("asset_brief_service", AssetBriefService),
                 events=bus,
             ),
@@ -803,9 +767,7 @@ def register_startup_steps(
             ProcessingPipelineService(
                 database,
                 storage=services.get("asset_storage", AssetStorage),
-                versions=services.get(
-                    "asset_version_service", AssetVersionService
-                ),
+                versions=services.get("asset_version_service", AssetVersionService),
                 events=bus,
             ),
         )
@@ -822,33 +784,21 @@ def register_startup_steps(
             GodotImportService(
                 database,
                 hub=services.get("editor_command_hub", EditorCommandHub),
-                projects=services.get(
-                    "project_registry_service", ProjectRegistryService
-                ),
+                projects=services.get("project_registry_service", ProjectRegistryService),
                 events=bus,
             ),
         )
-        services.register(
-            "asset_provenance_service", ProvenanceService(database, events=bus)
-        )
-        services.register(
-            "asset_license_service", LicenseService(database, events=bus)
-        )
-        services.register(
-            "asset_dependency_service", AssetDependencyService(database, events=bus)
-        )
+        services.register("asset_provenance_service", ProvenanceService(database, events=bus))
+        services.register("asset_license_service", LicenseService(database, events=bus))
+        services.register("asset_dependency_service", AssetDependencyService(database, events=bus))
         services.register(
             "asset_delivery_service",
             AssetDeliveryService(
                 database,
                 changesets=services.get("changeset_service", ChangeSetService),
-                quality=services.get(
-                    "asset_quality_control", QualityControlService
-                ),
+                quality=services.get("asset_quality_control", QualityControlService),
                 licenses=services.get("asset_license_service", LicenseService),
-                provenance=services.get(
-                    "asset_provenance_service", ProvenanceService
-                ),
+                provenance=services.get("asset_provenance_service", ProvenanceService),
                 approvals=services.get("approval_service", ApprovalService),
                 events=bus,
             ),
@@ -857,16 +807,10 @@ def register_startup_steps(
             "asset_recovery_service",
             AssetRecoveryService(
                 database,
-                generations=services.get(
-                    "asset_generation_orchestrator", GenerationOrchestrator
-                ),
-                processing=services.get(
-                    "asset_processing_pipeline", ProcessingPipelineService
-                ),
+                generations=services.get("asset_generation_orchestrator", GenerationOrchestrator),
+                processing=services.get("asset_processing_pipeline", ProcessingPipelineService),
                 imports=services.get("asset_import_service", GodotImportService),
-                deliveries=services.get(
-                    "asset_delivery_service", AssetDeliveryService
-                ),
+                deliveries=services.get("asset_delivery_service", AssetDeliveryService),
                 events=bus,
             ),
         )
@@ -881,35 +825,21 @@ def register_startup_steps(
         )
         services.register(
             "verification_orchestrator",
-            VerificationOrchestrator(
-                services.get("verification_service", VerificationService)
-            ),
+            VerificationOrchestrator(services.get("verification_service", VerificationService)),
         )
         services.register(
             "asset_dashboard_service",
             AssetDashboardService(
                 database,
                 assets=services.get("asset_service", AssetService),
-                generations=services.get(
-                    "asset_generation_orchestrator", GenerationOrchestrator
-                ),
-                processing=services.get(
-                    "asset_processing_pipeline", ProcessingPipelineService
-                ),
-                quality=services.get(
-                    "asset_quality_control", QualityControlService
-                ),
+                generations=services.get("asset_generation_orchestrator", GenerationOrchestrator),
+                processing=services.get("asset_processing_pipeline", ProcessingPipelineService),
+                quality=services.get("asset_quality_control", QualityControlService),
                 licenses=services.get("asset_license_service", LicenseService),
                 imports=services.get("asset_import_service", GodotImportService),
-                deliveries=services.get(
-                    "asset_delivery_service", AssetDeliveryService
-                ),
-                dependencies=services.get(
-                    "asset_dependency_service", AssetDependencyService
-                ),
-                recovery=services.get(
-                    "asset_recovery_service", AssetRecoveryService
-                ),
+                deliveries=services.get("asset_delivery_service", AssetDeliveryService),
+                dependencies=services.get("asset_dependency_service", AssetDependencyService),
+                recovery=services.get("asset_recovery_service", AssetRecoveryService),
             ),
         )
         await dispatcher.start()

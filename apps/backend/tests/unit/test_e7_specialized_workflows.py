@@ -75,7 +75,9 @@ def test_all_workflow_templates_have_reviewed_phases() -> None:
         assert len(document["phases"]) == len(spec.steps)
         for phase in document["phases"]:
             assert phase["review_required"] is True
-        ai_nodes = [node for node in document["nodes"] if node["node_type"] == NODE_TYPE_AI_EXECUTION]
+        ai_nodes = [
+            node for node in document["nodes"] if node["node_type"] == NODE_TYPE_AI_EXECUTION
+        ]
         assert all(node["config"].get("agent_key") for node in ai_nodes)
         final_type = document["nodes"][-1]["node_type"]
         assert final_type in {NODE_TYPE_USER_CONFIRMATION, NODE_TYPE_VERIFICATION}

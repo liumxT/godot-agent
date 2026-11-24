@@ -142,9 +142,7 @@ def _validate_steps(steps: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             try:
                 number = int(dependency)
             except (TypeError, ValueError) as exc:
-                raise AgentActionInvalid(
-                    "Step 依赖必须是序号", details={"index": index}
-                ) from exc
+                raise AgentActionInvalid("Step 依赖必须是序号", details={"index": index}) from exc
             if number < 1 or number >= index:
                 raise AgentActionInvalid(
                     "Step 依赖必须指向更早的 Step",
@@ -201,11 +199,7 @@ class PlanningService:
 
         async with self._database.session() as session:
             steps = await AgentStepRepository(session).list_by_execution(execution_id)
-        return [
-            step_view(item)
-            for item in steps
-            if item.status not in STEP_TERMINAL_STATUSES
-        ]
+        return [step_view(item) for item in steps if item.status not in STEP_TERMINAL_STATUSES]
 
     # ---- 创建与推进 ----
 
@@ -344,8 +338,7 @@ class PlanningService:
             if entity.status in {STEP_PENDING, STEP_BLOCKED}:
                 dependencies = tuple(json.loads(entity.dependencies))
                 if all(
-                    number in by_number
-                    and by_number[number].status == STEP_COMPLETED
+                    number in by_number and by_number[number].status == STEP_COMPLETED
                     for number in dependencies
                 ):
                     return await self._promote(entity.step_id)
@@ -452,14 +445,10 @@ class PlanningService:
                     "status": PLAN_ABANDONED,
                     "reason": reason,
                     "unknown_steps": [
-                        item.step_id
-                        for item in steps
-                        if item.status == STEP_UNKNOWN
+                        item.step_id for item in steps if item.status == STEP_UNKNOWN
                     ],
                     "skipped_steps": [
-                        item.step_id
-                        for item in steps
-                        if item.status == STEP_SKIPPED
+                        item.step_id for item in steps if item.status == STEP_SKIPPED
                     ],
                 },
                 now=now,
@@ -545,9 +534,7 @@ class PlanningService:
                 output_reference=output_reference,
             )
             if rowcount == 0:
-                raise VersionConflict(
-                    "Agent Step 状态已被并发修改", details={"step_id": step_id}
-                )
+                raise VersionConflict("Agent Step 状态已被并发修改", details={"step_id": step_id})
             entity.status = target
             entity.version += 1
             if set_started:

@@ -46,9 +46,7 @@ from modules.verification.service import (
     VerificationService,
 )
 
-_ALLOWED_EXECUTION_STATUSES = frozenset(
-    {"COMPLETED", "FAILED", "UNKNOWN", "SKIPPED", "CANCELLED"}
-)
+_ALLOWED_EXECUTION_STATUSES = frozenset({"COMPLETED", "FAILED", "UNKNOWN", "SKIPPED", "CANCELLED"})
 _NON_PASS_EXECUTION = frozenset({"FAILED", "UNKNOWN", "SKIPPED", "CANCELLED"})
 
 
@@ -201,9 +199,7 @@ class VerificationOrchestrator:
         if plan is None:
             raise VerificationPlanInvalid("验证活动缺少验证计划")
         if plan.status not in {PLAN_READY, PLAN_ACTIVE}:
-            raise VerificationPlanInvalid(
-                "验证计划状态不允许执行", details={"status": plan.status}
-            )
+            raise VerificationPlanInvalid("验证计划状态不允许执行", details={"status": plan.status})
         if not plan.requirement_ids:
             raise VerificationPlanInvalid("验证计划必须关联需求才能记录结果")
         unknown_layers = sorted(set(plan.verification_layers) - set(VERIFICATION_LAYERS))
@@ -216,9 +212,7 @@ class VerificationOrchestrator:
 
         reports: list[LayerReport] = []
         for layer in plan.verification_layers:
-            reports.append(
-                await self._run_layer(campaign_id, plan, layer, executor_id=executor_id)
-            )
+            reports.append(await self._run_layer(campaign_id, plan, layer, executor_id=executor_id))
 
         plan_status = PLAN_ACTIVE
         counts = _summarize(reports)

@@ -44,9 +44,7 @@ _ENV = RuntimeEnvironment(environment_id="vre_1", project_id="proj_1")
 @pytest.mark.asyncio
 async def test_runtime_executor_passes_completed_execution() -> None:
     driver = Driver(RuntimeExecution(status="COMPLETED", exit_code=0, logs=("ok",)))
-    executor = RuntimeTestExecutor(
-        RuntimeTestEngine(driver), _ENV, RuntimeTestSpec(test_id="t1")
-    )
+    executor = RuntimeTestExecutor(RuntimeTestEngine(driver), _ENV, RuntimeTestSpec(test_id="t1"))
 
     outcome = await executor(None)  # type: ignore[arg-type]
 

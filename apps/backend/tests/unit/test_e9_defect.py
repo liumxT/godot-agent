@@ -39,9 +39,7 @@ def test_recommend_agent_by_category() -> None:
     assert recommend_agent(DEFECT_CATEGORY_UI) == "ui_developer"
     assert recommend_agent(DEFECT_CATEGORY_TILEMAP) == "tilemap_level_specialist"
     assert recommend_agent(DEFECT_CATEGORY_ANIMATION) == "animation_specialist"
-    assert recommend_agent(DEFECT_CATEGORY_PERFORMANCE) == (
-        "performance_optimization_engineer"
-    )
+    assert recommend_agent(DEFECT_CATEGORY_PERFORMANCE) == ("performance_optimization_engineer")
     assert recommend_agent(DEFECT_CATEGORY_OTHER) == "godot_integration_specialist"
 
 

@@ -58,9 +58,7 @@ def upgrade() -> None:
         sa.Column("actor_id", sa.String(length=64), nullable=False),
         sa.Column("comment", sa.Text(), nullable=False),
         sa.Column("decided_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["review_id"], ["phase_reviews.review_id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["review_id"], ["phase_reviews.review_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("decision_id"),
     )
     op.create_index(
@@ -71,9 +69,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_phase_review_decisions_review", table_name="phase_review_decisions"
-    )
+    op.drop_index("ix_phase_review_decisions_review", table_name="phase_review_decisions")
     op.drop_table("phase_review_decisions")
 
     op.drop_index("ix_phase_reviews_campaign", table_name="phase_reviews")

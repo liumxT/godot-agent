@@ -84,9 +84,7 @@ CAPABILITIES = frozenset(
 CAPABILITY_SUPPORTED = "SUPPORTED"
 CAPABILITY_UNSUPPORTED = "UNSUPPORTED"
 CAPABILITY_UNKNOWN = "UNKNOWN"
-CAPABILITY_STATUSES = frozenset(
-    {CAPABILITY_SUPPORTED, CAPABILITY_UNSUPPORTED, CAPABILITY_UNKNOWN}
-)
+CAPABILITY_STATUSES = frozenset({CAPABILITY_SUPPORTED, CAPABILITY_UNSUPPORTED, CAPABILITY_UNKNOWN})
 
 REQUEST_CREATED = "CREATED"
 REQUEST_VALIDATING = "VALIDATING"
@@ -245,16 +243,12 @@ class ModelRequestModel(Base):
     provider_id: Mapped[str] = mapped_column(
         String(64), ForeignKey("model_providers.provider_id"), nullable=False
     )
-    model_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("models.model_id"), nullable=False
-    )
+    model_id: Mapped[str] = mapped_column(String(64), ForeignKey("models.model_id"), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     request_metadata: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("ix_model_requests_project_status", "project_id", "status"),
@@ -279,9 +273,7 @@ class ModelResponseModel(Base):
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    __table_args__ = (
-        UniqueConstraint("request_id", name="uq_model_responses_request"),
-    )
+    __table_args__ = (UniqueConstraint("request_id", name="uq_model_responses_request"),)
 
 
 class ModelUsageRecordModel(Base):
@@ -337,9 +329,7 @@ class ModelCostRecordModel(Base):
     output_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     cached_input_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     additional_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
-    provider_reported_cost: Mapped[Decimal | None] = mapped_column(
-        Numeric(18, 6), nullable=True
-    )
+    provider_reported_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 6), nullable=True)
     currency: Mapped[str | None] = mapped_column(String(8), nullable=True)
     pricing_version_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     calculation_status: Mapped[str] = mapped_column(String(16), nullable=False)
@@ -372,9 +362,7 @@ class ModelCallAuditModel(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     error_category: Mapped[str | None] = mapped_column(String(32), nullable=True)
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    responded_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    responded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     usage_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     cost_id: Mapped[str | None] = mapped_column(String(64), nullable=True)

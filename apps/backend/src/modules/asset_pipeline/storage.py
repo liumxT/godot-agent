@@ -94,9 +94,7 @@ class AssetStorage:
         base = self.area_dir(project_id, area).resolve()
         target = (base / normalized).resolve()
         if not target.is_relative_to(base):
-            raise AssetPathInvalid(
-                "资产路径越界", details={"path": relative_path, "area": area}
-            )
+            raise AssetPathInvalid("资产路径越界", details={"path": relative_path, "area": area})
         return target
 
     def allocate(
@@ -106,12 +104,12 @@ class AssetStorage:
 
         normalized = normalize_relative_path(filename)
         if "/" in normalized:
-            raise AssetPathInvalid(
-                "allocate 只接受文件名", details={"filename": filename}
-            )
+            raise AssetPathInvalid("allocate 只接受文件名", details={"filename": filename})
         stem, suffix = os.path.splitext(normalized)
         candidates = [normalized]
-        candidates.extend(f"{stem}_{index:03d}{suffix}" for index in range(1, MAX_CONFLICT_SUFFIX + 1))
+        candidates.extend(
+            f"{stem}_{index:03d}{suffix}" for index in range(1, MAX_CONFLICT_SUFFIX + 1)
+        )
         for candidate in candidates:
             target = self.resolve(project_id, area, candidate)
             if not target.exists():
@@ -139,9 +137,7 @@ class AssetStorage:
             )
         target = self.resolve(project_id, area, relative_path)
         if target.exists() and not overwrite:
-            raise AssetPathInvalid(
-                "资产文件已存在，禁止静默覆盖", details={"path": relative_path}
-            )
+            raise AssetPathInvalid("资产文件已存在，禁止静默覆盖", details={"path": relative_path})
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_name(f".{target.name}.{uuid4().hex}.tmp")
         try:
@@ -161,9 +157,7 @@ class AssetStorage:
     def read_bytes(self, project_id: str, area: str, relative_path: str) -> bytes:
         target = self.resolve(project_id, area, relative_path)
         if not target.is_file():
-            raise AssetStorageError(
-                "资产文件不存在", details={"path": relative_path, "area": area}
-            )
+            raise AssetStorageError("资产文件不存在", details={"path": relative_path, "area": area})
         try:
             return target.read_bytes()
         except OSError as exc:

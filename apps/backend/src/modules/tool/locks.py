@@ -125,7 +125,8 @@ class ResourceLockService:
                     details={
                         "resource_key": resource_key,
                         "conflicts": [
-                            {"lock_id": lock.lock_id, "lock_type": lock.lock_type} for lock in conflicts
+                            {"lock_id": lock.lock_id, "lock_type": lock.lock_type}
+                            for lock in conflicts
                         ],
                     },
                 )

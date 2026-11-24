@@ -61,8 +61,6 @@ def test_budget_statuses_and_exhaustion_are_computed_from_usage() -> None:
     assert statuses[BUDGET_REGRESSIONS].used == 0
 
     # 已用满 test_runs：即使当前用量未超限，再申请 1 次也应被拒绝
-    problems = exhausted_dimensions(
-        usage, limits, amounts={BUDGET_TEST_RUNS: 1, BUDGET_RETRIES: 1}
-    )
+    problems = exhausted_dimensions(usage, limits, amounts={BUDGET_TEST_RUNS: 1, BUDGET_RETRIES: 1})
     dimensions = {item["dimension"] for item in problems}
     assert dimensions == {BUDGET_TEST_RUNS, BUDGET_RETRIES}

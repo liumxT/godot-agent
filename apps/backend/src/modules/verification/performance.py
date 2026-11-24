@@ -129,11 +129,7 @@ class PerformanceDecision:
 
 
 def _average(samples: list[PerformanceMetrics], field_name: str) -> float | None:
-    values = [
-        value
-        for sample in samples
-        if (value := getattr(sample, field_name)) is not None
-    ]
+    values = [value for sample in samples if (value := getattr(sample, field_name)) is not None]
     if not values:
         return None
     return sum(values) / len(values)
@@ -165,13 +161,9 @@ def evaluate_performance(
     fps = averages.get("fps")
     if thresholds.minimum_fps is not None and fps is not None:
         if fps < thresholds.minimum_fps:
-            violations.append(
-                f"平均 FPS {fps:.2f} 低于最低要求 {thresholds.minimum_fps:.2f}"
-            )
+            violations.append(f"平均 FPS {fps:.2f} 低于最低要求 {thresholds.minimum_fps:.2f}")
         elif thresholds.target_fps is not None and fps < thresholds.target_fps:
-            warnings.append(
-                f"平均 FPS {fps:.2f} 未达到目标 {thresholds.target_fps:.2f}"
-            )
+            warnings.append(f"平均 FPS {fps:.2f} 未达到目标 {thresholds.target_fps:.2f}")
     frame_time = averages.get("frame_time_ms")
     if (
         thresholds.maximum_frame_time_ms is not None
@@ -187,9 +179,7 @@ def evaluate_performance(
         and memory is not None
         and memory > thresholds.maximum_memory_mb
     ):
-        violations.append(
-            f"内存 {memory:.2f}MB 超过上限 {thresholds.maximum_memory_mb:.2f}MB"
-        )
+        violations.append(f"内存 {memory:.2f}MB 超过上限 {thresholds.maximum_memory_mb:.2f}MB")
     scene_load = averages.get("scene_load_ms")
     if (
         thresholds.maximum_scene_load_ms is not None
@@ -219,15 +209,11 @@ def evaluate_performance(
                 if name == "fps":
                     drop = (baseline - current) / baseline
                     if drop > ratio:
-                        violations.append(
-                            f"FPS 相比基线下降 {drop:.1%}，超过 {ratio:.0%}"
-                        )
+                        violations.append(f"FPS 相比基线下降 {drop:.1%}，超过 {ratio:.0%}")
                 else:
                     growth = (current - baseline) / baseline
                     if growth > ratio:
-                        violations.append(
-                            f"{label} 相比基线增长 {growth:.1%}，超过 {ratio:.0%}"
-                        )
+                        violations.append(f"{label} 相比基线增长 {growth:.1%}，超过 {ratio:.0%}")
 
     return PerformanceDecision(
         passed=not violations,
