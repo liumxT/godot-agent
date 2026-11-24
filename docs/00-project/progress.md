@@ -1,23 +1,23 @@
 # 项目进度表
 
-> 更新于 2026-11-23（E8 进行中，M5 完成）。
+> 更新于 2026-11-24（E8 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
 > [E2 安全测试报告](e2-security-test-report.md)、[E2 验收报告](e2-acceptance-report.md)、
 > [E3 验收报告](e3-acceptance-report.md)、[E4 验收报告](e4-acceptance-report.md)、
-> [E5 验收报告](e5-acceptance-report.md)、[E6 验收报告](e6-acceptance-report.md) 与
-> [E7 验收报告](e7-acceptance-report.md)。
+> [E5 验收报告](e5-acceptance-report.md)、[E6 验收报告](e6-acceptance-report.md)、
+> [E7 验收报告](e7-acceptance-report.md) 与 [E8 验收报告](e8-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E8 Asset Pipeline（进行中，M7 / 8）** |
-| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 7 / 8 |
+| 当前阶段 | **E8 Asset Pipeline（已完成，M8 / 8）** |
+| 阶段进度 | 9 / 13 完成（E0–E8），E8 批次 8 / 8 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 717 passed（unit + integration 675 / contract 42），ruff 全通过 |
+| 后端测试 | 720 passed（unit + integration 678 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000022` |
 
@@ -33,7 +33,7 @@
 | E5 | AI & Tool Foundation | ✅ 已完成 | 2026-11-23 验收，31 任务，见 [E5 验收报告](e5-acceptance-report.md) |
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
 | E7 | Multi-Agent & Game Development | ✅ 已完成 | 2026-11-23 验收，7 批次 / 22 任务，见 [E7 验收报告](e7-acceptance-report.md) |
-| E8 | Asset Pipeline | ⏳ 进行中 | M5 完成（T11 Godot 导入、T12 来源追踪、T13 License） |
+| E8 | Asset Pipeline | ✅ 已完成 | 2026-11-24 验收，8 批次 / 20 任务，见 [E8 验收报告](e8-acceptance-report.md) |
 | E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
 | E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
 | E11 | Platformer Demo | ⬜ 未开始 | 系统级集成验收 |
@@ -490,7 +490,7 @@ RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断�
 访问 `/api/v1/agent-teams` 返回 403。后端 591 passed（unit + integration 549 / contract
 42），ruff 全通过，迁移 head `000021`。
 
-## 12. E8 实施进度（8 批次，进行中）
+## 12. E8 实施进度（8 批次 / 20 任务，验收通过）
 
 设计文档：[E8 Asset Pipeline](../../完整开发计划细分/E8.md)。批次按依赖划分：
 
@@ -503,7 +503,7 @@ RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断�
 | E8-M5 | T11 Godot 导入、T12 来源追踪、T13 License | ✅ 已完成 |
 | E8-M6 | T14 依赖图、T15 交付与 ChangeSet、T16 恢复 | ✅ 已完成 |
 | E8-M7 | T17 资产界面、T18 Agent 集成、T19 API 与事件 | ✅ 已完成 |
-| E8-M8 | T20 测试与 Platformer Demo 资产实战、验收报告 | ⬜ 未开始 |
+| E8-M8 | T20 测试与 Platformer Demo 资产实战、验收报告 | ✅ 已完成 |
 
 M1 交付：`modules/asset_pipeline/{models,repository,storage,service}.py`，
 迁移 `000022` 建立 19 张资产表（Asset / Version / Variant / Brief / Generation /
@@ -590,6 +590,18 @@ License、导入 UID、交付、依赖计数与四类 `UNKNOWN` 汇总）；管�
 动画、艺术总监、音频、VFX、3D 与资产管线专家接入资产契约且不授予 `file.write`；
 新增 3 个 API 集成测试与 1 个 Agent 契约测试。后端 717 passed
 （unit + integration 675 / contract 42），ruff 全通过。
+
+M8 交付：新增 `tests/integration/test_e8_acceptance.py` 与
+[E8 验收报告](e8-acceptance-report.md)。验收测试覆盖三类关键证据：
+Platformer Demo 资产全生命周期（Brief 创建/提议/批准 → 生成来源 → 处理 DAG →
+机器 QC → 人工审核 → License 核验 → 依赖记录 → 交付 ChangeSet/审批 →
+项目文件写入 → Editor Bridge 导入获得 `uid://` → 交付 `DELIVERED` →
+替换影响分析与仪表盘聚合）；路径穿越与跨项目隔离（`AssetPathInvalid`、
+`NotFoundError`、跨项目交付拒绝）；故障注入（License 过期阻断交付、
+Processing `UNKNOWN` 且无产物时恢复抛 `AssetRecoveryRequired`）。
+E8 共 96 个测试函数（14 个文件）+ 4 个契约测试（10 schema / 5 样例）。
+后端 720 passed（unit + integration 678 / contract 42），ruff 全通过，
+迁移 head `000022`。E8 阶段完成，可进入 E9 Verification & QA。
 
 ## 13. 已知问题与待办
 
