@@ -15,6 +15,7 @@ from fastapi.routing import APIRoute
 
 from app.api.agents import router as agents_router
 from app.api.approvals import router as approvals_router
+from app.api.assets import router as assets_router
 from app.api.auth import protected_router as auth_protected_router
 from app.api.auth import router as auth_router
 from app.api.bridge import router as bridge_router
@@ -59,6 +60,7 @@ ROUTERS: tuple[tuple[str, APIRouter], ...] = (
     ("multi-agent", multi_agent_router),
     ("manage", management_ui_router),
     ("bridge", bridge_router),
+    ("assets", assets_router),
 )
 
 

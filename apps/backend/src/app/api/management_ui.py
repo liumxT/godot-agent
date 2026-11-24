@@ -92,6 +92,8 @@ _PAGE = """<!DOCTYPE html>
   <section>
     <h2>项目详情</h2>
     <div id="project-detail" class="empty">未选择项目</div>
+    <h2>资产</h2>
+    <div id="assets" class="empty">未选择项目</div>
     <h2>任务</h2>
     <div id="tasks" class="empty">未选择项目</div>
     <h2>待处理审批</h2>
@@ -190,7 +192,7 @@ _PAGE = """<!DOCTYPE html>
   async function selectProject(projectId) {
     state.projectId = projectId;
     await Promise.all([
-      loadDetail(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels(),
+      loadDetail(), loadAssets(), loadTasks(), loadApprovals(), loadTools(), loadExecutions(), loadModels(),
       loadAgents(), loadMultiAgent()
     ]);
     await loadProjects();
@@ -211,6 +213,41 @@ _PAGE = """<!DOCTYPE html>
         <tr><th>类型</th><td>${esc(project.project_type)} · Godot ${esc(project.godot_version)}</td></tr>
         <tr><th>配置</th><td><details><summary>展开</summary><pre>${esc(JSON.stringify(config, null, 2))}</pre></details></td></tr>
       </table>`;
+  }
+
+  async function loadAssets() {
+    if (!state.projectId) return;
+    const data = await api(`/projects/${state.projectId}/assets/dashboard?limit=50`);
+    const items = data.items || [];
+    const unknown = data.unknown || { total: 0 };
+    const summary = `资产 ${data.total || 0} 个 · UNKNOWN ${unknown.total || 0} 项`;
+    if (!items.length) {
+      $("assets").className = "empty";
+      $("assets").textContent = summary + " · 暂无资产";
+      return;
+    }
+    $("assets").className = "";
+    $("assets").innerHTML = `
+      <div class="muted">${esc(summary)}</div>
+      <table>
+        <thead><tr><th>资产</th><th>类型</th><th>生命周期</th><th>质量</th><th>License</th><th>导入</th><th>交付</th><th>依赖</th></tr></thead>
+        <tbody>${items.map((asset) => `
+          <tr>
+            <td>${esc(asset.name)}<br><small class="muted">${esc(asset.asset_id)} · v${esc(asset.version_count)}</small></td>
+            <td>${esc(asset.category)} / ${esc(asset.asset_type)}</td>
+            <td><span class="pill ${statusClass(asset.lifecycle_status)}">${esc(asset.lifecycle_status)}</span></td>
+            <td>${pill(asset.quality_status)}</td>
+            <td>${pill(asset.license_status)}</td>
+            <td>${pill(asset.import_status)}${asset.godot_uid ? `<br><small class="muted">${esc(asset.godot_uid)}</small>` : ""}</td>
+            <td>${pill(asset.delivery_status)}</td>
+            <td>${esc(asset.dependency_count)}</td>
+          </tr>`).join("")}</tbody>
+      </table>`;
+  }
+
+  function pill(status) {
+    if (!status) return '<span class="muted">-</span>';
+    return `<span class="pill ${statusClass(status)}">${esc(status)}</span>`;
   }
 
   async function loadTasks() {

@@ -47,6 +47,7 @@ from modules.agent_runtime.tool_binding import AgentToolBindingService
 from modules.approval.repository import ApprovalRepository
 from modules.approval.service import ApprovalService
 from modules.asset_pipeline.briefs import AssetBriefService
+from modules.asset_pipeline.dashboard import AssetDashboardService
 from modules.asset_pipeline.delivery import AssetDeliveryService
 from modules.asset_pipeline.dependencies import AssetDependencyService
 from modules.asset_pipeline.generation import GenerationOrchestrator
@@ -865,6 +866,33 @@ def register_startup_steps(
                     "asset_delivery_service", AssetDeliveryService
                 ),
                 events=bus,
+            ),
+        )
+        services.register(
+            "asset_dashboard_service",
+            AssetDashboardService(
+                database,
+                assets=services.get("asset_service", AssetService),
+                generations=services.get(
+                    "asset_generation_orchestrator", GenerationOrchestrator
+                ),
+                processing=services.get(
+                    "asset_processing_pipeline", ProcessingPipelineService
+                ),
+                quality=services.get(
+                    "asset_quality_control", QualityControlService
+                ),
+                licenses=services.get("asset_license_service", LicenseService),
+                imports=services.get("asset_import_service", GodotImportService),
+                deliveries=services.get(
+                    "asset_delivery_service", AssetDeliveryService
+                ),
+                dependencies=services.get(
+                    "asset_dependency_service", AssetDependencyService
+                ),
+                recovery=services.get(
+                    "asset_recovery_service", AssetRecoveryService
+                ),
             ),
         )
         await dispatcher.start()

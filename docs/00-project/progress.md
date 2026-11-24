@@ -13,11 +13,11 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E8 Asset Pipeline（进行中，M6 / 8）** |
-| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 6 / 8 |
+| 当前阶段 | **E8 Asset Pipeline（进行中，M7 / 8）** |
+| 阶段进度 | 8 / 13 完成（E0–E7），E8 批次 7 / 8 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 713 passed（unit + integration 671 / contract 42），ruff 全通过 |
+| 后端测试 | 717 passed（unit + integration 675 / contract 42），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | 数据库迁移 | head 为 `000022` |
 
@@ -502,7 +502,7 @@ RUNNING Assignment 在重启后保持原状态与 `agent_instance_id`；中断�
 | E8-M4 | T09 处理流水线、T10 质量门控与人工审核 | ✅ 已完成 |
 | E8-M5 | T11 Godot 导入、T12 来源追踪、T13 License | ✅ 已完成 |
 | E8-M6 | T14 依赖图、T15 交付与 ChangeSet、T16 恢复 | ✅ 已完成 |
-| E8-M7 | T17 资产界面、T18 Agent 集成、T19 API 与事件 | ⬜ 未开始 |
+| E8-M7 | T17 资产界面、T18 Agent 集成、T19 API 与事件 | ✅ 已完成 |
 | E8-M8 | T20 测试与 Platformer Demo 资产实战、验收报告 | ⬜ 未开始 |
 
 M1 交付：`modules/asset_pipeline/{models,repository,storage,service}.py`，
@@ -579,6 +579,17 @@ APPROVED → APPLYING → IMPORTING → VERIFYING → DELIVERED` 状态机、缺
 `asset_dependency_service`、`asset_delivery_service`、`asset_recovery_service`
 （交付服务接入 Approval 校验）；新增 8 个集成测试与 4 个单元测试。后端 713
 passed（unit + integration 671 / contract 42），ruff 全通过。
+
+M7 交付：新增 `app/api/assets.py` 与 `app/schemas/asset_pipeline.py`（资产创建/过滤
+查询/元数据更新/版本与依赖读取、生成与处理任务提交及状态读取、机器与人工质量
+审核、License 登记与核验、Godot 导入与只读核对、交付计划/审批/审批有效性/结果
+验证；全部按项目授权，Job 必须带 ID，交付仍经 ChangeSet、Approval 与 Tool
+System）、`modules/asset_pipeline/dashboard.py`（资产浏览器聚合：当前版本、质量、
+License、导入 UID、交付、依赖计数与四类 `UNKNOWN` 汇总）；管理界面新增资产面板
+并调用仪表盘接口；Tool Registry 登记 10 个 `asset.*` 只读/请求工具；2D 美术、
+动画、艺术总监、音频、VFX、3D 与资产管线专家接入资产契约且不授予 `file.write`；
+新增 3 个 API 集成测试与 1 个 Agent 契约测试。后端 717 passed
+（unit + integration 675 / contract 42），ruff 全通过。
 
 ## 13. 已知问题与待办
 

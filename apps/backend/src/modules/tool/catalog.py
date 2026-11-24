@@ -33,7 +33,14 @@ def _str(description: str) -> dict[str, Any]:
 _SCENE = _str("场景资源路径（res:// 开头）")
 _NODE = _str("节点路径（相对场景根节点，如 Player/Sprite2D）")
 
-__all__ = ["BUILTIN_TOOLS", "FILE_TOOLS", "GODOT_TOOLS", "ToolSpec", "ensure_builtin_tools"]
+__all__ = [
+    "ASSET_TOOLS",
+    "BUILTIN_TOOLS",
+    "FILE_TOOLS",
+    "GODOT_TOOLS",
+    "ToolSpec",
+    "ensure_builtin_tools",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -359,7 +366,117 @@ FILE_TOOLS: tuple[ToolSpec, ...] = (
 )
 
 
-BUILTIN_TOOLS: tuple[ToolSpec, ...] = GODOT_TOOLS + FILE_TOOLS
+ASSET_TOOLS: tuple[ToolSpec, ...] = (
+    _read(
+        "asset.read",
+        "RESOURCE",
+        "读取资产、版本与状态",
+        _obj({"asset_id": _str("资产 ID")}, ("asset_id",)),
+    ),
+    _read(
+        "asset.dependency.read",
+        "RESOURCE",
+        "读取资产依赖与引用关系",
+        _obj({"asset_id": _str("资产 ID")}, ("asset_id",)),
+    ),
+    _read(
+        "asset.provenance.read",
+        "RESOURCE",
+        "读取资产来源追踪",
+        _obj({"asset_id": _str("资产 ID")}, ("asset_id",)),
+    ),
+    _read(
+        "asset.license.read",
+        "RESOURCE",
+        "读取资产授权状态",
+        _obj({"asset_id": _str("资产 ID")}, ("asset_id",)),
+    ),
+    _read(
+        "asset.import.status",
+        "RESOURCE",
+        "读取 Godot 导入任务与 UID",
+        _obj({"import_job_id": _str("导入任务 ID")}, ("import_job_id",)),
+    ),
+    ToolSpec(
+        name="asset.brief.submit",
+        category="RESOURCE",
+        description="提交资产需求简报，等待审批",
+        risk_level="R1",
+        input_schema=_obj(
+            {"asset_id": _str("资产 ID"), "brief": {"type": "object"}},
+            ("asset_id", "brief"),
+        ),
+        permissions=("project.write",),
+        capabilities=(),
+    ),
+    ToolSpec(
+        name="asset.generation.request",
+        category="RESOURCE",
+        description="通过 Model Gateway 请求资产生成",
+        risk_level="R1",
+        input_schema=_obj(
+            {
+                "asset_id": _str("资产 ID"),
+                "kind": _str("生成类型"),
+                "prompt": _str("生成描述"),
+            },
+            ("asset_id", "kind", "prompt"),
+        ),
+        permissions=("project.write",),
+        capabilities=(),
+    ),
+    ToolSpec(
+        name="asset.processing.request",
+        category="RESOURCE",
+        description="请求资产处理（裁切、缩放、Sprite Sheet 等）",
+        risk_level="R1",
+        input_schema=_obj(
+            {
+                "asset_id": _str("资产 ID"),
+                "input_version_id": _str("输入版本 ID"),
+                "graph": {"type": "object"},
+            },
+            ("asset_id", "input_version_id", "graph"),
+        ),
+        permissions=("project.write",),
+        capabilities=(),
+    ),
+    ToolSpec(
+        name="asset.review.submit",
+        category="RESOURCE",
+        description="提交机器或人工质量审核结论",
+        risk_level="R1",
+        input_schema=_obj(
+            {
+                "asset_id": _str("资产 ID"),
+                "version_id": _str("资产版本 ID"),
+                "approved": {"type": "boolean"},
+            },
+            ("asset_id", "version_id", "approved"),
+        ),
+        permissions=("project.write",),
+        capabilities=(),
+    ),
+    ToolSpec(
+        name="asset.import.request",
+        category="RESOURCE",
+        description="经 Tool System 请求 Godot Editor 真实导入",
+        risk_level="R1",
+        input_schema=_obj(
+            {
+                "asset_id": _str("资产 ID"),
+                "version_id": _str("资产版本 ID"),
+                "target_path": _SCENE,
+            },
+            ("asset_id", "version_id", "target_path"),
+        ),
+        permissions=("project.write",),
+        capabilities=(),
+    ),
+)
+
+
+BUILTIN_TOOLS: tuple[ToolSpec, ...] = GODOT_TOOLS + FILE_TOOLS + ASSET_TOOLS
 
 
 async def ensure_builtin_tools(registry: ToolRegistryService) -> tuple[int, int]:
