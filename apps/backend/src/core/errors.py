@@ -748,6 +748,90 @@ class AssetRecoveryRequired(AppError):
     status_code = 409
 
 
+class VerificationStateInvalid(AppError):
+    """E9：验证对象当前状态不允许该操作或迁移。"""
+
+    code = "VERIFICATION_STATE_INVALID"
+    status_code = 409
+
+
+class VerificationPlanInvalid(AppError):
+    """E9：验证计划缺少层次、目标或策略不合法。"""
+
+    code = "VERIFICATION_PLAN_INVALID"
+    status_code = 422
+
+
+class VerificationResultInvalid(AppError):
+    """E9：验证结果类型、证据或置信度不合法。"""
+
+    code = "VERIFICATION_RESULT_INVALID"
+    status_code = 422
+
+
+class VerificationEvidenceInvalid(AppError):
+    """E9：证据缺少来源、哈希或来源不可追溯。"""
+
+    code = "VERIFICATION_EVIDENCE_INVALID"
+    status_code = 422
+
+
+class VerificationEvidenceStale(AppError):
+    """E9：证据已失效，不能作为通过依据。"""
+
+    code = "VERIFICATION_EVIDENCE_STALE"
+    status_code = 409
+
+
+class VerificationRequirementUntraceable(AppError):
+    """E9：正式需求缺少验收标准或测试追踪。"""
+
+    code = "VERIFICATION_REQUIREMENT_UNTRACEABLE"
+    status_code = 422
+
+
+class VerificationCampaignNotComplete(AppError):
+    """E9：活动尚未完成，不能进入质量门禁或 Phase Review。"""
+
+    code = "VERIFICATION_CAMPAIGN_NOT_COMPLETE"
+    status_code = 409
+
+
+class QualityGateBlocked(AppError):
+    """E9：质量门禁未通过，禁止推进阶段。"""
+
+    code = "QUALITY_GATE_BLOCKED"
+    status_code = 409
+
+
+class QualityGateInvalid(AppError):
+    """E9：门禁规则或评估输入不合法。"""
+
+    code = "QUALITY_GATE_INVALID"
+    status_code = 422
+
+
+class DefectStateInvalid(AppError):
+    """E9：缺陷当前状态不允许该迁移。"""
+
+    code = "DEFECT_STATE_INVALID"
+    status_code = 409
+
+
+class DefectInvalid(AppError):
+    """E9：缺陷内容、严重级别或复现步骤不合法。"""
+
+    code = "DEFECT_INVALID"
+    status_code = 422
+
+
+class PhaseReviewInvalid(AppError):
+    """E9：Phase Review 结论、验收人或状态不合法。"""
+
+    code = "PHASE_REVIEW_INVALID"
+    status_code = 422
+
+
 def iter_error_types() -> list[type[AppError]]:
     """返回 AppError 及其全部子类，用于错误码登记检查。"""
 

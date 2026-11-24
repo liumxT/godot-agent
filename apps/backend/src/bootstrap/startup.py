@@ -127,6 +127,8 @@ from modules.tool.permissions import ToolPermissionEngine
 from modules.tool.recovery import ToolRecoveryService
 from modules.tool.registry import ToolRegistryService
 from modules.tool.verification import ToolVerificationService
+from modules.verification.orchestrator import VerificationOrchestrator
+from modules.verification.service import VerificationService
 from modules.workflow.repository import WorkflowInstanceRepository
 from modules.workflow.service import (
     WorkflowDefinitionService,
@@ -866,6 +868,21 @@ def register_startup_steps(
                     "asset_delivery_service", AssetDeliveryService
                 ),
                 events=bus,
+            ),
+        )
+        services.register(
+            "verification_service",
+            VerificationService(
+                database,
+                requirements=services.get("requirement_service", RequirementService),
+                projects=services.try_get("project_registry_service"),
+                changesets=services.try_get("changeset_service"),
+            ),
+        )
+        services.register(
+            "verification_orchestrator",
+            VerificationOrchestrator(
+                services.get("verification_service", VerificationService)
             ),
         )
         services.register(

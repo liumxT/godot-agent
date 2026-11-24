@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verification/verification_result.schema.json",
+  "title": "VerificationResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result_id", "campaign_id", "result_status", "evidence_ids", "created_at"],
+  "properties": {
+    "result_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "campaign_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "run_id": {"type": ["string", "null"], "maxLength": 64},
+    "requirement_id": {"type": ["string", "null"], "maxLength": 64},
+    "criterion_id": {"type": ["string", "null"], "maxLength": 64},
+    "test_case_id": {"type": ["string", "null"], "maxLength": 64},
+    "result_status": {"enum": ["PASSED", "FAILED", "UNKNOWN", "SKIPPED", "NOT_RUN", "WAIVED", "SUPERSEDED"]},
+    "evidence_ids": {"type": "array", "maxItems": 200, "items": {"type": "string", "maxLength": 64}},
+    "failure_reason": {"type": ["string", "null"]},
+    "confidence_level": {"enum": ["HIGH", "MEDIUM", "LOW", null]},
+    "verified_at": {"type": ["string", "null"], "format": "date-time"},
+    "superseded_by": {"type": ["string", "null"], "maxLength": 64},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

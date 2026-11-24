@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verification/acceptance_criterion.schema.json",
+  "title": "AcceptanceCriterion",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "criterion_id",
+    "project_id",
+    "requirement_id",
+    "criterion_type",
+    "statement",
+    "verification_method",
+    "priority",
+    "status",
+    "version",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "criterion_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "requirement_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "criterion_type": {"enum": ["FUNCTIONAL", "STRUCTURAL", "RUNTIME", "VISUAL", "PERFORMANCE", "SECURITY"]},
+    "statement": {"type": "string", "minLength": 1},
+    "verification_method": {
+      "enum": [
+        "STATIC_ANALYSIS",
+        "STRUCTURE_INSPECTION",
+        "RESOURCE_VALIDATION",
+        "RUNTIME_TEST",
+        "FUNCTIONAL_TEST",
+        "VISUAL_CHECK",
+        "PERFORMANCE_TEST"
+      ]
+    },
+    "expected": {"type": "object"},
+    "threshold": {"type": "object"},
+    "required_evidence": {"type": "array", "maxItems": 32, "items": {"type": "string", "maxLength": 64}},
+    "priority": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+    "status": {"enum": ["ACTIVE", "SUPERSEDED", "RETIRED"]},
+    "version": {"type": "integer", "minimum": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  }
+}

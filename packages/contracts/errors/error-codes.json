@@ -612,6 +612,78 @@
       "retryable": false,
       "http_status": 409,
       "description": "存在 UNKNOWN 状态，必须先完成状态核对。"
+    },
+    {
+      "code": "VERIFICATION_STATE_INVALID",
+      "retryable": false,
+      "http_status": 409,
+      "description": "验证活动、计划、执行或结果当前状态不允许该迁移。"
+    },
+    {
+      "code": "VERIFICATION_PLAN_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "验证计划缺少验证层次、目标平台或验收策略不合法。"
+    },
+    {
+      "code": "VERIFICATION_RESULT_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "验证结果状态、证据引用或置信度不合法。"
+    },
+    {
+      "code": "VERIFICATION_EVIDENCE_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "验证证据缺少来源、内容哈希或不可追溯。"
+    },
+    {
+      "code": "VERIFICATION_EVIDENCE_STALE",
+      "retryable": false,
+      "http_status": 409,
+      "description": "证据已失效或被撤销，不能作为通过依据。"
+    },
+    {
+      "code": "VERIFICATION_REQUIREMENT_UNTRACEABLE",
+      "retryable": false,
+      "http_status": 422,
+      "description": "正式需求缺少验收标准或测试追踪关系。"
+    },
+    {
+      "code": "VERIFICATION_CAMPAIGN_NOT_COMPLETE",
+      "retryable": false,
+      "http_status": 409,
+      "description": "验证活动尚未完成，不能进入质量门禁或 Phase Review。"
+    },
+    {
+      "code": "QUALITY_GATE_BLOCKED",
+      "retryable": false,
+      "http_status": 409,
+      "description": "质量门禁未通过，禁止推进阶段。"
+    },
+    {
+      "code": "QUALITY_GATE_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "质量门禁规则或评估输入不合法。"
+    },
+    {
+      "code": "DEFECT_STATE_INVALID",
+      "retryable": false,
+      "http_status": 409,
+      "description": "缺陷当前状态不允许该迁移。"
+    },
+    {
+      "code": "DEFECT_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "缺陷内容、严重级别或复现步骤不合法。"
+    },
+    {
+      "code": "PHASE_REVIEW_INVALID",
+      "retryable": false,
+      "http_status": 422,
+      "description": "Phase Review 结论、验收人或状态不合法。"
     }
   ]
 }

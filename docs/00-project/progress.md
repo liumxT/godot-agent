@@ -1,25 +1,26 @@
 # 项目进度表
 
-> 更新于 2026-11-24（E8 完成）。
+> 更新于 2026-11-24（E9 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
 > [E2 安全测试报告](e2-security-test-report.md)、[E2 验收报告](e2-acceptance-report.md)、
 > [E3 验收报告](e3-acceptance-report.md)、[E4 验收报告](e4-acceptance-report.md)、
 > [E5 验收报告](e5-acceptance-report.md)、[E6 验收报告](e6-acceptance-report.md)、
-> [E7 验收报告](e7-acceptance-report.md) 与 [E8 验收报告](e8-acceptance-report.md)。
+> [E7 验收报告](e7-acceptance-report.md)、[E8 验收报告](e8-acceptance-report.md) 与
+> [E9 验收报告](e9-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E8 Asset Pipeline（已完成，M8 / 8）** |
-| 阶段进度 | 9 / 13 完成（E0–E8），E8 批次 8 / 8 |
+| 当前阶段 | **E9 Verification & QA（已完成，M8 / 8）** |
+| 阶段进度 | 10 / 13 完成（E0–E9），E9 批次 8 / 8 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 720 passed（unit + integration 678 / contract 42），ruff 全通过 |
+| 后端测试 | 860 passed，1 warning（E9 全量 pytest，654.29s），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000022` |
+| 数据库迁移 | head 为 `000027` |
 
 ## 2. 阶段总览
 
@@ -34,8 +35,8 @@
 | E6 | Agent Runtime | ✅ 已完成 | 2026-11-23 验收，20 任务，见 [E6 验收报告](e6-acceptance-report.md) |
 | E7 | Multi-Agent & Game Development | ✅ 已完成 | 2026-11-23 验收，7 批次 / 22 任务，见 [E7 验收报告](e7-acceptance-report.md) |
 | E8 | Asset Pipeline | ✅ 已完成 | 2026-11-24 验收，8 批次 / 20 任务，见 [E8 验收报告](e8-acceptance-report.md) |
-| E9 | Verification & QA | ⬜ 未开始 | 需补 Godot runtime 冒烟检查 |
-| E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §6 |
+| E9 | Verification & QA | ✅ 已完成 | 2026-11-24 验收，8 批次 / 20 任务，见 [E9 验收报告](e9-acceptance-report.md) |
+| E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §14 |
 | E11 | Platformer Demo | ⬜ 未开始 | 系统级集成验收 |
 | E12 | Productization | ⬜ 未开始 | 含存量文档归档 |
 
@@ -603,11 +604,67 @@ E8 共 96 个测试函数（14 个文件）+ 4 个契约测试（10 schema / 5 �
 后端 720 passed（unit + integration 678 / contract 42），ruff 全通过，
 迁移 head `000022`。E8 阶段完成，可进入 E9 Verification & QA。
 
-## 13. 已知问题与待办
+## 13. E9 实施进度（8 批次 / 20 任务，验收通过）
+
+设计文档：[E9 Verification & QA](../../完整开发计划细分/E9.md)。批次按依赖划分：
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E9-M1 | T01 验证领域与契约、T02 测试用例注册、T03 需求追踪与验收标准 | ✅ 已完成 |
+| E9-M2 | T04 Verification Plan Engine、T05 Verification Orchestrator | ✅ 已完成 |
+| E9-M3 | T06 静态分析、T07 Scene / Resource 校验 | ✅ 已完成 |
+| E9-M4 | T08 Runtime 验证、T09 Functional Test Runner、T10 Debugger 集成 | ✅ 已完成 |
+| E9-M5 | T11 视觉验证、T12 性能验证、T13 证据管理 | ✅ 已完成 |
+| E9-M6 | T14 缺陷管理、T15 回归与影响分析 | ✅ 已完成 |
+| E9-M7 | T16 质量门禁、T17 Phase Review、T18 Dashboard / UI | ✅ 已完成 |
+| E9-M8 | T19 Agent 集成与验证策略、T20 Platformer Demo 验收、验收报告 | ✅ 已完成 |
+
+M1 交付：`modules/verification/{models,repository,service}.py` 建立 Campaign / Plan /
+Run / Result / TestCase / Criterion / TestLink / Evidence 等表与状态机；迁移 `000023`
+新增核心验证表；新增 12 个 E9 错误码与 13 个 `verification.* / defect.* /
+quality_gate.* / phase_review.*` 权限；六层验证体系与 `UNKNOWN ≠ FAILED`、
+`SKIPPED ≠ PASSED`、结果不可原地改写等冻结规则以单元测试锁定。
+
+M2 交付：`planner.py` 从需求 → 验收标准 → 测试用例推导验证层次，覆盖缺口会阻断计划并
+给出 gap；`orchestrator.py` 按计划逐层执行，写入结果与证据并将 Campaign 推进到
+`COMPLETED/FAILED`，无执行器、执行器失败、通过无证据均失败关闭。
+
+M3 交付：`godot/static_analyzer.py`（project.godot、GDScript 括号/缩进/重复类名扫描）、
+`scene_validator.py`（ext_resource、根节点、同级重名、连接目标、必需节点类型）、
+`resource_validator.py`（`res://` 引用与 `.import` 元数据）、`executors.py`（报告 →
+证据 + 结果草稿，来源用 `verification://` 标识报告而非伪造文件路径）。
+
+M4 交付：`runtime.py`（环境 CRUD、租约、启动/停止/查询、驱动失败与查询失败保持
+`UNKNOWN`）、`functional.py`（步骤断言、超时、基础设施错误与功能失败分离、清理失败不
+反转结果）、`debugger.py`（错误分类、地址/数字去噪指纹、基线化阻断策略）；迁移
+`000024` 新增运行时环境与 Debugger 错误表。
+
+M5 交付：`visual.py`（像素差异、动态区域掩码、基线缺失转人工、截图 Hash/尺寸校验）、
+`performance.py`（阈值、采样缺失、同环境退化判定）、`evidence.py`（文件存在性与 Hash
+校验、失效/过期、截图/运行时上下文完整性）。
+
+M6 交付：`defect.py`（缺陷类别 → 推荐 Agent、严重度 → 优先级、汇总）、`impact.py`
+（`res://` 反向依赖扫描、SECURITY > FULL > DEPENDENCY > TARGETED 回归策略、
+历史缺陷与覆盖缺口）；迁移 `000025`；新增缺陷 5 路由、影响分析与回归计划 API。
+
+M7 交付：`quality_gate.py`（GATE-1…GATE-10、按 Campaign 类型/风险选门禁、FAILED >
+BLOCKED > UNKNOWN > PARTIAL > PASSED 合并、有效豁免转 `WAIVED`）、`phase_review.py`
+（建议结论、风险、用户确认事项，通过率只算已执行）；迁移 `000026/000027`；新增门禁
+策略/评估/豁免、Phase Review 与 4 个 Dashboard API。
+
+M8 交付：`agent_policy.py`（Agent 允许/禁止操作矩阵、按风险级别的验证预算）、
+`agent_request_verification` / `agent_request_run`（策略 + 真实预算计算后执行）、
+Agent 策略与预算 API；新增 `tests/unit/test_e9_agent_policy.py`、
+`tests/integration/test_e9_agent_budget.py` 与 `tests/integration/test_e9_acceptance.py`
+（Platformer 验证闭环 + 缺陷修复回归闭环）；[E9 验收报告](e9-acceptance-report.md)。
+E9 共 26 个测试文件（25 个业务 + 1 个契约）/ 132 个业务测试函数。阶段完成，可进入 E10 Build & Release。
+
+## 14. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
-| Godot runtime 首次启动 `signal 11`，根因未确证，已不再复现 | E9 | 待 E9 增加 runtime 冒烟检查，复现则升级/重装 |
+| Godot runtime 首次启动 `signal 11`，根因未确证，已不再复现 | E9 | E9 已建立 runtime 冒烟与 `UNKNOWN` 保守映射；真实启动链路留 E11 复验 |
+| Runtime 自动化使用可注入 Driver，CI 未拉起真实 Godot | E9 / E11 | E11 Demo 接入真实运行时与截图管线 |
 | Godot 4.5.1 导出模板 | E10 | ✅ 已安装（`%APPDATA%\Godot\export_templates\4.5.1.stable`） |
 | 无 Python 干净机器上的打包验证 | E10 | 待安装包制作时执行 |
 | CI 未覆盖打包冒烟与 Markdown 链接检查 | E10 / E12 | 待补 |
@@ -622,7 +679,7 @@ E8 共 96 个测试函数（14 个文件）+ 4 个契约测试（10 schema / 5 �
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 14. 维护规则
+## 15. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。

@@ -1,0 +1,13 @@
+{
+  "evidence_id": "vev1a2b3c4d5e6f",
+  "project_id": "prj_platformer",
+  "evidence_type": "RUNTIME_TRACE",
+  "source_type": "GODOT_RUNTIME",
+  "source_reference": "runtime://session/player-jump/trace-01",
+  "content_hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "verification_run_id": "vrn1a2b3c4d5e6f",
+  "captured_at": "2026-11-24T08:09:30Z",
+  "validity_status": "VALID",
+  "metadata": {"frames": 120, "fps": 60},
+  "created_at": "2026-11-24T08:09:31Z"
+}

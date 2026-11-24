@@ -33,6 +33,7 @@ from app.api.system import router as system_router
 from app.api.system import status_router as system_status_router
 from app.api.tasks import router as tasks_router
 from app.api.tools import router as tools_router
+from app.api.verification import router as verification_router
 from app.api.version import API_PREFIX, API_VERSION
 from app.api.workflows import router as workflows_router
 from core.errors import StartupError
@@ -61,6 +62,7 @@ ROUTERS: tuple[tuple[str, APIRouter], ...] = (
     ("manage", management_ui_router),
     ("bridge", bridge_router),
     ("assets", assets_router),
+    ("verification", verification_router),
 )
 
 

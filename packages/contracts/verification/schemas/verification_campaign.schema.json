@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verification/verification_campaign.schema.json",
+  "title": "VerificationCampaign",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "campaign_id",
+    "project_id",
+    "campaign_type",
+    "status",
+    "version",
+    "created_at"
+  ],
+  "properties": {
+    "campaign_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "workflow_id": {"type": ["string", "null"], "maxLength": 64},
+    "phase_id": {"type": ["string", "null"], "maxLength": 64},
+    "task_id": {"type": ["string", "null"], "maxLength": 64},
+    "changeset_id": {"type": ["string", "null"], "maxLength": 64},
+    "campaign_type": {"enum": ["TASK", "PHASE", "WORKFLOW", "REGRESSION", "ASSET", "MANUAL"]},
+    "status": {"enum": ["DRAFT", "PLANNING", "READY", "RUNNING", "COMPLETED", "FAILED", "CANCELLED"]},
+    "verification_policy_id": {"type": ["string", "null"], "maxLength": 64},
+    "created_by": {"type": ["string", "null"], "maxLength": 64},
+    "version": {"type": "integer", "minimum": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

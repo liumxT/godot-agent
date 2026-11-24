@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verification/verification_run.schema.json",
+  "title": "VerificationRun",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_id", "campaign_id", "execution_status", "evidence_ids", "created_at"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "campaign_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "plan_id": {"type": ["string", "null"], "maxLength": 64},
+    "test_suite_id": {"type": ["string", "null"], "maxLength": 64},
+    "test_case_id": {"type": ["string", "null"], "maxLength": 64},
+    "environment_id": {"type": ["string", "null"], "maxLength": 64},
+    "execution_status": {"enum": ["QUEUED", "RUNNING", "COMPLETED", "FAILED", "UNKNOWN", "SKIPPED", "CANCELLED"]},
+    "started_at": {"type": ["string", "null"], "format": "date-time"},
+    "completed_at": {"type": ["string", "null"], "format": "date-time"},
+    "executor_id": {"type": ["string", "null"], "maxLength": 64},
+    "evidence_ids": {"type": "array", "maxItems": 200, "items": {"type": "string", "maxLength": 64}},
+    "failure_reason": {"type": ["string", "null"]},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

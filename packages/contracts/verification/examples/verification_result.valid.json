@@ -1,0 +1,15 @@
+{
+  "result_id": "vrs1a2b3c4d5e6f",
+  "campaign_id": "vcp1a2b3c4d5e6f",
+  "run_id": "vrn1a2b3c4d5e6f",
+  "requirement_id": "req_player_jump",
+  "criterion_id": "vcr1a2b3c4d5e6f",
+  "test_case_id": "vtc1a2b3c4d5e6f",
+  "result_status": "PASSED",
+  "evidence_ids": ["vev1a2b3c4d5e6f"],
+  "failure_reason": null,
+  "confidence_level": "HIGH",
+  "verified_at": "2026-11-24T08:10:00Z",
+  "superseded_by": null,
+  "created_at": "2026-11-24T08:10:00Z"
+}

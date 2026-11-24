@@ -1,0 +1,15 @@
+{
+  "campaign_id": "vcp1a2b3c4d5e6f",
+  "project_id": "prj_platformer",
+  "workflow_id": "wf_0001",
+  "phase_id": "phase_02",
+  "task_id": null,
+  "changeset_id": null,
+  "campaign_type": "PHASE",
+  "status": "READY",
+  "verification_policy_id": "policy_default",
+  "created_by": "agent:qa",
+  "version": 3,
+  "created_at": "2026-11-24T08:00:00Z",
+  "completed_at": null
+}

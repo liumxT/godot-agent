@@ -91,7 +91,7 @@ async def test_core_end_to_end(tmp_path: Path) -> None:
         backup = services.get("backup", BackupService)
 
         assert await database.ping() is True
-        assert await migration.current_revision() == "000022"
+        assert await migration.current_revision() == "000027"
 
         async with database.engine.begin() as connection:
             await connection.run_sync(_Base.metadata.create_all)
@@ -145,8 +145,8 @@ async def test_core_end_to_end(tmp_path: Path) -> None:
 
         info = await backup.create(reason="e1-integration")
         assert info.integrity.lower() == "ok"
-        restored = await backup.restore(info.path, expected_revision="000022")
-        assert restored.revision == "000022"
+        restored = await backup.restore(info.path, expected_revision="000027")
+        assert restored.revision == "000027"
         assert database.is_initialized is True
         assert dispatcher.running is True
 

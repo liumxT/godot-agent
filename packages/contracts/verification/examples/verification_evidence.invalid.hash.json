@@ -1,0 +1,13 @@
+{
+  "evidence_id": "vev_bad_hash",
+  "project_id": "prj_platformer",
+  "evidence_type": "LOG",
+  "source_type": "GODOT_RUNTIME",
+  "source_reference": "runtime://session/log-01",
+  "content_hash": "not-a-sha256",
+  "verification_run_id": null,
+  "captured_at": "2026-11-24T08:09:30Z",
+  "validity_status": "VALID",
+  "metadata": {},
+  "created_at": "2026-11-24T08:09:31Z"
+}

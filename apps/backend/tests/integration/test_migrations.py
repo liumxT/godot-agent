@@ -46,7 +46,7 @@ def _tables(path: Path) -> set[str]:
 def test_upgrade_creates_schema(settings: Settings) -> None:
     result = upgrade_to_head(settings)
 
-    assert result.to_revision == head_revision(settings) == "000022"
+    assert result.to_revision == head_revision(settings) == "000027"
     assert result.changed is True
     tables = _tables(_db_path(settings))
     assert "alembic_version" in tables
@@ -82,6 +82,23 @@ def test_upgrade_creates_schema(settings: Settings) -> None:
     assert "resource_locks" in tables
     assert "tool_audit_records" in tables
     assert "tool_verification_results" in tables
+    assert "verification_campaigns" in tables
+    assert "verification_plans" in tables
+    assert "verification_test_cases" in tables
+    assert "verification_criteria" in tables
+    assert "verification_test_links" in tables
+    assert "verification_runs" in tables
+    assert "verification_results" in tables
+    assert "verification_evidence" in tables
+    assert "verification_runtime_environments" in tables
+    assert "verification_debugger_errors" in tables
+    assert "verification_defects" in tables
+    assert "verification_regression_plans" in tables
+    assert "quality_gate_policies" in tables
+    assert "quality_gate_results" in tables
+    assert "quality_gate_waivers" in tables
+    assert "phase_reviews" in tables
+    assert "phase_review_decisions" in tables
 
 
 def test_upgrade_is_idempotent(settings: Settings) -> None:
@@ -89,7 +106,7 @@ def test_upgrade_is_idempotent(settings: Settings) -> None:
     second = upgrade_to_head(settings)
 
     assert second.changed is False
-    assert second.from_revision == second.to_revision == "000022"
+    assert second.from_revision == second.to_revision == "000027"
 
 
 def test_backup_created_before_second_upgrade(settings: Settings) -> None:
@@ -138,7 +155,7 @@ def test_failure_is_wrapped(monkeypatch: pytest.MonkeyPatch, settings: Settings)
 
     assert exc_info.value.code == "MIGRATION_FAILED"
     assert "boom" not in exc_info.value.message
-    assert exc_info.value.details["from_revision"] == "000022"
+    assert exc_info.value.details["from_revision"] == "000027"
 
 
 def test_uncreatable_database_directory_is_reported(tmp_path: Path) -> None:

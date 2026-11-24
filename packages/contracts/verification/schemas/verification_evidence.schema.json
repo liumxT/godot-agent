@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "verification/verification_evidence.schema.json",
+  "title": "VerificationEvidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_id",
+    "project_id",
+    "evidence_type",
+    "source_type",
+    "source_reference",
+    "content_hash",
+    "captured_at",
+    "validity_status",
+    "created_at"
+  ],
+  "properties": {
+    "evidence_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "project_id": {"type": "string", "minLength": 1, "maxLength": 64},
+    "evidence_type": {
+      "enum": [
+        "LOG",
+        "SCREENSHOT",
+        "TEST_REPORT",
+        "RUNTIME_TRACE",
+        "DEBUGGER_LOG",
+        "PERFORMANCE_SAMPLE",
+        "VIDEO",
+        "STRUCTURE_SNAPSHOT",
+        "DIFF",
+        "MANUAL_NOTE"
+      ]
+    },
+    "source_type": {"enum": ["GODOT_RUNTIME", "GODOT_EDITOR", "TEST_RUNNER", "AGENT", "USER", "IMPORT", "CI"]},
+    "source_reference": {"type": "string", "minLength": 1, "maxLength": 1024},
+    "content_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verification_run_id": {"type": ["string", "null"], "maxLength": 64},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "validity_status": {"enum": ["VALID", "STALE", "REVOKED", "EXPIRED"]},
+    "metadata": {"type": "object"},
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}

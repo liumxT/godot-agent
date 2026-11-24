@@ -1,0 +1,16 @@
+{
+  "criterion_id": "vcr1a2b3c4d5e6f",
+  "project_id": "prj_platformer",
+  "requirement_id": "req_player_jump",
+  "criterion_type": "FUNCTIONAL",
+  "statement": "玩家按下跳跃键后可以在下一次落地前完成一次跳跃",
+  "verification_method": "FUNCTIONAL_TEST",
+  "expected": {"jump_height_min": 32},
+  "threshold": {"max_failure_rate": 0.01},
+  "required_evidence": ["RUNTIME_TRACE"],
+  "priority": "HIGH",
+  "status": "ACTIVE",
+  "version": 1,
+  "created_at": "2026-11-24T08:00:00Z",
+  "updated_at": "2026-11-24T08:00:00Z"
+}
