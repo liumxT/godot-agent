@@ -85,6 +85,17 @@ ACTION_E10_RELEASE_PUBLISH = "release.publish"
 ACTION_E10_SIGNING_MANAGE = "signing.manage"
 ACTION_E10_DISTRIBUTION_MANAGE = "distribution.manage"
 ACTION_E10_DASHBOARD_READ = "build_release.dashboard.read"
+ACTION_E11_DEMO_READ = "demo.read"
+ACTION_E11_DEMO_MANAGE = "demo.manage"
+ACTION_E11_DEMO_ACCEPT = "demo.accept"
+
+E11_PROJECT_ACTIONS = frozenset(
+    {
+        ACTION_E11_DEMO_READ,
+        ACTION_E11_DEMO_MANAGE,
+        ACTION_E11_DEMO_ACCEPT,
+    }
+)
 
 E10_PROJECT_ACTIONS = frozenset(
     {
@@ -203,6 +214,7 @@ ACTIONS = frozenset(
     | E8_PROJECT_ACTIONS
     | E9_PROJECT_ACTIONS
     | E10_PROJECT_ACTIONS
+    | E11_PROJECT_ACTIONS
 )
 
 

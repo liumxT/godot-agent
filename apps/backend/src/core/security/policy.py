@@ -22,6 +22,7 @@ from core.security.principal import (
     ACTION_E10_RELEASE_APPROVE,
     ACTION_E10_RELEASE_PUBLISH,
     ACTION_E10_SIGNING_MANAGE,
+    ACTION_E11_DEMO_ACCEPT,
     ACTION_PROJECT_ACCESS_GRANT,
     ACTION_PROJECT_ACCESS_READ,
     ACTION_PROJECT_ACCESS_REVOKE,
@@ -33,6 +34,7 @@ from core.security.principal import (
     E8_PROJECT_ACTIONS,
     E9_PROJECT_ACTIONS,
     E10_PROJECT_ACTIONS,
+    E11_PROJECT_ACTIONS,
     ROLE_ADMIN,
     ROLE_EDITOR,
     ROLE_OWNER,
@@ -63,6 +65,7 @@ _PROJECT_ACTIONS = frozenset(
     | E8_PROJECT_ACTIONS
     | E9_PROJECT_ACTIONS
     | E10_PROJECT_ACTIONS
+    | E11_PROJECT_ACTIONS
 )
 _PROJECT_READ_ROLES = frozenset({ROLE_OWNER, ROLE_EDITOR, ROLE_VIEWER})
 _PROJECT_MANAGE_ROLES = frozenset({ROLE_OWNER})
@@ -77,6 +80,7 @@ _PROJECT_READ_ACTIONS = frozenset(
         | E8_PROJECT_ACTIONS
         | E9_PROJECT_ACTIONS
         | E10_PROJECT_ACTIONS
+        | E11_PROJECT_ACTIONS
     )
     if action.endswith(".read")
 )
@@ -96,6 +100,9 @@ _E10_OWNER_ONLY_ACTIONS = frozenset(
         ACTION_E10_ARTIFACT_QUARANTINE,
     }
 )
+
+
+_E11_OWNER_ONLY_ACTIONS = frozenset({ACTION_E11_DEMO_ACCEPT})
 
 
 @dataclass(frozen=True)
@@ -182,6 +189,10 @@ def evaluate(
         if principal.role in _PROJECT_MANAGE_ROLES:
             return _allow("abac.release.owner")
         return _deny(REASON_ROLE_DENIED, "rbac.release.owner")
+    if action in _E11_OWNER_ONLY_ACTIONS:
+        if principal.role in _PROJECT_MANAGE_ROLES:
+            return _allow("abac.demo.accept")
+        return _deny(REASON_ROLE_DENIED, "rbac.demo.accept")
     if principal.role in _PROJECT_EDIT_ROLES:
         if action.startswith("project."):
             if principal.role in _PROJECT_MANAGE_ROLES:

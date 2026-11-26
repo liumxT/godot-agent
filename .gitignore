@@ -53,3 +53,9 @@ desktop.ini
 *.bak
 .screenshots/
 artifacts/
+
+# 本地工具链（Godot 可执行文件等，不入库）
+.tools/
+
+# Demo 证据日志必须入库（E11 验收依赖）
+!demo/platformer/reports/evidence/*.log

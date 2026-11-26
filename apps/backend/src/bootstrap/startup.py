@@ -80,6 +80,7 @@ from modules.changeset.repository import ChangeSetRepository
 from modules.changeset.service import ChangeSetService
 from modules.client.service import AuthCleanupTask, AuthService, ClientService
 from modules.context.service import ContextAssemblyService
+from modules.demo_game.service import DemoGameService
 from modules.editor_command.hub import EditorCommandHub
 from modules.editor_session.models import EditorSessionModel
 from modules.editor_session.service import EditorSessionService
@@ -909,6 +910,16 @@ def register_startup_steps(
         services.register(
             "build_release_dashboard_service",
             BuildReleaseDashboardService(database),
+        )
+        services.register(
+            "demo_game_service",
+            DemoGameService(
+                database,
+                verification=services.try_get("verification_service"),
+                builds=services.try_get("build_orchestrator"),
+                artifacts=services.try_get("artifact_registry_service"),
+                releases=services.try_get("release_manager_service"),
+            ),
         )
         services.register(
             "asset_dashboard_service",

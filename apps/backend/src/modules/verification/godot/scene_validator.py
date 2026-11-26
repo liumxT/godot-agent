@@ -26,6 +26,7 @@ from modules.verification.godot.findings import (
 )
 
 _ATTRIBUTE = re.compile(r'([A-Za-z_]+)="([^"]*)"')
+_INSTANCE = re.compile(r'instance=\s*ExtResource\("([^"]+)"\)')
 _EXT_REFERENCE = re.compile(r'ExtResource\("([^"]+)"\)')
 _SKIP_DIRS = {".git", ".godot", "__pycache__", "node_modules", ".venv"}
 
@@ -133,7 +134,9 @@ def parse_scene(path: Path, root: Path) -> SceneDocument:
             attrs = _attributes(line)
             name = attrs.get("name", "")
             node_type = attrs.get("type", "")
-            if not name or not node_type:
+            # 实例化节点（instance=ExtResource(...)）在合法 .tscn 中不写 type
+            instance = "ExtResource" if _INSTANCE.search(line) else attrs.get("instance", "")
+            if not name or (not node_type and not instance):
                 findings.append(
                     error("scene_node_invalid", "node 缺少 name 或 type", relative, number)
                 )
@@ -141,7 +144,7 @@ def parse_scene(path: Path, root: Path) -> SceneDocument:
             nodes.append(
                 SceneNode(
                     name=name,
-                    type=node_type,
+                    type=node_type or "INSTANCE",
                     parent=attrs.get("parent"),
                     line=number,
                 )

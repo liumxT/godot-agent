@@ -23,6 +23,7 @@ from app.api.bridge import router as bridge_router
 from app.api.builds import router as builds_router
 from app.api.changesets import router as changesets_router
 from app.api.clients import router as clients_router
+from app.api.demo import router as demo_router
 from app.api.diagnostics import v1_router as diagnostics_router
 from app.api.health import router as health_router
 from app.api.management_ui import router as management_ui_router
@@ -69,6 +70,7 @@ ROUTERS: tuple[tuple[str, APIRouter], ...] = (
     ("builds", builds_router),
     ("artifacts", artifacts_router),
     ("releases", releases_router),
+    ("demo", demo_router),
 )
 
 

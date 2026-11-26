@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-26（E10 完成）。
+> 更新于 2026-11-26（E11 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -8,19 +8,21 @@
 > [E3 验收报告](e3-acceptance-report.md)、[E4 验收报告](e4-acceptance-report.md)、
 > [E5 验收报告](e5-acceptance-report.md)、[E6 验收报告](e6-acceptance-report.md)、
 > [E7 验收报告](e7-acceptance-report.md)、[E8 验收报告](e8-acceptance-report.md)、
-> [E9 验收报告](e9-acceptance-report.md) 与 [E10 验收报告](e10-acceptance-report.md)。
+> [E9 验收报告](e9-acceptance-report.md)、[E10 验收报告](e10-acceptance-report.md) 与
+> [E11 验收报告](e11-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E10 Build & Release（已完成，M6 / 6）** |
-| 阶段进度 | 11 / 13 完成（E0–E10），E10 批次 6 / 6 |
+| 当前阶段 | **E11 Platformer Demo（已完成，20 / 20 任务）** |
+| 阶段进度 | 12 / 13 完成（E0–E11），E11 全部任务完成 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 898 passed，1 warning（E10 全量 pytest，834.97s），ruff 全通过 |
+| 后端测试 | 916 passed，1 warning（E11 全量 pytest，956.89s），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000031` |
+| Demo 运行时验证 | 24 / 24 passed（真实 Godot 4.5.1 headless） |
+| 数据库迁移 | head 为 `000032` |
 
 ## 2. 阶段总览
 
@@ -37,7 +39,7 @@
 | E8 | Asset Pipeline | ✅ 已完成 | 2026-11-24 验收，8 批次 / 20 任务，见 [E8 验收报告](e8-acceptance-report.md) |
 | E9 | Verification & QA | ✅ 已完成 | 2026-11-24 验收，8 批次 / 20 任务，见 [E9 验收报告](e9-acceptance-report.md) |
 | E10 | Build & Release | ✅ 已完成 | 2026-11-26 验收，6 批次 / 20 任务，见 [E10 验收报告](e10-acceptance-report.md) |
-| E11 | Platformer Demo | ⬜ 未开始 | 系统级集成验收 |
+| E11 | Platformer Demo | ✅ 已完成 | 2026-11-26 验收，20 任务，见 [E11 验收报告](e11-acceptance-report.md) |
 | E12 | Productization | ⬜ 未开始 | 含存量文档归档 |
 
 ## 3. E0 任务明细（已完成）
@@ -59,7 +61,7 @@
 
 | 项 | 状态 / 数值 |
 | --- | --- |
-| 后端测试 | 491 passed（pytest，asyncio auto） |
+| 后端测试 | 916 passed，1 warning（E11 全量 pytest，见 §15） |
 | 契约校验 | 38 个 manifest 用例，Backend 与 Godot 双向验证（契约测试 42 passed） |
 | Godot 运行 | headless 编辑器模式加载插件、契约探针，E3 测试 68/68 passed，`exit 0` |
 | 打包（onedir） | 39.1 MB，冷启动到 `/health` 1248 ms，迁移与健康检查通过 |
@@ -706,16 +708,68 @@ M6 交付：`dashboard.py`（构建队列/制品/包/候选/审批/发布聚合�
 （构建 → 制品 → 包 → 候选 → 冒烟 → 用户审批 → 本地交付 → 发布后验证闭环，
 以及 `UNKNOWN` 构建恢复）。
 
-## 15. 已知问题与待办
+## 15. E11 实施进度（20 任务，验收通过）
+
+设计文档：[E11 Platformer Demo](../../完整开发计划细分/E11.md)。交付按 7 个批次：
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E11-M1 | T01 需求分析、T02 游戏设计、T03 技术架构 | ✅ 已完成 |
+| E11-M2 | T04 项目初始化与工程基础 | ✅ 已完成 |
+| E11-M3 | T05 玩家、T06 战斗、T07 敌人、T08 关卡、T09 收集与分数 | ✅ 已完成 |
+| E11-M4 | T10 UI 与流程、T11 表现层、T12 存档 | ✅ 已完成 |
+| E11-M5 | T13 多 Agent、T14 ChangeSet / Approval、T15 Context | ✅ 已完成 |
+| E11-M6 | T16 验证与 QA、T17 构建与发布 | ✅ 已完成 |
+| E11-M7 | T18 可观测性 / UX、T19 稳定性、T20 最终验收 | ✅ 已完成 |
+
+M1 交付：`modules/demo_game/{specification,models,repository,service}.py` 把 21 条需求、
+36 条验收条件、8 个机制、8 个功能、1 个关卡与 18 个测试场景编码为可追踪基线，
+支持规格冻结、条件/场景状态更新、验收结论（`ACCEPTED / ACCEPTED_WITH_NOTES / REJECTED`，
+拒绝必须带后续修复任务）与系统报告聚合；迁移 `000032` 新增 8 张 `demo_game_*` 表；
+新增 `demo.read / demo.manage / demo.accept` 权限（验收仅 Owner）；`app/api/demo.py`
+提供规格、需求、功能、机制、关卡、场景、验收与 `system-report` 端点。
+
+M2 交付：`demo/platformer/godot_project` 可被 Godot 4.5.1 打开，主场景
+`res://scenes/main/main.tscn`，5 个自动加载单例，`move_left / move_right / jump / attack /
+pause` 输入映射，960 × 540 `gl_compatibility`；`test_e11_godot_project.py` 校验工程设置、
+输入映射、场景/资源引用、资产齐备与无头冒烟入口。
+
+M3 交付：玩家控制器（移动/跳跃/攻击/受伤/死亡）、Hitbox/Hurtbox 战斗、巡逻敌人、
+`TileMapLayer` 地面与平台层、地刺陷阱、终点、金币/宝石收集与 ScoreManager；
+`runtime_verifier.tscn` 用真实输入驱动 24 项用例，全部 PASS。
+
+M4 交付：主菜单、HUD、暂停菜单、结算界面、`GameFlowManager`、`AudioManager`
+（BGM + 跳跃/受伤/收集音效）、`SaveManager`（最佳分数，损坏存档回退默认值）。
+
+M5 交付：复用 E4 ChangeSet 与 E7 多 Agent 编排；交付链路测试以真实文件 SHA-256
+登记交付物并完成 `VALID → APPROVED → APPLYING → APPLIED`，Context 装配返回项目层。
+
+M6 交付：`tests/integration/test_e11_delivery_chain.py` 在真实工程文件上执行
+STATIC / STRUCTURE / RESOURCE 三层验证，绑定 `runtime-verify.log` 作为真实运行证据；
+再以真实 Godot headless 导出 `PlatformerDemo.exe`，完成不可变制品、交付包、发布候选、
+冒烟（`exported-smoke.log`，13 项检查）、用户审批、本地交付与发布后哈希复核。
+
+M7 交付：`system-report` 聚合规格覆盖度、需求追踪、验证与构建摘要；用户验收
+`ACCEPTED_WITH_NOTES`（视觉/音频保留人工确认）；输出 [E11 验收报告](e11-acceptance-report.md)
+与 [Demo 交付说明](../../demo/platformer/reports/acceptance-report.md)。
+
+质量门禁：E11 测试 17 passed（规格 6 / 工程 9 / 交付链路 2），后端全量 pytest 916 passed / 1 warning（956.89s），
+ruff check / format 全通过，结构检查与敏感扫描通过，契约 57 passed，迁移 head `000032`，
+Godot 运行时验证 24 / 24，导出冒烟 PASS。
+
+## 16. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
 | Godot runtime 首次启动 `signal 11`，根因未确证，已不再复现 | E9 | E9 已建立 runtime 冒烟与 `UNKNOWN` 保守映射；真实启动链路留 E11 复验 |
-| Runtime 自动化使用可注入 Driver，CI 未拉起真实 Godot | E9 / E11 | E11 Demo 接入真实运行时与截图管线 |
+| Runtime 自动化使用可注入 Driver，CI 未拉起真实 Godot | E9 / E11 | ✅ E11 接入真实 headless 运行时（24 项用例）；截图/视觉差异管线仍未接入 |
 | Godot 4.5.1 导出模板 | E10 | ✅ 已安装（`%APPDATA%\Godot\export_templates\4.5.1.stable`） |
 | 无 Python 干净机器上的打包验证 | E10 | 待安装包制作时执行 |
 | CI 未覆盖打包冒烟与 Markdown 链接检查 | E10 / E12 | 待补 |
 | onefile 便携产物的杀软误报 | E10 | 分发前在目标环境实测 |
+| Demo 视觉为静态占位 SVG，无逐帧动画；音频为占位音效 | E11 | P1 表现层，视觉/音频需人工确认 |
+| Demo 未登记 12 Phase 专用 Workflow 模板，未新增独立多 Agent 编排场景 | E11 | 复用 E4 Workflow 与 E7 `game_workflow_service` / E2E 证据 |
+| 导出产物（约 92 MB）不入库，CI 无 Godot 时跳过真实导出用例 | E11 | 需可执行文件时在目标环境重新导出 |
 | 管理界面为浏览器单页，未提供 Godot 编辑器 Dock | E5+ | 本期按最小实现处理 |
 | Workflow 未实现并行分支与节点超时重试 | E5+ | 后续 Workflow 增强 |
 | 启动恢复将未完成 Attempt 置 `UNKNOWN`、Task 置 `BLOCKED` | E5 | 自动重试策略由 Agent 执行层实现 |
@@ -726,7 +780,7 @@ M6 交付：`dashboard.py`（构建队列/制品/包/候选/审批/发布聚合�
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 16. 维护规则
+## 17. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。

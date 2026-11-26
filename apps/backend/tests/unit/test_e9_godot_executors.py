@@ -88,6 +88,27 @@ async def test_scene_executor_reports_structure_failure(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_scene_executor_accepts_instanced_nodes(tmp_path: Path) -> None:
+    _write(tmp_path / "project.godot", "config_version=5\n")
+    _write(tmp_path / "hud.tscn", '[gd_scene format=3]\n\n[node name="Hud" type="Control"]\n')
+    _write(
+        tmp_path / "main.tscn",
+        "[gd_scene load_steps=2 format=3]\n\n"
+        '[ext_resource type="PackedScene" path="res://hud.tscn" id="1"]\n\n'
+        '[node name="Main" type="Node"]\n\n'
+        '[node name="Hud" parent="." instance=ExtResource("1")]\n',
+    )
+
+    outcome = await SceneStructureExecutor(
+        tmp_path,
+        scenes=("main.tscn",),
+        required=(NodeRequirement(scene="main.tscn", path="Hud", type="INSTANCE"),),
+    )(None)  # type: ignore[arg-type]
+
+    assert outcome.result_status == "PASSED", outcome.failure_reason
+
+
+@pytest.mark.asyncio
 async def test_resource_executor_detects_missing_import(tmp_path: Path) -> None:
     _write(tmp_path / "art" / "icon.png", "png")
 
