@@ -15,10 +15,12 @@ from fastapi.routing import APIRoute
 
 from app.api.agents import router as agents_router
 from app.api.approvals import router as approvals_router
+from app.api.artifacts import router as artifacts_router
 from app.api.assets import router as assets_router
 from app.api.auth import protected_router as auth_protected_router
 from app.api.auth import router as auth_router
 from app.api.bridge import router as bridge_router
+from app.api.builds import router as builds_router
 from app.api.changesets import router as changesets_router
 from app.api.clients import router as clients_router
 from app.api.diagnostics import v1_router as diagnostics_router
@@ -28,6 +30,7 @@ from app.api.models import router as models_router
 from app.api.multi_agent import router as multi_agent_router
 from app.api.projects import router as projects_router
 from app.api.projects_v1 import router as projects_v1_router
+from app.api.releases import router as releases_router
 from app.api.sessions import router as sessions_router
 from app.api.system import router as system_router
 from app.api.system import status_router as system_status_router
@@ -63,6 +66,9 @@ ROUTERS: tuple[tuple[str, APIRouter], ...] = (
     ("bridge", bridge_router),
     ("assets", assets_router),
     ("verification", verification_router),
+    ("builds", builds_router),
+    ("artifacts", artifacts_router),
+    ("releases", releases_router),
 )
 
 

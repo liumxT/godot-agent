@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 from sqlalchemy import func, select
@@ -63,6 +64,18 @@ from modules.asset_pipeline.versioning import AssetVersionService
 from modules.audit.service import AuditService
 from modules.bridge_event.service import BridgeEventService
 from modules.bridge_metrics import BridgeMetrics
+from modules.build_release.adapter import GodotHeadlessAdapter, LocalProcessExecutor
+from modules.build_release.artifacts import ArtifactRegistryService
+from modules.build_release.dashboard import BuildReleaseDashboardService
+from modules.build_release.orchestrator import BuildOrchestrator
+from modules.build_release.packaging import PackagingService
+from modules.build_release.provenance import BuildProvenanceService
+from modules.build_release.release_approvals import ReleaseApprovalService
+from modules.build_release.release_candidates import ReleaseCandidateService
+from modules.build_release.release_manager import ReleaseManagerService
+from modules.build_release.service import BuildReleaseService
+from modules.build_release.signing import SigningService
+from modules.build_release.smoke_test import ArtifactVerificationService, SmokeTestService
 from modules.changeset.repository import ChangeSetRepository
 from modules.changeset.service import ChangeSetService
 from modules.client.service import AuthCleanupTask, AuthService, ClientService
@@ -826,6 +839,76 @@ def register_startup_steps(
         services.register(
             "verification_orchestrator",
             VerificationOrchestrator(services.get("verification_service", VerificationService)),
+        )
+        build_release_service = BuildReleaseService(database)
+        services.register("build_release_service", build_release_service)
+        await build_release_service.ensure_platform_capabilities()
+        services.register(
+            "build_orchestrator",
+            BuildOrchestrator(
+                database,
+                builds=build_release_service,
+                executor=LocalProcessExecutor(),
+                godot_adapter=GodotHeadlessAdapter(os.environ.get("GODOT_BIN", "godot")),
+                projects=services.try_get("project_registry_service"),
+            ),
+        )
+        artifact_service = ArtifactRegistryService(database)
+        services.register("artifact_registry_service", artifact_service)
+        services.register(
+            "packaging_service",
+            PackagingService(database, artifacts=artifact_service),
+        )
+        services.register("provenance_service", BuildProvenanceService(database))
+        services.register(
+            "artifact_verification_service",
+            ArtifactVerificationService(database, artifacts=artifact_service),
+        )
+        services.register(
+            "smoke_test_service",
+            SmokeTestService(database, provenance=services.get("provenance_service")),
+        )
+        services.register(
+            "release_candidate_service",
+            ReleaseCandidateService(
+                database,
+                artifacts=artifact_service,
+                packages=services.get("packaging_service"),
+            ),
+        )
+        services.register(
+            "signing_service",
+            SigningService(
+                database,
+                artifacts=artifact_service,
+                provenance=services.get("provenance_service"),
+            ),
+        )
+        services.register(
+            "release_approval_service",
+            ReleaseApprovalService(
+                database,
+                candidates=services.get("release_candidate_service"),
+                artifacts=artifact_service,
+                packages=services.get("packaging_service"),
+                provenance=services.get("provenance_service"),
+            ),
+        )
+        services.register(
+            "release_manager_service",
+            ReleaseManagerService(
+                database,
+                approvals=services.get("release_approval_service"),
+                candidates=services.get("release_candidate_service"),
+                artifacts=artifact_service,
+                packages=services.get("packaging_service"),
+                projects=services.try_get("project_registry_service"),
+                provenance=services.get("provenance_service"),
+            ),
+        )
+        services.register(
+            "build_release_dashboard_service",
+            BuildReleaseDashboardService(database),
         )
         services.register(
             "asset_dashboard_service",

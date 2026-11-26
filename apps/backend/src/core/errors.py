@@ -832,6 +832,139 @@ class PhaseReviewInvalid(AppError):
     status_code = 422
 
 
+class BuildStateInvalid(AppError):
+    """E10：构建对象当前状态不允许该操作或迁移。"""
+
+    code = "BUILD_STATE_INVALID"
+    status_code = 409
+
+
+class BuildConfigurationInvalid(AppError):
+    """E10：构建配置字段、平台、预算或环境变量白名单不合法。"""
+
+    code = "BUILD_CONFIGURATION_INVALID"
+    status_code = 422
+
+
+class ExportPresetInvalid(AppError):
+    """E10：Export Preset 缺失、平台不匹配或模板不可用。"""
+
+    code = "EXPORT_PRESET_INVALID"
+    status_code = 422
+
+
+class BuildEnvironmentNotReady(AppError):
+    """E10：构建环境未就绪或有阻断项，禁止启动构建。"""
+
+    code = "BUILD_ENVIRONMENT_NOT_READY"
+    status_code = 409
+
+
+class BuildPathInvalid(AppError):
+    """E10：构建路径逃逸或不符合白名单限制。"""
+
+    code = "BUILD_PATH_INVALID"
+    status_code = 422
+
+
+class BuildExecutorError(AppError):
+    """E10：受控构建执行器启动或监控失败。"""
+
+    code = "BUILD_EXECUTOR_ERROR"
+    status_code = 502
+
+
+class ArtifactImmutable(AppError):
+    """E10：已注册 Artifact 内容不可修改，必须生成新版本。"""
+
+    code = "ARTIFACT_IMMUTABLE"
+    status_code = 409
+
+
+class ArtifactHashMismatch(AppError):
+    """E10：制品内容哈希与登记值不一致，禁止交付。"""
+
+    code = "ARTIFACT_HASH_MISMATCH"
+    status_code = 409
+
+
+class ArtifactVerificationInvalid(AppError):
+    """E10：制品验证请求或结果不合法。"""
+
+    code = "ARTIFACT_VERIFICATION_INVALID"
+    status_code = 422
+
+
+class PackageInvalid(AppError):
+    """E10：交付包内容、策略或清单不合法。"""
+
+    code = "PACKAGE_INVALID"
+    status_code = 422
+
+
+class ReleaseCandidateInvalid(AppError):
+    """E10：发布候选缺依赖、快照或版本号不合法。"""
+
+    code = "RELEASE_CANDIDATE_INVALID"
+    status_code = 422
+
+
+class ReleaseCandidateNotReady(AppError):
+    """E10：发布候选未满足门禁，不能进入审批或发布。"""
+
+    code = "RELEASE_CANDIDATE_NOT_READY"
+    status_code = 409
+
+
+class ReleaseApprovalRequired(AppError):
+    """E10：缺少有效发布审批，禁止正式发布。"""
+
+    code = "RELEASE_APPROVAL_REQUIRED"
+    status_code = 409
+
+
+class ReleaseApprovalMismatch(AppError):
+    """E10：审批绑定的制品/清单/版本与当前内容不一致。"""
+
+    code = "RELEASE_APPROVAL_MISMATCH"
+    status_code = 409
+
+
+class SigningInvalid(AppError):
+    """E10：签名配置、凭证引用或签名对象不合法。"""
+
+    code = "SIGNING_INVALID"
+    status_code = 422
+
+
+class SigningUnknown(AppError):
+    """E10：签名结果不明确，必须先核对再决定是否重试。"""
+
+    code = "SIGNING_UNKNOWN"
+    status_code = 409
+
+
+class ReleaseStateInvalid(AppError):
+    """E10：发布对象当前状态不允许该操作或迁移。"""
+
+    code = "RELEASE_STATE_INVALID"
+    status_code = 409
+
+
+class DistributionInvalid(AppError):
+    """E10：分发目标、渠道能力或交付操作不合法。"""
+
+    code = "DISTRIBUTION_INVALID"
+    status_code = 422
+
+
+class BuildRecoveryRequired(AppError):
+    """E10：存在 UNKNOWN 状态，必须先完成状态核对。"""
+
+    code = "BUILD_RECOVERY_REQUIRED"
+    status_code = 409
+
+
 def iter_error_types() -> list[type[AppError]]:
     """返回 AppError 及其全部子类，用于错误码登记检查。"""
 

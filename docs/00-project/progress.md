@@ -1,26 +1,26 @@
 # 项目进度表
 
-> 更新于 2026-11-24（E9 完成）。
+> 更新于 2026-11-26（E10 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
 > [E2 安全测试报告](e2-security-test-report.md)、[E2 验收报告](e2-acceptance-report.md)、
 > [E3 验收报告](e3-acceptance-report.md)、[E4 验收报告](e4-acceptance-report.md)、
 > [E5 验收报告](e5-acceptance-report.md)、[E6 验收报告](e6-acceptance-report.md)、
-> [E7 验收报告](e7-acceptance-report.md)、[E8 验收报告](e8-acceptance-report.md) 与
-> [E9 验收报告](e9-acceptance-report.md)。
+> [E7 验收报告](e7-acceptance-report.md)、[E8 验收报告](e8-acceptance-report.md)、
+> [E9 验收报告](e9-acceptance-report.md) 与 [E10 验收报告](e10-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E9 Verification & QA（已完成，M8 / 8）** |
-| 阶段进度 | 10 / 13 完成（E0–E9），E9 批次 8 / 8 |
+| 当前阶段 | **E10 Build & Release（已完成，M6 / 6）** |
+| 阶段进度 | 11 / 13 完成（E0–E10），E10 批次 6 / 6 |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 860 passed，1 warning（E9 全量 pytest，654.29s），ruff 全通过 |
+| 后端测试 | 898 passed，1 warning（E10 全量 pytest，834.97s），ruff 全通过 |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
-| 数据库迁移 | head 为 `000027` |
+| 数据库迁移 | head 为 `000031` |
 
 ## 2. 阶段总览
 
@@ -36,7 +36,7 @@
 | E7 | Multi-Agent & Game Development | ✅ 已完成 | 2026-11-23 验收，7 批次 / 22 任务，见 [E7 验收报告](e7-acceptance-report.md) |
 | E8 | Asset Pipeline | ✅ 已完成 | 2026-11-24 验收，8 批次 / 20 任务，见 [E8 验收报告](e8-acceptance-report.md) |
 | E9 | Verification & QA | ✅ 已完成 | 2026-11-24 验收，8 批次 / 20 任务，见 [E9 验收报告](e9-acceptance-report.md) |
-| E10 | Build & Release | ⬜ 未开始 | 导出模板已就绪，见 §14 |
+| E10 | Build & Release | ✅ 已完成 | 2026-11-26 验收，6 批次 / 20 任务，见 [E10 验收报告](e10-acceptance-report.md) |
 | E11 | Platformer Demo | ⬜ 未开始 | 系统级集成验收 |
 | E12 | Productization | ⬜ 未开始 | 含存量文档归档 |
 
@@ -659,7 +659,54 @@ Agent 策略与预算 API；新增 `tests/unit/test_e9_agent_policy.py`、
 （Platformer 验证闭环 + 缺陷修复回归闭环）；[E9 验收报告](e9-acceptance-report.md)。
 E9 共 26 个测试文件（25 个业务 + 1 个契约）/ 132 个业务测试函数。阶段完成，可进入 E10 Build & Release。
 
-## 14. 已知问题与待办
+## 14. E10 实施进度（6 批次 / 20 任务，验收通过）
+
+设计文档：[E10 Build & Release](../../完整开发计划细分/E10.md)。批次按依赖划分：
+
+| 批次 | 任务 | 状态 |
+| --- | --- | --- |
+| E10-M1 | T01 领域与状态机、T02 构建配置与版本、T03 Export Preset、T04 环境管理 | ✅ 已完成 |
+| E10-M2 | T05 Build Orchestrator、T06 Godot Headless Adapter、T07 平台导出适配器、T17 恢复 | ✅ 已完成 |
+| E10-M3 | T08 Artifact Registry、T09 Packaging、T13 Provenance / Evidence | ✅ 已完成 |
+| E10-M4 | T11 Release Candidate、T14 Artifact Verification / Smoke Test | ✅ 已完成 |
+| E10-M5 | T10 Signing & Secrets、T12 Release Approval、T15 Release Manager、T16 Local Distribution | ✅ 已完成 |
+| E10-M6 | T18 Dashboard / UI、T19 Agent 集成、T20 Platformer Demo 验收、验收报告 | ✅ 已完成 |
+
+M1 交付：`modules/build_release/models.py` 建立 Build Configuration / Version / Export
+Preset / Environment / Platform Capability / Build Job / Attempt / Log 表与状态机，
+`service.py` 提供配置版本快照（未变化拒绝发布新版本）、Environment 指纹去重与
+`READY / READY_WITH_WARNINGS / BLOCKED` 判定、平台能力默认集；迁移 `000028`；
+新增 E10 错误码与 `build.* / artifact.* / release.* / signing.* / distribution.*`
+权限动作。
+
+M2 交付：`adapter.py`（受控执行器：可执行文件白名单、路径守卫、环境变量白名单、
+超时与日志脱敏、`EXEC_*` 结果）、`orchestrator.py`（启动前门禁全部通过后才进入
+`PREPARING/RUNNING`；exit=0 但无产物仍失败；超时/无法判定进入 `UNKNOWN`；
+`recover_build` 依据产物存在性收敛，禁止直接重试 `UNKNOWN`）。
+
+M3 交付：`artifacts.py`（内容不可变：同内容幂等、不同内容新版本；manifest 哈希重算
+校验完整性）、`packaging.py`（清单哈希 + 包哈希、绑定校验失败转 `REJECTED`）、
+`provenance.py`（按 build/attempt 幂等，追加 signing/approval/distribution 等证据）；
+迁移 `000029`。
+
+M4 交付：`smoke_test.py`（`SKIPPED ≠ PASSED`，空检查不得通过；冒烟结果写入证据）、
+`release_candidates.py`（候选要求制品与交付包均 `VERIFIED` 且绑定一致；校验清单哈希、
+制品验证、包验证、冒烟通过、验证证据，失败转 `REJECTED`，通过转
+`READY_FOR_APPROVAL`）；迁移 `000030`。
+
+M5 交付：`signing.py`（只保存证书/凭证引用，明文密钥拒绝；UNKNOWN 必须核对后收敛；
+失败不覆盖制品）、`release_approvals.py`（审批绑定候选清单/制品/包哈希，内容变化
+自动失效；审批结果写证据）、`release_manager.py` 与 `distribution.py`（发布状态机、
+本地交付幂等键、复制后哈希校验、发布后验证、撤回与回滚标记）；迁移 `000031`。
+
+M6 交付：`dashboard.py`（构建队列/制品/包/候选/审批/发布聚合与渠道能力）、
+`agent_policy.py`（11 项允许操作、7 项禁止操作、5 个 Agent 角色权限矩阵）；
+`app/api/releases.py` 与 `app/api/builds.py`、`app/api/artifacts.py` 覆盖签名、
+审批、发布与分发；新增 `tests/integration/test_e10_acceptance.py`
+（构建 → 制品 → 包 → 候选 → 冒烟 → 用户审批 → 本地交付 → 发布后验证闭环，
+以及 `UNKNOWN` 构建恢复）。
+
+## 15. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
@@ -679,7 +726,7 @@ E9 共 26 个测试文件（25 个业务 + 1 个契约）/ 132 个业务测试�
 | 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 15. 维护规则
+## 16. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。
