@@ -186,7 +186,7 @@ Godot AI Agent Platform 是一个为 Godot 游戏开发引擎设计的 AI 辅助
 | **运维手册** | [docs/04-operations/runbooks.md](../04-operations/runbooks.md) |
 | **发布说明 v1.0.0** | [docs/05-product/release-notes/v1.0.0.md](../05-product/release-notes/v1.0.0.md) |
 | **架构文档** | [docs/02-architecture/](../02-architecture/) |
-| **API 文档** | [docs/05-api/](../05-api/) |
+| **API 契约** | [packages/contracts/](../../packages/contracts/) |
 | **验收报告（13 份）** | [docs/00-project/](.) |
 
 ### 5.3 发布产物

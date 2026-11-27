@@ -123,8 +123,8 @@ Godot AI Agent Platform 在 Godot 编辑器旁运行一个本地后端，通过 
 
 安装完成后，可通过以下方式验证：
 
-- 访问 `http://127.0.0.1:8000/api/v1/product/info`（需认证）
-- 访问 `http://127.0.0.1:8000/health/ready`（健康检查）
+- 访问 `http://127.0.0.1:8765/api/v1/product/info`（需认证）
+- 访问 `http://127.0.0.1:8765/health/ready`（健康检查）
 - Godot 插件面板显示"已连接"
 
 ---
@@ -141,7 +141,7 @@ Godot AI Agent Platform 在 Godot 编辑器旁运行一个本地后端，通过 
 ### 3.2 连接后端
 
 1. 在 `AI Agent` 面板点击"连接后端"
-2. 后端地址默认 `http://127.0.0.1:8000`，可修改
+2. 后端地址默认 `http://127.0.0.1:8765`，可修改
 3. 连接成功后显示：
    - 认证状态：已认证
    - Session ID：当前会话
@@ -613,7 +613,7 @@ API Key、Token 等敏感值**只能**使用以下引用格式：
 
 | 现象 | 可能原因 | 处理方式 |
 | --- | --- | --- |
-| 插件无法连接后端 | 后端未启动 / 端口被占 / Session 过期 | 检查后端进程、端口 8000、重新连接 |
+| 插件无法连接后端 | 后端未启动 / 端口被占 / Session 过期 | 检查后端进程、端口 8765、重新连接 |
 | 启动提示 schema 过高 | 数据库版本高于产品支持版本 | 使用匹配的新版本产品，或从备份恢复 |
 | 模型不可用 | API Key 无效 / 模型未注册 / 网络问题 | 检查 Key、注册模型、检查网络 |
 | 更新被拒绝 | 签名无效 / 哈希不符 / 降级 / 未批准 | 检查更新通道与签名，获取有效更新包 |
@@ -666,26 +666,24 @@ API Key、Token 等敏感值**只能**使用以下引用格式：
 
 ### 17.3 配置关键字段速查
 
+以下为后端真实环境变量（前缀 `GODOT_AI_`，对应 `apps/backend/src/config/settings.py` 的 `Settings` 字段）。安装器附带的 `Start-Backend.cmd` 已自动设置数据目录与 `GODOT_AI_DATABASE_URL`，一般无需手动配置。
+
 ```ini
-# 模型
-provider.default = openai
-model.default = gpt-4o
+# 网络：仅允许回环地址
+GODOT_AI_HOST=127.0.0.1
+GODOT_AI_PORT=8765
 
-# 安全
-security.require_signature = true
-security.clock_tolerance_seconds = 300
+# 数据与数据库（GODOT_AI_DATABASE_URL 为必填，缺失即拒绝启动）
+GODOT_AI_DATA_DIR=<数据目录>/data
+GODOT_AI_DATABASE_URL=sqlite+aiosqlite:///<数据目录>/data/godot_ai_agent.db
+GODOT_AI_LOG_DIR=<数据目录>/logs
 
-# 更新
-update.channel = STABLE
-update.require_user_approval = true
-
-# 隐私
-privacy.telemetry_default = OFF
-
-# 预算
-budget.max_tokens_per_task = 100000
-budget.max_cost_per_task = 1.00
+# 运行环境与模型 Provider（none / openai / anthropic / 本地）
+GODOT_AI_ENVIRONMENT=development
+GODOT_AI_MODEL_PROVIDER=none
 ```
+
+> API Key、Token 不属于上述环境变量，统一经系统凭据库存储，在配置中以 `cred://` 等引用（见第 12.3 节）。
 
 ### 17.4 命令行速查
 
