@@ -35,6 +35,7 @@
 - [开发者与集成指南](05-product/developer-guide.md)
 - [运维手册（Runbook）](04-operations/runbooks.md)
 - [产品发布目录说明](../release/README.md)
+- [发布说明 v1.0.0 GA](05-product/release-notes/v1.0.0.md)
 
 ### 流程与管理
 

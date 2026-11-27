@@ -20,5 +20,6 @@ python scripts/release/build_product.py --output release
 | `verification/` | GA 验收证据（测试、兼容性、安装冒烟、回滚演练） |
 
 发布门禁：候选必须签名、包含 SBOM 与 7 类证据，经 admin 审批后才能发布。
-参见 [运维手册](../docs/04-operations/runbooks.md) 与
-[开发者指南](../docs/05-product/developer-guide.md)。
+参见 [运维手册](../docs/04-operations/runbooks.md)、
+[开发者指南](../docs/05-product/developer-guide.md) 与
+[发布说明 v1.0.0 GA](../docs/05-product/release-notes/v1.0.0.md)。
