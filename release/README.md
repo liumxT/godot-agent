@@ -23,3 +23,30 @@ python scripts/release/build_product.py --output release
 参见 [运维手册](../docs/04-operations/runbooks.md)、
 [开发者指南](../docs/05-product/developer-guide.md) 与
 [发布说明 v1.0.0 GA](../docs/05-product/release-notes/v1.0.0.md)。
+
+## Windows 安装器（已构建）
+
+- 产物：`installers/windows/GodotAIAgent-Setup-1.0.0.exe`（约 35 MB）
+- SHA-256：`7D9CC3E319B609EDEAAA7B6DA125C774727557904F913A042A6E4C879399D370`
+- 内含：E12 后端 `godot-ai-backend.exe`（PyInstaller onefile，含 product 模块与全部 33 个迁移）、
+  `Start-Backend.cmd` 启动脚本、Godot 插件、用户/开发/运维文档。
+- 默认安装到用户目录（`%LOCALAPPDATA%\Programs\GodotAIAgent`），无需管理员；
+  数据目录 `%LOCALAPPDATA%\GodotAIAgent` 与安装目录分离，卸载保留用户数据。
+- 启动脚本自动设置 `GODOT_AI_DATABASE_URL` 等，开箱即用；已验证安装后
+  `Start-Backend.cmd --migrate` 可将数据库升级到 head `000033`。
+
+重建步骤：
+
+```powershell
+# 1. 构建后端 exe（apps/backend 下）
+cd apps/backend
+.\.venv\Scripts\python.exe -m PyInstaller godot-ai-backend.spec --noconfirm `
+  --distpath ..\..\artifacts\dist-e12 --workpath ..\..\artifacts\build-e12
+
+# 2. 编译安装器（仓库根目录；ISCC 以便携模式置于 .tools/innosetup）
+.tools\innosetup\ISCC.exe scripts\release\installer-windows.iss
+```
+
+构建脚本：[installer-windows.iss](../scripts/release/installer-windows.iss)、
+[godot-ai-backend.spec](../apps/backend/godot-ai-backend.spec)、
+[Start-Backend.cmd](../scripts/release/packaging/Start-Backend.cmd)。

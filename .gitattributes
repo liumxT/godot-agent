@@ -8,6 +8,10 @@
 *.md text eol=lf
 *.json text eol=lf
 
+# Windows 批处理必须 CRLF，否则 cmd.exe 解析失败
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
 *.png binary
 *.jpg binary
 *.jpeg binary
