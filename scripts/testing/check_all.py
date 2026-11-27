@@ -91,7 +91,12 @@ class StageResult:
     duration_ms: int
 
 
-def _run(command: list[str], cwd: Path, timeout: int = 600) -> tuple[int, str]:
+def _run(
+    command: list[str],
+    cwd: Path,
+    timeout: int = 600,
+    env: dict[str, str] | None = None,
+) -> tuple[int, str]:
     completed = subprocess.run(
         command,
         cwd=cwd,
@@ -99,6 +104,7 @@ def _run(command: list[str], cwd: Path, timeout: int = 600) -> tuple[int, str]:
         text=True,
         timeout=timeout,
         check=False,
+        env=env,
     )
     return completed.returncode, (completed.stdout + completed.stderr).strip()
 
@@ -191,13 +197,32 @@ def _godot_binary() -> str | None:
     return shutil.which("godot") or shutil.which("godot4")
 
 
+def _godot_env(name: str) -> dict[str, str]:
+    """为 Godot 编辑器提供隔离的配置与用户数据目录。
+
+    多个 Godot 实例共用全局编辑器设置（Windows 的 APPDATA、Linux 的 XDG）
+    时会争用 editor_settings 与 user:// 文件，导致设置写盘失败、凭证读写失败。
+    每个阶段使用独立目录，既避免争用，也不会污染开发者本机的真实设置。
+    """
+
+    config_root = ROOT / "artifacts" / "godot-config" / name
+    config_root.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    env["APPDATA"] = str(config_root)
+    env["XDG_CONFIG_HOME"] = str(config_root / "config")
+    env["XDG_DATA_HOME"] = str(config_root / "data")
+    return env
+
+
 def stage_godot() -> str:
     binary = _godot_binary()
     if binary is None:
         return "SKIP: 未找到 Godot，可设置 GODOT_BIN"
+    env = _godot_env("plugin")
     code, output = _run(
         [binary, "--headless", "--path", str(GODOT_PROJECT), "--editor", "--quit"],
         ROOT,
+        env=env,
     )
     if code != 0:
         raise AssertionError(output[-2000:])
@@ -216,6 +241,7 @@ def stage_godot() -> str:
             "--contract-test",
         ],
         ROOT,
+        env=env,
     )
     if code != 0:
         raise AssertionError(output[-2000:])
@@ -239,12 +265,13 @@ def stage_godot_bridge() -> str:
     ]
     summary: tuple[int, int] | None = None
     last_output = ""
+    env = _godot_env("bridge")
     for attempt in range(2):
         # Godot 编辑器退出后仍可能在保存项目缓存，紧接着启动会读到旧锁并异常退出。
         # 前序阶段会留下导入/设置写盘线程，启动扫描被拖慢时 1200 帧可能不足以跑完测试，
         # 因此给测试运行器留出更大的帧数上限；测试完成会主动 quit，不影响正常耗时。
         time.sleep(3.0)
-        code, output = _run(command, ROOT)
+        code, output = _run(command, ROOT, env=env)
         last_output = output
         summary = _godot_test_summary(output)
         if summary is not None:
