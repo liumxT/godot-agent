@@ -28,6 +28,7 @@ import argparse
 import hashlib
 import json
 import platform
+import shutil
 import sys
 from datetime import UTC, datetime
 from importlib import metadata
@@ -73,6 +74,65 @@ SUBDIRS = (
     "verification",
 )
 
+# 组装（assemble）源：已构建产物/文档/证据，源存在才复制，缺失则记入 skipped。
+BACKEND_EXE_SRC = ROOT / "artifacts" / "dist-e12" / "godot-ai-backend.exe"
+BACKEND_LAUNCHER_SRC = ROOT / "scripts" / "release" / "packaging" / "Start-Backend.cmd"
+PLUGIN_SRC = ROOT / "apps" / "godot-plugin" / "addons" / "godot_ai_agent"
+ASSEMBLE_DOCS = (
+    "docs/05-product/user-guide.md",
+    "docs/05-product/usage-manual.md",
+    "docs/05-product/developer-guide.md",
+    "docs/04-operations/runbooks.md",
+    "docs/05-product/release-notes/v1.0.0.md",
+)
+VERIFICATION_SRC = {
+    "ci-report.md": ROOT / "artifacts" / "ci-report.md",
+    "full-test-report.md": ROOT / "artifacts" / "full-test-report.md",
+}
+
+
+def assemble(output: Path) -> dict[str, object]:
+    """把已构建的产物、插件、文档与 GA 证据复制进 release 目录。
+
+    源缺失时跳过并记录，不强制失败（exe 可能尚未打包）。本步骤只做组装，
+    不替代 PyInstaller 打包、插件导出或安装器编译。
+    """
+
+    copied: list[str] = []
+    skipped: list[str] = []
+
+    def _copy_file(src: Path, dest: Path) -> None:
+        if src.exists():
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest)
+            copied.append(str(dest.relative_to(output)))
+        else:
+            skipped.append(str(src.relative_to(ROOT)))
+
+    # 后端可执行文件与启动脚本
+    _copy_file(BACKEND_EXE_SRC, output / "backend" / "godot-ai-backend.exe")
+    _copy_file(BACKEND_LAUNCHER_SRC, output / "backend" / "Start-Backend.cmd")
+
+    # Godot 插件（整目录）
+    if PLUGIN_SRC.exists():
+        dest = output / "godot_plugin" / "addons" / "godot_ai_agent"
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(PLUGIN_SRC, dest)
+        copied.append("godot_plugin/addons/godot_ai_agent")
+    else:
+        skipped.append(str(PLUGIN_SRC.relative_to(ROOT)))
+
+    # 文档
+    for rel in ASSEMBLE_DOCS:
+        _copy_file(ROOT / rel, output / "documentation" / Path(rel).name)
+
+    # GA 验收证据
+    for name, src in VERIFICATION_SRC.items():
+        _copy_file(src, output / "verification" / name)
+
+    return {"copied": copied, "skipped": skipped}
+
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -102,7 +162,9 @@ def _sbom() -> dict[str, object]:
 
 
 def validate_tree() -> list[str]:
-    problems = [f"缺少交付物: {path}" for path in REQUIRED_PATHS if not (ROOT / path).exists()]
+    problems = [
+        f"缺少交付物: {path}" for path in REQUIRED_PATHS if not (ROOT / path).exists()
+    ]
     problems += [
         f"组件未登记: {item.component_id}"
         for item in COMPONENTS
@@ -172,6 +234,7 @@ def build(output: Path) -> dict[str, object]:
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True),
         encoding="utf-8",
     )
+    manifest["assemble"] = assemble(output)
     return manifest
 
 

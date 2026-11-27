@@ -1,11 +1,17 @@
 # 产品发布目录
 
-本目录由 `scripts/release/build_product.py` 生成或组装，二进制产物不入库。
+本目录由 `scripts/release/build_product.py` 生成或组装，二进制产物不入库（仅 `README.md` 入库）。
 
 ```powershell
-python scripts/release/build_product.py --check
-python scripts/release/build_product.py --output release
+python scripts/release/build_product.py --check           # 仅校验交付物
+python scripts/release/build_product.py --output release  # 生成清单/SBOM 并组装产物
 ```
+
+`--output` 会生成清单、契约、兼容性矩阵与 SBOM，并把已构建产物组装进目录：
+后端 `godot-ai-backend.exe` 与启动脚本（来自 `artifacts/dist-e12`）、Godot 插件
+（`godot_plugin/addons/godot_ai_agent`）、核心文档（`documentation/`）、GA 证据
+（`verification/`：CI 报告、完整测试报告、安装器冒烟 `installer-smoke.json`）。
+源缺失时跳过并记录于输出 `assemble.skipped`。
 
 ## 目录结构
 
