@@ -59,6 +59,7 @@
 - [E10 验收报告](00-project/e10-acceptance-report.md)
 - [E11 验收报告](00-project/e11-acceptance-report.md)
 - [E12 验收报告](00-project/e12-acceptance-report.md)
+- [项目交付总结报告](00-project/project-delivery-summary.md)
 - [Platformer Demo 交付说明](../demo/platformer/reports/acceptance-report.md)
 
 ### 架构设计
