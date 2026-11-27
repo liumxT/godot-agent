@@ -57,5 +57,9 @@ artifacts/
 # 本地工具链（Godot 可执行文件等，不入库）
 .tools/
 
+# 产品发布产物（由 scripts/release/build_product.py 生成，二进制不入库）
+/release/*
+!/release/README.md
+
 # Demo 证据日志必须入库（E11 验收依赖）
 !demo/platformer/reports/evidence/*.log

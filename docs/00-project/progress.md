@@ -1,6 +1,6 @@
 # 项目进度表
 
-> 更新于 2026-11-26（E11 完成）。
+> 更新于 2026-11-27（E12 完成）。
 > 阶段划分依据 [完整开发计划细分/](../../完整开发计划细分/)（E0–E12）。
 > 单阶段细节见 [E0 验收报告](e0-acceptance-report.md)、[E0 测试报告](e0-test-report.md)、
 > [E1 测试报告](e1-test-report.md)、[E1 验收报告](e1-acceptance-report.md)、
@@ -8,21 +8,21 @@
 > [E3 验收报告](e3-acceptance-report.md)、[E4 验收报告](e4-acceptance-report.md)、
 > [E5 验收报告](e5-acceptance-report.md)、[E6 验收报告](e6-acceptance-report.md)、
 > [E7 验收报告](e7-acceptance-report.md)、[E8 验收报告](e8-acceptance-report.md)、
-> [E9 验收报告](e9-acceptance-report.md)、[E10 验收报告](e10-acceptance-report.md) 与
-> [E11 验收报告](e11-acceptance-report.md)。
+> [E9 验收报告](e9-acceptance-report.md)、[E10 验收报告](e10-acceptance-report.md)、
+> [E11 验收报告](e11-acceptance-report.md) 与 [E12 验收报告](e12-acceptance-report.md)。
 
 ## 1. 总体进度
 
 | 项 | 状态 |
 | --- | --- |
-| 当前阶段 | **E11 Platformer Demo（已完成，20 / 20 任务）** |
-| 阶段进度 | 12 / 13 完成（E0–E11），E11 全部任务完成 |
+| 当前阶段 | **E12 Productization（已完成，20 / 20 任务，GA Ready）** |
+| 阶段进度 | 13 / 13 完成（E0–E12） |
 | 仓库 | `github.com/liumxT/godot-agent`，分支 `main` |
 | CI | GitHub Actions 双 job（`Backend checks` + `Godot plugin checks`，ubuntu-24.04） |
-| 后端测试 | 916 passed，1 warning（E11 全量 pytest，956.89s），ruff 全通过 |
+| 后端测试 | 953 passed，1 warning（896 业务 + 57 契约，见 §16） |
 | Godot 测试 | 68 / 68 passed（headless 编辑器入口） |
 | Demo 运行时验证 | 24 / 24 passed（真实 Godot 4.5.1 headless） |
-| 数据库迁移 | head 为 `000032` |
+| 数据库迁移 | head 为 `000033` |
 
 ## 2. 阶段总览
 
@@ -40,7 +40,7 @@
 | E9 | Verification & QA | ✅ 已完成 | 2026-11-24 验收，8 批次 / 20 任务，见 [E9 验收报告](e9-acceptance-report.md) |
 | E10 | Build & Release | ✅ 已完成 | 2026-11-26 验收，6 批次 / 20 任务，见 [E10 验收报告](e10-acceptance-report.md) |
 | E11 | Platformer Demo | ✅ 已完成 | 2026-11-26 验收，20 任务，见 [E11 验收报告](e11-acceptance-report.md) |
-| E12 | Productization | ⬜ 未开始 | 含存量文档归档 |
+| E12 | Productization | ✅ 已完成 | 2026-11-27 验收，20 任务，GA Ready，见 [E12 验收报告](e12-acceptance-report.md) |
 
 ## 3. E0 任务明细（已完成）
 
@@ -61,7 +61,7 @@
 
 | 项 | 状态 / 数值 |
 | --- | --- |
-| 后端测试 | 916 passed，1 warning（E11 全量 pytest，见 §15） |
+| 后端测试 | 953 passed，1 warning（E12 全量 pytest，见 §16） |
 | 契约校验 | 38 个 manifest 用例，Backend 与 Godot 双向验证（契约测试 42 passed） |
 | Godot 运行 | headless 编辑器模式加载插件、契约探针，E3 测试 68/68 passed，`exit 0` |
 | 打包（onedir） | 39.1 MB，冷启动到 `/health` 1248 ms，迁移与健康检查通过 |
@@ -757,7 +757,46 @@ M7 交付：`system-report` 聚合规格覆盖度、需求追踪、验证与构�
 ruff check / format 全通过，结构检查与敏感扫描通过，契约 57 passed，迁移 head `000032`，
 Godot 运行时验证 24 / 24，导出冒烟 PASS。
 
-## 16. 已知问题与待办
+## 16. E12 实施进度（20 任务，验收通过）
+
+设计文档：[E12 Productization](../../完整开发计划细分/E12.md)。交付按 20 个任务展开：
+
+| 任务组 | 任务 | 状态 |
+| --- | --- | --- |
+| 产品域 | T01 领域与契约、T02 架构与打包、T18 API/扩展稳定性 | ✅ 已完成 |
+| 交付与运行 | T03 安装器与首运、T04 配置与 Secrets、T05 License、T06 更新、T07 迁移、T08 回滚恢复 | ✅ 已完成 |
+| 质量与治理 | T09 兼容性、T10 安全加固、T11 隐私、T12 诊断、T15 性能、T16 长期运行、T17 支持维护 | ✅ 已完成 |
+| 体验与发布 | T13 文档、T14 UX、T19 发布流水线、T20 GA 验收 | ✅ 已完成 |
+
+T01/T02 交付：`modules/product/{models,repository,versioning,service}.py` 与迁移
+`000033_e12_product_core.py`（20 张产品表），产品版本 `1.0.0` 与游戏制品版本域
+`game_artifact` 强制隔离；11 个组件版本与 10 项契约登记，未知/超版本契约返回 `UNKNOWN`。
+
+T03/T04 交付：`installer.py` 的安装状态机、目录隔离预检查、10 项验证、回滚与卸载、
+插件 `SKIP/INSTALL/UPGRADE/CONFLICT` 计划、12 步首次运行向导；`configuration.py`
+四层配置、受保护键、明文 Secrets 拒绝与脱敏导出；模型不可用直接失败。
+
+T05/T06/T07/T08 交付：`licensing.py`（离线宽限、过期、时钟异常、Feature 默认关闭）、
+`updates.py`（DEV/BETA/STABLE、HMAC 签名、哈希、批准、禁止降级）、
+`migrations.py`（目标 schema、降级阻断、强制备份、失败标记）、
+`recovery.py`（恢复点、UNKNOWN 人工核实、保留用户数据、不删除项目）。
+
+T09–T12 交付：`compatibility.py` 平台/Godot/Python/协议/schema 矩阵与 UNKNOWN 规则；
+产品动作 RBAC（读允许非 Agent、变更仅 admin、Agent 全拒绝）与产品审计；
+`privacy.py` 遥测默认关闭、上下文预览脱敏、删除范围隔离；
+`diagnostics.py` 9 个错误码、支持包脱敏与 SHA-256、崩溃报告 `LOCAL_ONLY`。
+
+T13/T14/T19/T20 交付：[用户指南](../05-product/user-guide.md)、
+[开发者指南](../05-product/developer-guide.md)、[运维手册](../04-operations/runbooks.md)、
+[发布目录说明](../../release/README.md)、`scripts/release/build_product.py`
+（产品/组件/契约/兼容性清单 + SBOM + 校验和）、`release_pipeline.py`
+（7 类证据、签名、SBOM、审批与发布）、[E12 验收报告](e12-acceptance-report.md)。
+
+质量门禁：E12 新增 37 个测试（单元 23 / 集成 14）；后端全量 pytest 953 passed / 1 warning，
+ruff 全通过，迁移 head `000033`，`build_product.py --check` 通过，
+`check_all.py` 8 阶段全 PASS（详见验收报告 §8）。
+
+## 17. 已知问题与待办
 
 | 事项 | 影响阶段 | 状态 |
 | --- | --- | --- |
@@ -765,7 +804,11 @@ Godot 运行时验证 24 / 24，导出冒烟 PASS。
 | Runtime 自动化使用可注入 Driver，CI 未拉起真实 Godot | E9 / E11 | ✅ E11 接入真实 headless 运行时（24 项用例）；截图/视觉差异管线仍未接入 |
 | Godot 4.5.1 导出模板 | E10 | ✅ 已安装（`%APPDATA%\Godot\export_templates\4.5.1.stable`） |
 | 无 Python 干净机器上的打包验证 | E10 | 待安装包制作时执行 |
-| CI 未覆盖打包冒烟与 Markdown 链接检查 | E10 / E12 | 待补 |
+| CI 未覆盖打包冒烟与 Markdown 链接检查 | E10 / E12 | 待补；E12 已提供 `build_product.py --check` 供接入 |
+| macOS / Linux 桌面安装器未真机验证 | E12 | 兼容性矩阵标记 UNVERIFIED / PARTIAL，不宣称 GA 支持 |
+| 未执行 24 小时长稳与多进程压测 | E12 | 依赖状态机、幂等、健康检查与 E1 性能基线；后续补压测 |
+| 产品管理页面复用浏览器管理页，未提供独立安装向导 UI | E12 | 产品流程以 API 与状态机交付，UI 后续增强 |
+| 更新签名使用内置 HMAC 密钥 | E12 | 适用于本地/离线分发；公共分发需非对称签名与密钥轮换 |
 | onefile 便携产物的杀软误报 | E10 | 分发前在目标环境实测 |
 | Demo 视觉为静态占位 SVG，无逐帧动画；音频为占位音效 | E11 | P1 表现层，视觉/音频需人工确认 |
 | Demo 未登记 12 Phase 专用 Workflow 模板，未新增独立多 Agent 编排场景 | E11 | 复用 E4 Workflow 与 E7 `game_workflow_service` / E2E 证据 |
@@ -777,10 +820,10 @@ Godot 运行时验证 24 / 24，导出冒烟 PASS。
 | Runtime 凭证（`client_type=tool`）API 已支持，管理界面未提供签发入口 | E5 | 客户端管理界面补齐 |
 | 多 Agent 并发以单进程 asyncio 模拟，未做多进程/多后端压测 | E7 | 单后端 SQLite，写入由资源锁与事务串行化 |
 | Attempt 失效时运行中多 Agent 的联动回收未做专项测试 | E7 | 编排入口拒绝不可运行 Attempt；运行中隔离依赖 Agent Runtime |
-| 存量规划文档归档 `docs/` | E12 | 规则已定，E12 执行 |
+| 存量规划文档归档 `docs/` | E12 | ⏳ 规则已定，归档不阻塞 GA |
 | Godot 安装路径含中文（建议迁 ASCII） | — | 非阻塞，未执行 |
 
-## 17. 维护规则
+## 18. 维护规则
 
 1. 每完成一个任务勾选或更新状态，每阶段结束同步本文件与阶段验收报告。
 2. 状态符号：`✅ 已完成 / ⏳ 进行中 / ⬜ 未开始 / ⛔ 阻塞`。

@@ -9,7 +9,9 @@
 | `02-architecture/` | 模块设计、架构图、跨模块约束 |
 | `03-development/` | 具体工程规范（数据库、配置、日志、CI 等） |
 | `04-testing/` | 测试计划、测试用例集（E1 起） |
+| `04-operations/` | 运维手册、升级/恢复/安全事件 Runbook（E12 起） |
 | `05-api/` | API / 事件协议说明（契约事实源在 `packages/contracts/`） |
+| `05-product/` | 用户指南、开发者与集成指南（E12 起） |
 | `06-decisions/` | ADR 与待确认事项 |
 | `templates/` | 各类文档模板，复制后填写 |
 
@@ -26,6 +28,13 @@
 - [日志规范](03-development/logging.md)
 - [错误码与异常规范](03-development/errors.md)
 - [CI 与自动化检查](03-development/ci.md)
+
+### 产品与运维
+
+- [用户指南](05-product/user-guide.md)
+- [开发者与集成指南](05-product/developer-guide.md)
+- [运维手册（Runbook）](04-operations/runbooks.md)
+- [产品发布目录说明](../release/README.md)
 
 ### 流程与管理
 
@@ -48,6 +57,7 @@
 - [E9 验收报告](00-project/e9-acceptance-report.md)
 - [E10 验收报告](00-project/e10-acceptance-report.md)
 - [E11 验收报告](00-project/e11-acceptance-report.md)
+- [E12 验收报告](00-project/e12-acceptance-report.md)
 - [Platformer Demo 交付说明](../demo/platformer/reports/acceptance-report.md)
 
 ### 架构设计

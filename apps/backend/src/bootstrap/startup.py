@@ -9,8 +9,9 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 
 from bootstrap.service_registry import ServiceRegistry
 from config.service import ConfigService
@@ -111,6 +112,16 @@ from modules.multi_agent.service import (
 )
 from modules.multi_agent.specialized import SpecializedAgentCatalog
 from modules.multi_agent.workflows import GameWorkflowService
+from modules.product.configuration import ProductConfigurationService
+from modules.product.diagnostics import DiagnosticsService
+from modules.product.installer import InstallationService
+from modules.product.licensing import LicenseService as ProductLicenseService
+from modules.product.migrations import ProductMigrationService
+from modules.product.privacy import PrivacyService
+from modules.product.recovery import RecoveryService
+from modules.product.release_pipeline import ProductReleaseService
+from modules.product.service import ProductService
+from modules.product.updates import UpdateService
 from modules.project.service import ProjectService
 from modules.project_registry.service import (
     ProjectConfigurationService,
@@ -951,6 +962,47 @@ def register_startup_steps(
         )
         services.register("backup", backup)
 
+    async def _init_product() -> None:
+        database = services.get("database", DatabaseService)
+        backup = services.try_get("backup")
+        secret_store = services.try_get("secret_store")
+
+        async def _state_probe() -> dict[str, Any]:
+            async with database.session() as session:
+                outbox = await session.scalar(text("SELECT COUNT(*) FROM event_outbox"))
+                inbox = await session.scalar(text("SELECT COUNT(*) FROM event_inbox"))
+            return {
+                "outbox": {"status": "OBSERVED", "pending": int(outbox or 0)},
+                "inbox": {"status": "OBSERVED", "pending": int(inbox or 0)},
+            }
+
+        installation_service = InstallationService(database)
+        configuration_service = ProductConfigurationService(database)
+        license_service = ProductLicenseService(database)
+        diagnostics_service = DiagnosticsService(database, settings.data_dir)
+        update_service = UpdateService(database, secret_store=secret_store)
+        product_migration_service = ProductMigrationService(database, backup_provider=backup)
+        recovery_service = RecoveryService(
+            database, backup_provider=backup, state_probe=_state_probe
+        )
+        privacy_service = PrivacyService(database)
+        product_release_service = ProductReleaseService(database)
+        product_service = ProductService(
+            database, license_service=license_service, diagnostics=diagnostics_service
+        )
+        await license_service.ensure_development_license()
+
+        services.register("installation_service", installation_service)
+        services.register("configuration_service", configuration_service)
+        services.register("license_service", license_service)
+        services.register("diagnostics_service", diagnostics_service)
+        services.register("update_service", update_service)
+        services.register("product_migration_service", product_migration_service)
+        services.register("recovery_service", recovery_service)
+        services.register("privacy_service", privacy_service)
+        services.register("product_release_service", product_release_service)
+        services.register("product_service", product_service)
+
     manager.register_startup_step("config", _init_config, timeout=STARTUP_STEP_TIMEOUT)
     manager.register_startup_step(
         "logging",
@@ -983,3 +1035,4 @@ def register_startup_steps(
         timeout=EVENT_STARTUP_TIMEOUT,
     )
     manager.register_startup_step("backup", _init_backup, timeout=STARTUP_STEP_TIMEOUT)
+    manager.register_startup_step("product", _init_product, timeout=STARTUP_STEP_TIMEOUT)

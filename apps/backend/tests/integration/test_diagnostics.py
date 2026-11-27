@@ -38,7 +38,7 @@ def test_summary_includes_runtime_and_migration(client) -> None:
 
     assert body["application"]["state"] == "RUNNING"
     assert body["application"]["uptime_seconds"] is not None
-    assert body["database"] == {"status": "ready", "revision": "000032"}
+    assert body["database"] == {"status": "ready", "revision": "000033"}
     assert body["migration"]["at_head"] is True
     assert body["logging"]["log_file"].endswith("backend.log")
     assert body["backup"]["available"] is True

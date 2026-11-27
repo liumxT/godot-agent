@@ -23,6 +23,7 @@ from core.security.principal import (
     ACTION_E10_RELEASE_PUBLISH,
     ACTION_E10_SIGNING_MANAGE,
     ACTION_E11_DEMO_ACCEPT,
+    ACTION_E12_PRODUCT_READ,
     ACTION_PROJECT_ACCESS_GRANT,
     ACTION_PROJECT_ACCESS_READ,
     ACTION_PROJECT_ACCESS_REVOKE,
@@ -35,6 +36,7 @@ from core.security.principal import (
     E9_PROJECT_ACTIONS,
     E10_PROJECT_ACTIONS,
     E11_PROJECT_ACTIONS,
+    E12_PRODUCT_ACTIONS,
     ROLE_ADMIN,
     ROLE_EDITOR,
     ROLE_OWNER,
@@ -104,6 +106,10 @@ _E10_OWNER_ONLY_ACTIONS = frozenset(
 
 _E11_OWNER_ONLY_ACTIONS = frozenset({ACTION_E11_DEMO_ACCEPT})
 
+_PRODUCT_PRIVILEGED_ACTIONS = frozenset(
+    action for action in E12_PRODUCT_ACTIONS if action != ACTION_E12_PRODUCT_READ
+)
+
 
 @dataclass(frozen=True)
 class AuthorizationDecision:
@@ -149,6 +155,13 @@ def evaluate(
 
     if principal.role == ROLE_ADMIN:
         return _allow("rbac.admin")
+
+    if action in E12_PRODUCT_ACTIONS:
+        if principal.client_type == "agent":
+            return _deny(REASON_ROLE_DENIED, "rbac.product.agent")
+        if action in _PRODUCT_PRIVILEGED_ACTIONS:
+            return _deny(REASON_ROLE_DENIED, "rbac.product.admin")
+        return _allow("rbac.product.read")
 
     if action not in _PROJECT_ACTIONS:
         return _allow("rbac.client")

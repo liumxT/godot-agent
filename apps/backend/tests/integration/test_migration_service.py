@@ -56,8 +56,8 @@ async def test_first_migration_applies_and_records(
     result = await service.run()
 
     assert result.from_revision is None
-    assert result.to_revision == "000032"
-    assert result.head_revision == "000032"
+    assert result.to_revision == "000033"
+    assert result.head_revision == "000033"
     assert result.applied == (
         "000001",
         "000002",
@@ -91,6 +91,7 @@ async def test_first_migration_applies_and_records(
         "000030",
         "000031",
         "000032",
+        "000033",
     )
     assert result.backup_path is not None and result.backup_path.exists()
     assert await _history(service.database) == [
@@ -126,6 +127,7 @@ async def test_first_migration_applies_and_records(
         ("000030", "applied"),
         ("000031", "applied"),
         ("000032", "applied"),
+        ("000033", "applied"),
     ]
 
 
@@ -137,7 +139,7 @@ async def test_repeated_migration_is_noop(service: MigrationService) -> None:
     assert second.applied == ()
     # 已在 head 时不重复备份
     assert second.backup_path is None
-    assert len(await _history(service.database)) == 32
+    assert len(await _history(service.database)) == 33
 
 
 async def test_history_keeps_version_order(service: MigrationService) -> None:
@@ -177,6 +179,7 @@ async def test_history_keeps_version_order(service: MigrationService) -> None:
         "000030",
         "000031",
         "000032",
+        "000033",
     ]
 
 
@@ -214,7 +217,7 @@ async def test_failure_is_recorded_and_wrapped(
 
     assert exc_info.value.code == "MIGRATION_FAILED"
     history = await _history(service.database)
-    assert history[-1] == ("000032", "failed")
+    assert history[-1] == ("000033", "failed")
 
 
 async def test_verify_at_head_rejects_mismatch(service: MigrationService) -> None:
@@ -286,4 +289,5 @@ def test_startup_runs_migrations(tmp_path: Path) -> None:
         ("000030",),
         ("000031",),
         ("000032",),
+        ("000033",),
     ]

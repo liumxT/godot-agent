@@ -46,7 +46,7 @@ def _tables(path: Path) -> set[str]:
 def test_upgrade_creates_schema(settings: Settings) -> None:
     result = upgrade_to_head(settings)
 
-    assert result.to_revision == head_revision(settings) == "000032"
+    assert result.to_revision == head_revision(settings) == "000033"
     assert result.changed is True
     tables = _tables(_db_path(settings))
     assert "alembic_version" in tables
@@ -106,7 +106,7 @@ def test_upgrade_is_idempotent(settings: Settings) -> None:
     second = upgrade_to_head(settings)
 
     assert second.changed is False
-    assert second.from_revision == second.to_revision == "000032"
+    assert second.from_revision == second.to_revision == "000033"
 
 
 def test_backup_created_before_second_upgrade(settings: Settings) -> None:
@@ -155,7 +155,7 @@ def test_failure_is_wrapped(monkeypatch: pytest.MonkeyPatch, settings: Settings)
 
     assert exc_info.value.code == "MIGRATION_FAILED"
     assert "boom" not in exc_info.value.message
-    assert exc_info.value.details["from_revision"] == "000032"
+    assert exc_info.value.details["from_revision"] == "000033"
 
 
 def test_uncreatable_database_directory_is_reported(tmp_path: Path) -> None:
