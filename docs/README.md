@@ -32,6 +32,7 @@
 ### 产品与运维
 
 - [用户指南](05-product/user-guide.md)
+- [使用手册（完整版）](05-product/usage-manual.md)
 - [开发者与集成指南](05-product/developer-guide.md)
 - [运维手册（Runbook）](04-operations/runbooks.md)
 - [产品发布目录说明](../release/README.md)
